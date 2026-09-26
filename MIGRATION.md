@@ -13,21 +13,21 @@ Upstream reference docs: `docs/src/content/docs/migration/from-wordpress.mdx`, `
 | Item | Status | How we know |
 |---|---|---|
 | WP REST endpoint | ✅ `/wp-json/wp/v2` open, returns 200 | `curl https://guidecyprus.com/wp-json/wp/v2/posts?per_page=1` |
-| Post count | ✅ 94 posts (`X-WP-Total: 94`) | REST header |
+| Post count | ✅ 161 published posts: 94 `en` + 67 `tr`. REST shows only the 94 `en`. | WPML translation table |
 | SEO plugin | ✅ Yoast SEO v27.5 (meta present in `yoast_head` of REST response) | REST |
-| Multilingual | ⚠️ `/tr/` path observed in canonical URL. **Locale plugin unconfirmed** — likely WPML, Polylang, or TranslatePress | REST meta |
+| Multilingual | ✅ **WPML**. Locales `en` (default, unprefixed at `/`) and `tr` (at `/tr/`); `x-default` → `/` | `wpml/v1` namespaces in `/wp-json/`, `hreflang` links on the home page |
 | JWT auth | ✅ `access-control-expose-headers: X-JWT-Refresh` present | REST headers |
-| Pages | ❓ count unknown — REST call to `/wp/v2/pages` not yet run | needs fetch |
+| Pages | ✅ 7 published + 1 draft: 2 `en` + 6 `tr` | database |
 | Custom post types | ❓ unknown | needs fetch `/wp/v2/types` |
-| Custom fields (ACF) | ❓ unknown | needs exporter analysis or DB dump |
-| Comments | ❓ enabled/disabled unknown | needs exporter analysis or DB dump |
-| Users/roles | ❓ scope unknown | needs exporter analysis or DB dump |
+| Custom fields (ACF) | ⚠️ ACF + ACFML active; field usage not yet checked | plugin list |
+| Comments | ✅ 0 approved comments; nothing to migrate | database |
+| Users/roles | ✅ 2 users | database |
 | Custom theme assets | ❓ non-public (CSS/JS/images) unknown | needs FTP/SSH |
+| Current edge | ✅ Domain already proxied through Cloudflare (`server: cloudflare`) | response headers |
+| Backup | ✅ Database dump + full site directory archive, taken 2026-09-25, stored on the origin server | — |
+| WXR | ✅ Full export (949 items, plugins skipped so all languages are included), stored next to the backup | WP-CLI |
 
-**Hard requirement:** WP admin access, for one of the two import sources EmDash supports:
-
-- **EmDash Exporter plugin (recommended for this site).** Install it on WordPress, then generate a migration key under **Tools → EmDash Migration**. Beyond what WXR carries, it imports comments, menus, site title/tagline/logo/favicon, **Yoast SEO fields**, and ACF/custom meta for which a matching EmDash field exists.
-- **WXR file** (Tools → Export → All content). Covers posts, pages, custom post types, taxonomy terms, reusable blocks, authors and attachment URLs. It does **not** import Yoast values, menus, comments or arbitrary custom meta. Use it only if the plugin can't be installed.
+**Import source: WXR** (`wp export`, or Tools → Export → All content). It covers posts, pages, custom post types, taxonomy terms, reusable blocks, authors and attachment URLs, but not Yoast values, menus or arbitrary custom meta. The docs also describe an EmDash Exporter plugin that imports those extras; the public release (`emdash-cms/wp-emdash` 1.0.0) lacks them and sends no WPML data, so this migration doesn't use it (§7).
 
 The public REST API alone can't be imported. Entering the site URL without the exporter only runs a probe that detects and counts content.
 
@@ -119,11 +119,11 @@ i18n: {
 
 The default locale must not be prefixed. `prefixDefaultLocale: true` and `routing: "prefix-always"` make `/_emdash/admin` return 404. guidecyprus.com's current shape (English at `/`, Turkish at `/tr/`) fits the default strategy. If the live site actually prefixes English, handle `/en/…` with redirects instead.
 
-**Import.** The WXR parser reads WPML (`_icl_lang_code` + `trid`) and Polylang (`_locale` / `language` taxonomy + `_translations`), and passes the locale and translation group per post to the importer. The exporter source also detects the multilingual plugin. TranslatePress stores translations outside posts, so neither path picks it up. If guidecyprus.com uses TranslatePress, the Turkish content has to be rebuilt as translated entries after import.
+**Import.** The WXR parser reads WPML (`_icl_lang_code` + `trid`) and Polylang (`_locale` / `language` taxonomy + `_translations`), and passes the locale and translation group per post to the importer. The exporter source also detects the multilingual plugin.
 
 ⚠️ Upstream's `guides/internationalization.mdx` says a WXR import lands everything in the default locale, which contradicts the parser code above. Before the full run, confirm with a trial import of a few posts that TR entries arrive with `locale = tr` and linked to their EN siblings.
 
-**Decision needed before Phase 1:** which multilingual plugin guidecyprus.com runs (WPML, Polylang or TranslatePress), and which locale is the default.
+**Decided:** guidecyprus.com runs WPML with `en` as the unprefixed default and `tr` under `/tr/`. That matches the config above and EmDash's default routing, and the importer reads WPML's `_icl_lang_code` and `trid`.
 
 ---
 
@@ -143,24 +143,39 @@ Open question: how many active WP users/editors on guidecyprus.com?
 
 ## 6. DNS / cutover plan
 
-### Phase 1 — Preview (≈ 1–2 days)
+### Phase 1 — Preview (done locally 2026-09-26)
 
-- Pick a template. **`templates/blog` is the closest match** to a WP tourism guide: `posts` + `pages` collections, categories, tags, menus. Use `templates/blog-cloudflare` if hosting on Cloudflare.
-- Scaffold the site outside this monorepo: `pnpm create emdash@latest`, choose the blog template.
-- Add the `i18n` block from §4. Adjust routes to match the WP permalink structure.
-- Run `pnpm dev` and complete setup at `/_emdash/admin`.
-- Install the EmDash Exporter on WordPress. Generate a migration key, then paste it into **Import WordPress**.
-- Review the analysis: collection mapping, custom post types, author mapping. Enable menus, site identity and SEO.
-- Trial-import a handful of posts in both languages and verify locales (§4). Then run the full import and the media step.
-- Verify against the source:
-  - Counts per post type, status and locale.
-  - 50 random posts rendering correctly with images.
-  - Yoast titles/descriptions.
-  - Menus, categories/tags, comments.
+Site repo: `guidecyprus-site` (sibling of this repo), EmDash 0.40.1 on `blog-cloudflare`.
+
+1. Scaffold: `pnpm create emdash@latest guidecyprus-site --template cloudflare:blog --pm pnpm --no-sandboxed-plugins --install --yes`, then upgrade to `emdash@0.40.1`.
+2. Add the `i18n` block from §4.
+3. Port routes to the WP URL structure:
+   - `/%postname%/` for posts and pages, with `/tr/` for Turkish.
+   - `/category/parent/child/` and `/tag/<slug>/`.
+   - Static front pages at `/` and `/tr/`; their old slugs 301 there.
+4. Export the WXR with plugins skipped, then add `_icl_lang_code` and `trid` postmeta per item from WPML's `icl_translations` (§7).
+5. Import through the admin API, in order: analyze → prepare (adds `pages.excerpt`) → execute → media (unique URLs only) → rewrite-urls.
+6. Run the post-import SQL from the site repo:
+   - `scripts/fix-wxr-taxonomies.py` restores decoded term labels in every locale and the category parents.
+   - `scripts/import-yoast-seo.py` copies Yoast titles and descriptions into `_emdash_seo`.
+7. Delete the template's sample posts and "About" page. Set the site title to "Guide Cyprus" and the tagline.
+
+Result:
+- 94 `en` + 65 `tr` posts and 8 pages.
+- 391 media files, with 365 content URLs rewritten.
+- 23 categories and 128 tags.
+- 50 Yoast descriptions and 3 custom titles.
+- The 2 WPML-linked page pairs share translation groups. WPML didn't link the posts, so they stay independent.
+- One `tr` draft with an empty slug was skipped; its published version imported.
+
+Known gaps:
+- The English homepage title gets a " - Guide Cyprus" suffix that the live site doesn't show.
+- One post still links to an origin image, probably a resized variant.
+- Menus aren't imported, because WXR doesn't carry them.
 
 ### Phase 2 — Parallel run (≈ 2–5 days)
 
-- Deploy to a staging host (Cloudflare Workers for the Cloudflare template, or Node + Docker on your existing infra).
+- Create the D1 database and R2 bucket, then `wrangler deploy` to a `*.workers.dev` URL for staging.
 - Crawl or sample old public URLs and check each has an equivalent on staging: 200 OK, correct content, correct image. Enter a 301 in EmDash's redirects for every URL without a 1:1 match.
 - Confirm SEO meta (titles, descriptions, OG) and hreflang per post.
 - Confirm drafts aren't reachable when logged out.
@@ -168,59 +183,60 @@ Open question: how many active WP users/editors on guidecyprus.com?
 
 ### Phase 3 — Cutover (≈ 30 minutes, then 30 days of monitoring)
 
-- Drop TTL on `guidecyprus.com` DNS to 300s, 24h in advance.
-- Flip DNS to the new host.
-- Keep WP online for 30 days at a fallback host (e.g., `legacy.guidecyprus.com`) so content can be compared or re-imported.
+- Point `legacy.guidecyprus.com` at the WordPress origin and keep it online for 30 days, so content can be compared or re-imported.
+- Attach the Worker to `guidecyprus.com` as a custom domain. The zone is already on Cloudflare, so there is no nameserver change or TTL wait.
 - Watch 404 logs daily. Add redirects as gaps appear.
 - After 30 days with no significant traffic on legacy, retire WP. Keep the backup.
 
 ---
 
-## 7. Open questions for the human
+## 7. Decisions
 
-1. **Template choice.** `blog` is the default for a WP-like site. Confirm or override (`marketing`, `portfolio` exist but don't fit).
-2. **Hosting target.** Cloudflare (D1 + R2) or Node + SQLite on existing infra. This decides the template variant.
-3. **Multilingual plugin and default locale.** WPML, Polylang or TranslatePress? Is English or Turkish unprefixed today? See §4.
-4. **Exporter plugin.** Can the EmDash Exporter be installed on guidecyprus.com? If not, can you produce a WXR export? That path loses Yoast, menus and comments.
-5. **Backup.** Can you provide a `wp-content/uploads` tarball + MySQL dump?
-6. **Auth scope.** How many editors need accounts on the new site?
-7. **Comments.** Import them (exporter path), or disable comments on the new site?
-8. **Domain TTL access.** Can you lower TTL on guidecyprus.com 24h before cutover?
+Criteria: free to run and simplest to operate.
+
+| Question | Decision | Why |
+|---|---|---|
+| Template | `blog-cloudflare` | Posts, pages, categories, tags and menus match the WP site |
+| Hosting | Cloudflare Workers free plan + D1 + R2 | The domain is already on Cloudflare, so cutover is a route change rather than a DNS move. The free tiers cover a 94-post site. Sandboxed plugins need Workers Paid, so leave them disabled at scaffold time. R2 may ask for a payment method on the account even when usage stays within the free tier. |
+| Import source | WXR + WPML language data | The public EmDash Exporter (`emdash-cms/wp-emdash` 1.0.0) predates the core importer. It has no migration-key wizard and sends no WPML locale/translation group, comments or menus, so TR/EN links would be lost. WPML keeps languages in its `icl_translations` table, not postmeta, so a stock WXR carries none either. Add `_icl_lang_code` and `trid` postmeta to each WXR item from that table; the WXR parser reads both. Yoast values need a separate step. |
+| i18n | WPML → row-per-locale, `en` default, `tr` prefixed | Matches current URLs, so no locale redirects are needed |
+| Editors | Create EmDash accounts for active editors; other authors become guest bylines | No password migration exists |
+| Comments | None to import | The site has 0 approved comments |
+
+## 8. Open questions for the human
+
+1. **Credentials.** Rotate the origin root password, and switch to SSH key auth.
+2. **Editors.** Who needs a login on the new site?
+3. **Cloudflare account.** Which account holds the guidecyprus.com zone? `wrangler login` must use it.
 
 ---
 
-## 8. Rough effort estimate
+## 9. Rough effort estimate
 
 | Phase | Hours | Notes |
 |---|---|---|
 | 1 — Preview | 8–12 | scaffold + i18n/routes (3h), exporter setup + analysis (1h), trial + full import (2h), content QA and fix-ups (4h) |
 | 2 — Parallel | 6–10 | deploy (2h), URL audit and redirects (3h), SEO/visual QA (3h) |
 | 3 — Cutover | 2 + 30 days passive | DNS flip (0.5h), monitoring (30 days, ~10 min/day) |
-| Extras | +4–16 | TranslatePress rebuild, ACF field modelling, or theme porting beyond the blog template |
+| Extras | +4–16 | ACF field modelling or theme porting beyond the blog template |
 
 Total active work: **~20–40 hours** over 2–3 weeks of calendar time.
 
 ---
 
-## 9. Next commands (for me to run)
+## 10. Next commands
 
 ```bash
-# 1. Monorepo dependencies (already installed; needed for reading/running upstream code)
-cd /home/git-projects/guidecyprus
-pnpm install --frozen-lockfile
-
-# 2. Scaffold the site (outside the monorepo, or under a new directory)
-pnpm create emdash@latest   # choose: blog (or blog-cloudflare)
-
-# 3. In the new site: dev server, then import from the admin
-pnpm dev
-# open http://localhost:4321/_emdash/admin → Import WordPress
+cd /home/git-projects/guidecyprus-site
+pnpm wrangler login                      # account that holds the guidecyprus.com zone
+pnpm wrangler d1 create guidecyprus      # put the database_id in wrangler.jsonc
+pnpm wrangler r2 bucket create guidecyprus-media
+pnpm run deploy                          # → *.workers.dev staging URL
 ```
 
-## 10. Blockers
+Then rerun the §6 Phase 1 import steps against the deployed site. The post-import SQL runs with `wrangler d1 execute guidecyprus --remote --file …`.
 
-None for the planning phase. Blockers for execution:
+## 11. Blockers
 
-- **No import source yet.** Need the EmDash Exporter installed on guidecyprus.com, or a WXR file.
-- **Multilingual plugin unknown.** Decides whether translations import automatically (WPML/Polylang) or need a rebuild (TranslatePress).
-- **Hosting target not chosen.** Decides the template variant (`blog` vs `blog-cloudflare`).
+- **Cloudflare account access** for `wrangler login` (§8, question 3).
+- **Media on R2:** the media step fetches from the WordPress origin, which must stay online.
