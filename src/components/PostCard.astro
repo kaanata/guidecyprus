@@ -1,6 +1,7 @@
 ---
 import type { MediaValue, ContentBylineCredit } from "emdash";
 import { Image } from "emdash/ui";
+import { localePath } from "../utils/i18n";
 
 interface Props {
 	title: string;
@@ -97,7 +98,7 @@ const formattedDate = date
 		tags && tags.length > 0 && (
 			<div class="card-tags">
 				{tags.slice(0, 2).map((tag) => (
-					<a href={`/tag/${tag.slug}`} class="card-tag">
+					<a href={localePath(Astro.currentLocale, `/tag/${tag.slug}`)} class="card-tag">
 						{tag.label}
 					</a>
 				))}

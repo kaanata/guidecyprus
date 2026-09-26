@@ -1,25 +1,33 @@
 ---
-import { getEmDashEntry, decodeSlug } from "emdash";
+import { getSeoMeta, getSiteSettings } from "emdash";
 import { PortableText } from "emdash/ui";
 import Base from "../../layouts/Base.astro";
+import type { ResolvedEntry } from "../../utils/resolve-entry";
+import { resolveBlogSiteIdentity, TITLE_SEPARATOR } from "../../utils/site-identity";
 
-const slug = decodeSlug(Astro.params.slug);
-
-if (!slug) {
-	return Astro.redirect("/404");
+interface Props {
+	page: Extract<ResolvedEntry, { collection: "pages" }>["entry"];
 }
 
-const { entry: page, cacheHint } = await getEmDashEntry("pages", slug);
+const { page } = Astro.props;
+const slug = page.data.slug;
+const { siteTitle } = resolveBlogSiteIdentity(await getSiteSettings());
 
-if (!page) {
-	return Astro.redirect("/404");
-}
-
-if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
+const seo = getSeoMeta(page, {
+	siteTitle,
+	siteUrl: Astro.url.origin,
+	path: Astro.url.pathname.replace(/\/$/, ""),
+	titleSeparator: TITLE_SEPARATOR,
+});
 ---
 
 <Base
-	title={page.data.title}
+	title={seo.title}
+	pageTitle={seo.ogTitle}
+	description={seo.description}
+	image={seo.ogImage}
+	canonical={seo.canonical}
+	robots={seo.robots}
 	content={{ collection: "pages", id: page.data.id, slug }}
 >
 	<article class="page-article">

@@ -1,7 +1,7 @@
 ---
-import PageView from "../components/views/PageView.astro";
-import { frontPageSlug } from "../utils/front-page";
-import { resolveEntry } from "../utils/resolve-entry";
+import PageView from "../../components/views/PageView.astro";
+import { frontPageSlug } from "../../utils/front-page";
+import { resolveEntry } from "../../utils/resolve-entry";
 
 const slug = frontPageSlug(Astro.currentLocale);
 const resolved = slug ? await resolveEntry(slug, Astro.currentLocale) : null;

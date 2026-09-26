@@ -1,10 +1,8 @@
 ---
 import {
-	getEmDashEntry,
 	getEmDashCollection,
 	getTermsForEntries,
 	getSeoMeta,
-	decodeSlug,
 	getSiteSettings,
 } from "emdash";
 import {
@@ -16,21 +14,17 @@ import { Comments, CommentForm } from "emdash/ui/comments";
 import Base from "../../layouts/Base.astro";
 import PostCard from "../../components/PostCard.astro";
 import { getReadingTime } from "../../utils/reading-time";
-import { resolveBlogSiteIdentity } from "../../utils/site-identity";
+import { resolveBlogSiteIdentity, TITLE_SEPARATOR } from "../../utils/site-identity";
+import { localePath } from "../../utils/i18n";
+import type { ResolvedEntry } from "../../utils/resolve-entry";
 
-const slug = decodeSlug(Astro.params.slug);
+const locale = Astro.currentLocale;
 
-if (!slug) {
-	return Astro.redirect("/404");
+interface Props {
+	post: Extract<ResolvedEntry, { collection: "posts" }>["entry"];
 }
 
-const { entry: post, cacheHint } = await getEmDashEntry("posts", slug);
-
-if (!post) {
-	return Astro.redirect("/404");
-}
-
-if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
+const { post } = Astro.props;
 
 // Get featured image URL for OG fallback
 // The image may have src (external) or meta.storageKey (local)
@@ -62,6 +56,7 @@ const seo = getSeoMeta(post, {
 	siteUrl: Astro.url.origin,
 	path: Astro.url.pathname.replace(/\/$/, ""),
 	defaultOgImage: featuredImageUrl,
+	titleSeparator: TITLE_SEPARATOR,
 });
 
 // Bylines are already hydrated by getEmDashEntry
@@ -76,6 +71,7 @@ const tags = post.data.terms?.tag ?? [];
 
 // Fetch a few extra recent posts in case the current post is among them.
 const { entries: recentPosts } = await getEmDashCollection("posts", {
+		locale,
 	orderBy: { published_at: "desc" },
 	limit: 4,
 });
@@ -87,6 +83,7 @@ const otherTagsByEntry = await getTermsForEntries(
 	"posts",
 	otherPosts.map((p) => p.data.id),
 	"tag",
+	{ locale },
 );
 const otherPostsWithTags = otherPosts.map((p) => ({
 	post: p,
@@ -112,7 +109,7 @@ const publishDate =
 	type="article"
 	publishedTime={post.data.publishedAt?.toISOString() ?? null}
 	modifiedTime={post.data.updatedAt.toISOString()}
-	content={{ collection: "posts", id: post.data.id, slug }}
+	content={{ collection: "posts", id: post.data.id, slug: post.data.slug }}
 >
 	<article class="article">
 		{/* Hero: Full-width featured image */}
@@ -177,7 +174,7 @@ const publishDate =
 								<span class="meta-label">Tags</span>
 								<div class="meta-tags">
 									{tags.map((t) => (
-										<a href={`/tag/${t.slug}`} class="meta-tag">
+										<a href={localePath(locale, `/tag/${t.slug}`)} class="meta-tag">
 											{t.label}
 										</a>
 									))}
@@ -264,7 +261,7 @@ const publishDate =
 									title={p.data.title}
 									excerpt={p.data.excerpt}
 									featuredImage={p.data.featured_image}
-									href={`/posts/${p.id}`}
+									href={localePath(locale, `/${p.id}`)}
 									date={p.data.publishedAt ?? undefined}
 									readingTime={getReadingTime(p.data.content)}
 									tags={postTags.map((t) => ({ slug: t.slug, label: t.label }))}

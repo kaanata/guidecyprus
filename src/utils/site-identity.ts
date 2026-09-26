@@ -12,6 +12,9 @@ export interface BlogSiteIdentitySettings {
 	favicon?: MediaReference;
 }
 
+/** Matches the WordPress/Yoast title format, e.g. "Beer Point - Guide Cyprus". */
+export const TITLE_SEPARATOR = " - ";
+
 const DEFAULT_SITE_TITLE = "My Blog";
 const DEFAULT_SITE_TAGLINE = "Thoughts, stories, and ideas.";
 

@@ -1,0 +1,30 @@
+---
+import { decodeSlug } from "emdash";
+import PageView from "../components/views/PageView.astro";
+import PostView from "../components/views/PostView.astro";
+import { frontPageSlug } from "../utils/front-page";
+import { localePath } from "../utils/i18n";
+import { resolveEntry } from "../utils/resolve-entry";
+
+const slug = decodeSlug(Astro.params.slug);
+
+if (slug && slug === frontPageSlug(Astro.currentLocale)) {
+	return Astro.redirect(localePath(Astro.currentLocale, "/"), 301);
+}
+
+const resolved = slug ? await resolveEntry(slug, Astro.currentLocale) : null;
+
+if (!resolved) {
+	return Astro.rewrite("/404");
+}
+
+if (Astro.cache?.enabled) Astro.cache.set(resolved.cacheHint);
+---
+
+{
+	resolved.collection === "posts" ? (
+		<PostView post={resolved.entry} />
+	) : (
+		<PageView page={resolved.entry} />
+	)
+}

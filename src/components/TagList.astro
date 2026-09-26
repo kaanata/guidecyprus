@@ -1,4 +1,6 @@
 ---
+import { localePath } from "../utils/i18n";
+
 interface Props {
   tags: Array<{ slug: string; label: string }>;
   class?: string;
@@ -11,7 +13,7 @@ const { tags, class: className } = Astro.props;
   <ul class:list={["tag-list", className]}>
     {tags.map((tag) => (
       <li>
-        <a href={`/tag/${tag.slug}`} class="tag">{tag.label}</a>
+        <a href={localePath(Astro.currentLocale, `/tag/${tag.slug}`)} class="tag">{tag.label}</a>
       </li>
     ))}
   </ul>

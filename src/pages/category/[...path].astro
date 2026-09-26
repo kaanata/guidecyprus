@@ -1,0 +1,18 @@
+---
+import { decodeSlug, getTerm } from "emdash";
+import CategoryView from "../../components/views/CategoryView.astro";
+
+// WordPress nests child categories under their parents (/category/parent/child/);
+// the last segment identifies the term.
+const slug = decodeSlug(Astro.params.path?.split("/").at(-1));
+const term = slug ? await getTerm("category", slug, {
+	includeCounts: false,
+	locale: Astro.currentLocale,
+}) : null;
+
+if (!term) {
+	return Astro.rewrite("/404");
+}
+---
+
+<CategoryView term={term} />
