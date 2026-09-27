@@ -4,6 +4,9 @@
 	"main": "./src/worker.ts",
 	"compatibility_date": "2026-02-24",
 	"compatibility_flags": ["nodejs_compat"],
+	"vars": {
+		"EMDASH_SITE_URL": "https://guidecyprus.divine-queen-9624.workers.dev",
+	},
 	"d1_databases": [
 		{
 			"binding": "DB",
