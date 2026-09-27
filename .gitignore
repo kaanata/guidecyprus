@@ -14,3 +14,6 @@ data.db
 
 # Local Wrangler/Miniflare state (D1, R2)
 .wrangler
+
+# Claude memory plugin notes
+.remember
