@@ -236,6 +236,8 @@ pnpm run deploy                          # → *.workers.dev staging URL
 
 Then rerun the §6 Phase 1 import steps against the deployed site. The post-import SQL runs with `wrangler d1 execute guidecyprus --remote --file …`.
 
+Staging runs with `EMDASH_SITE_URL` set to the `workers.dev` URL (a `vars` entry in `wrangler.jsonc`). Passkeys are bound to that hostname. Before cutover, give the admin a second way to sign in: a magic link with an email provider configured, or a GitHub/Google login. Then switch `EMDASH_SITE_URL` to `https://guidecyprus.com` and register a new passkey there.
+
 ## 11. Blockers
 
 - **Cloudflare account access** for `wrangler login` (§8, question 3).
