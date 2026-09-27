@@ -1,0 +1,35 @@
+{
+  "name": "@main-aff/plugin-ad-manager",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ad spaces for the DailyBet site: banner and network-code ads with scheduling, rotation, targeting and stats.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./sandbox": { "types": "./dist/sandbox-entry.d.ts", "default": "./dist/sandbox-entry.js" },
+    "./admin": { "types": "./dist/admin.d.ts", "default": "./dist/admin.js" },
+    "./spaces": { "types": "./dist/spaces.d.ts", "default": "./dist/spaces.js" }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "emdash": ">=0.30.0",
+    "react": "^19.0.0"
+  },
+  "dependencies": {
+    "zod": "^4.4.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260820.1",
+    "happy-dom": "^15.0.0",
+    "typescript": "^5.9.0",
+    "vitest": "^2.1.0"
+  }
+}

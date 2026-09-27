@@ -1,0 +1,30 @@
+{
+  "name": "@main-aff/plugin-ai-writer",
+  "version": "0.1.0",
+  "description": "AI writer for the bilingual (English/Turkish) Cyprus travel guide on EmDash: Express Mode, editor panel, bulk rules (typed topics, RSS feeds), bulk edit and translation, internal links and a recent-runs widget. OpenRouter and MiniMax.",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./sandbox": "./src/sandbox-entry.ts",
+    "./admin": "./src/admin/index.tsx",
+    "./core": "./src/lib/core.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "emdash": ">=0.35.0",
+    "react": "^19.0.0"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^4.5.0",
+    "zod": "^4.4.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260820.1",
+    "typescript": "^5.9.0",
+    "vitest": "^2.1.0"
+  }
+}
