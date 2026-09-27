@@ -1,6 +1,8 @@
 ---
 import { getEmDashCollection, getTermsForEntries } from "emdash";
 import Base from "../../layouts/Base.astro";
+import AdSpace from "../AdSpace.astro";
+import { inFeedAfter } from "../../utils/ads";
 import { getReadingTime } from "../../utils/reading-time";
 import { localePath } from "../../utils/i18n";
 
@@ -40,6 +42,7 @@ const formatDate = (date: Date) =>
 ---
 
 <Base title="All Posts" description="Browse all blog posts">
+	<AdSpace space="top-banner" page="latest" />
 	<div class="posts-page">
 		<header class="page-header">
 			<h1 class="page-title">All Posts</h1>
@@ -54,7 +57,8 @@ const formatDate = (date: Date) =>
 				<p class="empty">No posts yet.</p>
 			) : (
 				<div class="posts-list">
-					{postsWithTags.map(({ post, tags, bylines }) => (
+					{postsWithTags.map(({ post, tags, bylines }, index) => (
+						<>
 						<article class="post-item">
 							<a href={localePath(locale, `/${post.id}`)} class="post-link">
 								<div class="post-meta">
@@ -106,6 +110,8 @@ const formatDate = (date: Date) =>
 								</div>
 							)}
 						</article>
+						{inFeedAfter(index, postsWithTags.length) && <AdSpace space="in-feed" />}
+						</>
 					))}
 				</div>
 			)
@@ -157,6 +163,11 @@ const formatDate = (date: Date) =>
 
 	.post-item:last-child {
 		border-bottom: none;
+	}
+
+	/* In-feed ad between list items; margins vanish with the space when it is unfilled. */
+	.posts-list :global(.ad-slot) {
+		margin-block: var(--spacing-8);
 	}
 
 	.post-link {

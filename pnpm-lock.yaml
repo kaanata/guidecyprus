@@ -151,6 +151,9 @@ importers:
       typescript:
         specifier: ^5.9.0
         version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@26.6.2)(happy-dom@15.11.7)(lightningcss@1.33.0)
 
 packages:
 

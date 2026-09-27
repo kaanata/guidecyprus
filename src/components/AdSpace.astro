@@ -1,0 +1,156 @@
+---
+/**
+ * An empty ad space for the ad-manager plugin (@main-aff/plugin-ad-manager).
+ *
+ * The theme only places the space; the plugin's loader (injected at body end by
+ * its page:fragments hook) decides what fills it. Contract with the loader
+ * (plugins/ad-manager/src/loader.ts):
+ *   - it sets html[data-ads="on"], then collects every [data-ad-space] element
+ *     that has layout boxes (display:none spaces are skipped entirely);
+ *   - page context comes from the first [data-ad-page] element on the page;
+ *   - creatives go into the space's .ad-slot__body;
+ *   - a filled space gets [data-ad-filled] and [data-ad-id]; an unfilled one
+ *     (nothing matched, serve failed or timed out) gets the `hidden` attribute.
+ *
+ * So the space is display:none until the loader turns ads on (no JS, plugin
+ * disabled or not installed: nothing shows), reserves its box while the serve
+ * request is in flight, and disappears if it stays empty.
+ */
+import { AD_SPACES, type AdSpaceId, type PageType } from "@main-aff/plugin-ad-manager/spaces";
+import { adLabel } from "../utils/ads";
+
+interface Props {
+	space: AdSpaceId;
+	/**
+	 * Page type for targeting. Pass it on exactly one space per page (the top
+	 * banner): the loader reads the first [data-ad-page] it finds.
+	 */
+	page?: PageType;
+	/** Element to render; use "li" inside lists so the markup stays valid. */
+	as?: "aside" | "div" | "li";
+	class?: string;
+}
+
+const { space, page, as: Tag = "aside", class: className } = Astro.props;
+const { reserve } = AD_SPACES[space];
+const desktop = reserve.desktop;
+// A space with no mobile reserve is desktop-only (the article sidebar).
+const mobile = reserve.mobile;
+const label = adLabel(Astro.currentLocale);
+
+const sizeVars = [
+	`--ad-w: ${desktop.width}px`,
+	`--ad-h: ${desktop.height}px`,
+	`--ad-mw: ${(mobile ?? desktop).width}px`,
+	`--ad-mh: ${(mobile ?? desktop).height}px`,
+].join("; ");
+---
+
+<Tag
+	class:list={["ad-slot", { "ad-slot--desktop-only": !mobile }, className]}
+	data-ad-space={space}
+	data-ad-page={page}
+	aria-label={Tag === "li" ? undefined : label}
+	style={sizeVars}
+>
+	<span class="ad-slot__label" aria-hidden="true">{label}</span>
+	<div class="ad-slot__body"></div>
+</Tag>
+
+<style>
+	/* Off unless the loader is running. */
+	.ad-slot {
+		display: none;
+		width: var(--ad-w);
+		max-width: 100%;
+		margin-inline: auto;
+		list-style: none;
+	}
+
+	:global(html[data-ads="on"]) .ad-slot:not([hidden]) {
+		display: block;
+	}
+
+	/* The loader hides spaces it can't fill; never let a display rule undo that. */
+	.ad-slot[hidden] {
+		display: none !important;
+	}
+
+	/*
+	 * Reserved label line, shown once an ad is in. While the serve request is in
+	 * flight the space is plain background, never a grey placeholder box.
+	 */
+	.ad-slot__label {
+		display: block;
+		margin: 0 0 var(--spacing-1);
+		font-size: var(--font-size-xs);
+		font-weight: 500;
+		line-height: var(--leading-snug);
+		letter-spacing: var(--tracking-wide);
+		text-transform: uppercase;
+		color: var(--color-muted);
+		visibility: hidden;
+	}
+
+	.ad-slot[data-ad-filled] .ad-slot__label {
+		visibility: visible;
+	}
+
+	.ad-slot__body {
+		min-height: var(--ad-h);
+		overflow-wrap: anywhere;
+	}
+
+	.ad-slot__body > :global(a) {
+		display: block;
+		width: fit-content;
+		max-width: 100%;
+		margin-inline: auto;
+	}
+
+	.ad-slot__body :global(img) {
+		max-width: 100%;
+		height: auto;
+		margin-inline: auto;
+	}
+
+	/* Appended by the loader after the body when the ad carries a disclosure. */
+	.ad-slot :global(.ad-slot__disclosure) {
+		margin: var(--spacing-1) 0 0;
+		font-size: var(--font-size-xs);
+		line-height: var(--leading-snug);
+		color: var(--color-muted);
+	}
+
+	/* Top banner: full-bleed row under the header, inside the page gutter. */
+	.ad-slot[data-ad-space="top-banner"] {
+		max-width: calc(100% - 2 * var(--spacing-6));
+		margin-block-start: var(--spacing-6);
+	}
+
+	/* In-feed spaces take a whole row when dropped into a card grid. */
+	.ad-slot[data-ad-space="in-feed"] {
+		grid-column: 1 / -1;
+	}
+
+	/* Same breakpoint the loader uses for the phone banner image. */
+	@media (max-width: 640px) {
+		.ad-slot {
+			width: var(--ad-mw);
+		}
+
+		.ad-slot__body {
+			min-height: var(--ad-mh);
+		}
+
+		.ad-slot[data-ad-space="top-banner"] {
+			max-width: calc(100% - 2 * var(--spacing-4));
+			margin-block-start: var(--spacing-4);
+		}
+
+		/* Desktop-only spaces never get a box, so the loader never requests them. */
+		.ad-slot--desktop-only {
+			display: none !important;
+		}
+	}
+</style>

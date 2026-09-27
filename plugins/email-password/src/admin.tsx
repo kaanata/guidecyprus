@@ -7,15 +7,22 @@
  * login form for existing users, `SetupStep` is the first-admin form used
  * when the site hasn't been initialised yet.
  *
+ * The same module is also the `adminEntry` of the companion
+ * `emailPasswordAccount()` plugin, which reads `pages` from it: the
+ * "/password" page (`PasswordPage`) lets the signed-in user set or change
+ * their own password.
+ *
  * Both forms POST JSON to the route handlers shipped with this plugin and
  * render inline error / success messages; they do NOT navigate the page.
  * The handler redirects on success, so a navigation happens once.
  */
 
-import { useState, type FormEvent, type JSX } from "react";
+import { useEffect, useState, type FormEvent, type JSX } from "react";
+import { apiFetch, getErrorMessage } from "emdash/plugin-utils";
 
 const LOGIN_ENDPOINT = "/_emdash/api/auth/email-password/login";
 const SETUP_ENDPOINT = "/_emdash/api/auth/email-password/setup";
+const PASSWORD_ENDPOINT = "/_emdash/api/auth/email-password/password";
 
 interface ErrorResponse {
   error?: { code?: string; message?: string };
@@ -292,3 +299,189 @@ export function SetupStep({ onComplete }: { onComplete: () => void }): JSX.Eleme
     </form>
   );
 }
+
+
+interface PasswordStatus {
+  hasPassword: boolean;
+  email: string;
+}
+
+const sharedSuccessClass =
+  "rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800 dark:border-green-900 dark:bg-green-950 dark:text-green-200";
+
+/**
+ * "Password" admin page (companion plugin page at
+ * `/_emdash/admin/plugins/email-password/password`).
+ *
+ * Shows "Set password" when the signed-in user has no credential yet —
+ * e.g. the admin who signed up with a passkey — and "Change password"
+ * (asking for the current one) when they do. Requests go through
+ * `apiFetch`, which adds the `X-EmDash-Request` CSRF header the private
+ * route requires.
+ */
+export function PasswordPage(): JSX.Element {
+  const [status, setStatus] = useState<PasswordStatus | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiFetch(PASSWORD_ENDPOINT);
+        if (!res.ok) throw new Error(await getErrorMessage(res, "Couldn't load your password status."));
+        const payload = (await res.json()) as { data: PasswordStatus };
+        if (!cancelled) setStatus(payload.data);
+      } catch (err) {
+        if (!cancelled) setLoadError(err instanceof Error ? err.message : "Couldn't load your password status.");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function onSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    if (!status) return;
+    setError(null);
+    setNotice(null);
+    if (newPassword !== confirmPassword) {
+      setError("The new passwords don't match.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await apiFetch(PASSWORD_ENDPOINT, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          status.hasPassword ? { currentPassword, newPassword } : { newPassword },
+        ),
+      });
+      if (!res.ok) {
+        setError(await getErrorMessage(res, "Couldn't save your password."));
+        return;
+      }
+      setNotice(
+        status.hasPassword
+          ? "Password changed."
+          : `Password set. You can now sign in with ${status.email} and this password.`,
+      );
+      setStatus({ ...status, hasPassword: true });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch {
+      setError("Network error — please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const title = status?.hasPassword ? "Change password" : "Set password";
+
+  return (
+    <div className="max-w-md space-y-4">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold text-[var(--color-text)]">{status ? title : "Password"}</h1>
+        {status ? (
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            {status.hasPassword
+              ? "Enter your current password, then choose a new one."
+              : "Your account has no password yet. Set one to sign in with email & password in addition to your passkey or magic link."}{" "}
+            Sign-in email: <strong>{status.email}</strong>
+          </p>
+        ) : null}
+      </div>
+
+      {loadError ? <p className={sharedErrorClass}>{loadError}</p> : null}
+      {!status && !loadError ? (
+        <p className="text-sm text-[var(--color-muted)]">Loading…</p>
+      ) : null}
+
+      {status ? (
+        <form onSubmit={onSubmit} className="space-y-3" noValidate>
+          {status.hasPassword ? (
+            <div className="space-y-1">
+              <label
+                htmlFor="email-password-current"
+                className="block text-sm font-medium text-[var(--color-text)]"
+              >
+                Current password
+              </label>
+              <input
+                id="email-password-current"
+                name="currentPassword"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.currentTarget.value)}
+                disabled={submitting}
+                className={sharedInputClass}
+              />
+            </div>
+          ) : null}
+          <div className="space-y-1">
+            <label
+              htmlFor="email-password-new"
+              className="block text-sm font-medium text-[var(--color-text)]"
+            >
+              New password
+            </label>
+            <input
+              id="email-password-new"
+              name="newPassword"
+              type="password"
+              autoComplete="new-password"
+              required
+              minLength={12}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.currentTarget.value)}
+              disabled={submitting}
+              className={sharedInputClass}
+            />
+            <p className="text-xs text-[var(--color-muted)]">
+              Minimum 12 characters with at least one letter and one digit or symbol.
+            </p>
+          </div>
+          <div className="space-y-1">
+            <label
+              htmlFor="email-password-confirm"
+              className="block text-sm font-medium text-[var(--color-text)]"
+            >
+              Confirm new password
+            </label>
+            <input
+              id="email-password-confirm"
+              name="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              required
+              minLength={12}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.currentTarget.value)}
+              disabled={submitting}
+              className={sharedInputClass}
+            />
+          </div>
+          {error ? <p className={sharedErrorClass}>{error}</p> : null}
+          {notice ? <p className={sharedSuccessClass}>{notice}</p> : null}
+          <button type="submit" disabled={submitting} className={sharedButtonClass}>
+            {submitting ? "Saving…" : title}
+          </button>
+        </form>
+      ) : null}
+    </div>
+  );
+}
+
+/** Admin pages for the companion `emailPasswordAccount()` plugin. */
+export const pages: Record<string, () => JSX.Element> = { "/password": PasswordPage };
