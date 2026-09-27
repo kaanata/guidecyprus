@@ -5,6 +5,8 @@ import {
 } from "emdash";
 import Base from "../../layouts/Base.astro";
 import PostCard from "../../components/PostCard.astro";
+import AdSpace from "../AdSpace.astro";
+import { inFeedAfter } from "../../utils/ads";
 import { getReadingTime } from "../../utils/reading-time";
 import type { TaxonomyTerm } from "emdash";
 import { localePath } from "../../utils/i18n";
@@ -43,6 +45,7 @@ const filteredPosts = posts.map((post) => ({
 	title={`Posts tagged "${term.label}"`}
 	description={`All posts tagged with ${term.label}`}
 >
+	<AdSpace space="top-banner" page="tag" />
 	<section class="archive-section">
 		<header class="archive-header">
 			<span class="archive-label">Tag</span>
@@ -58,7 +61,8 @@ const filteredPosts = posts.map((post) => ({
 				<p class="no-posts">No posts with this tag yet.</p>
 			) : (
 				<div class="posts-grid">
-					{filteredPosts.map(({ post, tags }) => (
+					{filteredPosts.map(({ post, tags }, index) => (
+						<>
 						<PostCard
 							title={post.data.title}
 							excerpt={post.data.excerpt}
@@ -68,6 +72,8 @@ const filteredPosts = posts.map((post) => ({
 							readingTime={getReadingTime(post.data.content)}
 							tags={tags.map((t) => ({ slug: t.slug, label: t.label }))}
 						/>
+						{inFeedAfter(index, filteredPosts.length) && <AdSpace space="in-feed" />}
+						</>
 					))}
 				</div>
 			)

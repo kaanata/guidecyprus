@@ -5,6 +5,8 @@ import {
 } from "emdash";
 import Base from "../../layouts/Base.astro";
 import PostCard from "../../components/PostCard.astro";
+import AdSpace from "../AdSpace.astro";
+import { inFeedAfter } from "../../utils/ads";
 import { getReadingTime } from "../../utils/reading-time";
 import type { TaxonomyTerm } from "emdash";
 import { localePath } from "../../utils/i18n";
@@ -41,6 +43,8 @@ const filteredPosts = posts.map((post) => ({
 ---
 
 <Base title={`${term.label} posts`} description={`All posts in ${term.label}`}>
+	{/* ad-manager has no category page type; "tag" is the closest (a taxonomy archive). */}
+	<AdSpace space="top-banner" page="tag" />
 	<section class="archive-section">
 		<header class="archive-header">
 			<span class="archive-label">Category</span>
@@ -56,7 +60,8 @@ const filteredPosts = posts.map((post) => ({
 				<p class="no-posts">No posts in this category yet.</p>
 			) : (
 				<div class="posts-grid">
-					{filteredPosts.map(({ post, tags }) => (
+					{filteredPosts.map(({ post, tags }, index) => (
+						<>
 						<PostCard
 							title={post.data.title}
 							excerpt={post.data.excerpt}
@@ -66,6 +71,8 @@ const filteredPosts = posts.map((post) => ({
 							readingTime={getReadingTime(post.data.content)}
 							tags={tags.map((t) => ({ slug: t.slug, label: t.label }))}
 						/>
+						{inFeedAfter(index, filteredPosts.length) && <AdSpace space="in-feed" />}
+						</>
 					))}
 				</div>
 			)

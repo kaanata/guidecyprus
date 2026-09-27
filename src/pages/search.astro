@@ -2,7 +2,9 @@
 export const prerender = false;
 
 import { search } from "emdash";
+import AdSpace from "../components/AdSpace.astro";
 import Base from "../layouts/Base.astro";
+import { inFeedAfter } from "../utils/ads";
 import { localePath } from "../utils/i18n";
 
 const query = Astro.url.searchParams.get("q")?.trim() || "";
@@ -20,6 +22,7 @@ const { items: results } = query
 	title={query ? `Search: ${query}` : "Search"}
 	description="Search blog posts"
 >
+	<AdSpace space="top-banner" page="search" />
 	<section class="search-page">
 		<h1 class="search-title">Search</h1>
 
@@ -48,7 +51,8 @@ const { items: results } = query
 		{
 			results.length > 0 && (
 				<ol class="search-results">
-					{results.map((result) => (
+					{results.map((result, index) => (
+						<>
 						<li class="search-result">
 							<a
 								href={localePath(result.locale, `/${result.slug ?? result.id}`)}
@@ -62,6 +66,10 @@ const { items: results } = query
 								)}
 							</a>
 						</li>
+						{inFeedAfter(index, results.length) && (
+							<AdSpace space="in-feed" as="li" />
+						)}
+						</>
 					))}
 				</ol>
 			)
@@ -147,6 +155,11 @@ const { items: results } = query
 
 	.search-result:last-child {
 		border-bottom: none;
+	}
+
+	/* In-feed ad between results; margins vanish with the space when it is unfilled. */
+	.search-results :global(.ad-slot) {
+		margin-block: var(--spacing-6);
 	}
 
 	.result-link {

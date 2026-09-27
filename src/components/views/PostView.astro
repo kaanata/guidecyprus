@@ -13,6 +13,8 @@ import {
 import { Comments, CommentForm } from "emdash/ui/comments";
 import Base from "../../layouts/Base.astro";
 import PostCard from "../../components/PostCard.astro";
+import AdSpace from "../AdSpace.astro";
+import { splitForInArticle } from "../../utils/ads";
 import { getReadingTime } from "../../utils/reading-time";
 import { resolveBlogSiteIdentity, TITLE_SEPARATOR } from "../../utils/site-identity";
 import { localePath } from "../../utils/i18n";
@@ -91,6 +93,9 @@ const otherPostsWithTags = otherPosts.map((p) => ({
 	bylines: p.data.bylines ?? [],
 }));
 
+// In-article ad after the 2nd paragraph; short posts get none.
+const inArticleSplit = splitForInArticle(post.data.content);
+
 const publishDate =
 	post.data.publishedAt?.toLocaleDateString("en-US", {
 		year: "numeric",
@@ -111,6 +116,7 @@ const publishDate =
 	modifiedTime={post.data.updatedAt.toISOString()}
 	content={{ collection: "posts", id: post.data.id, slug: post.data.slug }}
 >
+	<AdSpace space="top-banner" page="article" />
 	<article class="article">
 		{/* Hero: Full-width featured image */}
 		{
@@ -223,7 +229,17 @@ const publishDate =
 				</header>
 
 				<div class="article-content">
-					<PortableText value={post.data.content} />
+					{
+						inArticleSplit ? (
+							<>
+								<PortableText value={inArticleSplit[0]} />
+								<AdSpace space="in-article" />
+								<PortableText value={inArticleSplit[1]} />
+							</>
+						) : (
+							<PortableText value={post.data.content} />
+						)
+					}
 				</div>
 
 				<div class="article-comments">
@@ -234,6 +250,10 @@ const publishDate =
 
 			{/* Right gutter: TOC + Sidebar widgets */}
 			<aside class="article-sidebar">
+				{/* Not inside the sticky block: a 600px ad would push the TOC off short screens. */}
+				<div class="sidebar-ad">
+					<AdSpace space="article-sidebar" as="div" />
+				</div>
 				<div class="sidebar-sticky">
 					<nav class="toc" aria-label="Table of contents">
 						<h4 class="toc-title">On this page</h4>
@@ -597,6 +617,49 @@ const publishDate =
 	/* Right column: TOC + Sidebar */
 	.article-sidebar {
 		display: block;
+	}
+
+	/*
+	 * Article sidebar ad. The space is 300px wide but the gutter is
+	 * --gutter-width (200px), and widening the gutter would shift or squeeze the
+	 * body column. Instead the ad hangs 100px past the gutter into the empty page
+	 * margin, which only exists on wide screens: the three-column grid is ~1190px,
+	 * so from 1440px there is at least 100px of margin on each side. Below that
+	 * the wrapper is display:none, so the loader skips the space (it only asks
+	 * for spaces with layout boxes) and nothing is requested or reserved.
+	 */
+	.sidebar-ad {
+		display: none;
+	}
+
+	@media (min-width: 1440px) {
+		.sidebar-ad {
+			display: block;
+		}
+	}
+
+	.sidebar-ad :global(.ad-slot) {
+		max-width: none;
+		margin-inline: 0;
+	}
+
+	.sidebar-ad :global(.ad-slot:not([hidden])) {
+		margin-block-end: var(--spacing-8);
+	}
+
+	/* In-article ad sits in the body column like any other block. */
+	.article-content :global(.ad-slot) {
+		margin-block: 0 1.5em;
+	}
+
+	/* Keep the body's image and paragraph rules off the ad and its disclosure line. */
+	.article-content :global(.ad-slot img) {
+		margin: 0 auto;
+		border-radius: 0;
+	}
+
+	.article-content :global(.ad-slot__disclosure) {
+		margin-bottom: 0;
 	}
 
 	.sidebar-sticky {

@@ -8,14 +8,17 @@
   "exports": {
     ".": "./src/index.ts",
     "./admin": "./src/admin.tsx",
+    "./plugin": "./src/plugin.ts",
     "./routes/login": "./src/routes/login.ts",
-    "./routes/setup": "./src/routes/setup.ts"
+    "./routes/setup": "./src/routes/setup.ts",
+    "./routes/password": "./src/routes/password.ts"
   },
   "files": [
     "src"
   ],
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "peerDependencies": {
     "@emdash-cms/auth": "*",
@@ -26,6 +29,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260820.1",
-    "typescript": "^5.9.0"
+    "typescript": "^5.9.0",
+    "vitest": "^2.1.0"
   }
 }

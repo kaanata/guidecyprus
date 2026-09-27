@@ -23,9 +23,20 @@
  *   - Setup is gated on `emdash:setup_complete !== true`, matching the
  *     check in the built-in OAuth callback. After the first admin is
  *     created the setup route returns 404.
+ *   - A signed-in user can set or change their own password through the
+ *     private `PASSWORD_ENDPOINT` route (session required, CSRF header
+ *     required, current password required when one already exists). The
+ *     UI for it is the "Password" admin page contributed by the companion
+ *     `emailPasswordAccount()` plugin descriptor below.
  */
 
-import type { AuthProviderDescriptor } from "emdash";
+import type { AuthProviderDescriptor, PluginDescriptor } from "emdash";
+
+/** Private route where a signed-in user sets or changes their password. */
+export const PASSWORD_ENDPOINT = "/_emdash/api/auth/email-password/password";
+
+/** Plugin id of the companion account plugin (admin page host). */
+export const ACCOUNT_PLUGIN_ID = "email-password";
 
 export interface EmailPasswordOptions {
   /**
@@ -50,9 +61,17 @@ export function emailPassword(options: EmailPasswordOptions = {}): AuthProviderD
         pattern: "/_emdash/api/auth/email-password/setup",
         entrypoint: "@main-aff/plugin-email-password/routes/setup",
       },
+      {
+        pattern: PASSWORD_ENDPOINT,
+        entrypoint: "@main-aff/plugin-email-password/routes/password",
+      },
     ],
+    // Exact paths, not the `/_emdash/api/auth/email-password/` prefix: the
+    // password route must stay private so EmDash's auth middleware resolves
+    // the session user and enforces the `X-EmDash-Request` CSRF header.
     publicRoutes: [
-      "/_emdash/api/auth/email-password/",
+      "/_emdash/api/auth/email-password/login",
+      "/_emdash/api/auth/email-password/setup",
     ],
     storage: {
       credentials: {
@@ -60,6 +79,34 @@ export function emailPassword(options: EmailPasswordOptions = {}): AuthProviderD
         uniqueIndexes: ["email"],
       },
     },
+  };
+}
+
+/**
+ * Companion native plugin that adds the "Password" admin page.
+ *
+ * `AuthProviderDescriptor.adminEntry` can only contribute `LoginButton`,
+ * `LoginForm` and `SetupStep`, and the built-in Security settings page has
+ * no extension slot. Plugin admin pages are the one place EmDash 0.40 lets
+ * third-party UI render for a signed-in user, so this descriptor exists only
+ * to host that page. It has no storage, hooks or routes of its own; the page
+ * talks to the auth provider's `PASSWORD_ENDPOINT`.
+ *
+ * Register it next to the provider:
+ *
+ *     emdash({
+ *       plugins: [emailPasswordAccount()],
+ *       authProviders: [emailPassword()],
+ *     })
+ */
+export function emailPasswordAccount(): PluginDescriptor {
+  return {
+    id: ACCOUNT_PLUGIN_ID,
+    version: "0.1.0",
+    format: "native",
+    entrypoint: "@main-aff/plugin-email-password/plugin",
+    adminEntry: "@main-aff/plugin-email-password/admin",
+    adminPages: [{ path: "/password", label: "Password", icon: "lock" }],
   };
 }
 

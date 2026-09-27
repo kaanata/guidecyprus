@@ -13,4 +13,4 @@ if (resolved?.collection !== "pages") {
 if (Astro.cache?.enabled) Astro.cache.set(resolved.cacheHint);
 ---
 
-<PageView page={resolved.entry} />
+<PageView page={resolved.entry} adPage="home" />

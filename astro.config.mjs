@@ -6,7 +6,7 @@ import webhookNotifier from "@emdash-cms/plugin-webhook-notifier";
 import { adManager } from "@main-aff/plugin-ad-manager";
 import { aiWriter } from "@main-aff/plugin-ai-writer";
 import { cloudflareEmail } from "@main-aff/plugin-cloudflare-email";
-import { emailPassword } from "@main-aff/plugin-email-password";
+import { emailPassword, emailPasswordAccount } from "@main-aff/plugin-email-password";
 import { defineConfig, fontProviders } from "astro/config";
 import emdash from "emdash/astro";
 
@@ -35,6 +35,8 @@ export default defineConfig({
 					from: { email: "noreply@notify.guidecyprus.com", name: "Guide Cyprus" },
 					replyTo: "info@guidecyprus.com",
 				}),
+				// Hosts the admin "Password" page for the email-password provider.
+				emailPasswordAccount(),
 			],
 			authProviders: [emailPassword()],
 			sandboxed: [webhookNotifier],
