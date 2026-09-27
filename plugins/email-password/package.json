@@ -1,0 +1,31 @@
+{
+  "name": "@main-aff/plugin-email-password",
+  "version": "0.1.0",
+  "description": "Email + password authentication as an EmDash auth provider plugin.",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./admin": "./src/admin.tsx",
+    "./routes/login": "./src/routes/login.ts",
+    "./routes/setup": "./src/routes/setup.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@emdash-cms/auth": "*",
+    "astro": "^7.0.0",
+    "emdash": ">=0.30.0",
+    "kysely": "*",
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260820.1",
+    "typescript": "^5.9.0"
+  }
+}
