@@ -25,6 +25,21 @@
 */
 
 :root {
+	/* WCAG AA (4.5:1) for meta text on both --color-bg and --color-bg-subtle;
+	   the defaults (#8b8b8b / #6b6b6b) measure 3.3–3.6:1. */
+	--color-muted: light-dark(#707070, #8f8f8f);
+}
+
+@supports not (color: light-dark(#000, #fff)) {
+	:root {
+		--color-muted: #707070;
+	}
+}
+
+/* Links inside running text need more than colour to stand out. */
+.footer-copyright a {
+	text-decoration: underline;
+	text-underline-offset: 2px;
 }
 
 .nav-admin {

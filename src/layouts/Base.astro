@@ -195,7 +195,7 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 						<p class="footer-tagline">{siteTagline}</p>
 					</div>
 					<div class="footer-nav">
-						<h4 class="footer-heading">{t(locale, "footer.navigate")}</h4>
+						<h2 class="footer-heading">{t(locale, "footer.navigate")}</h2>
 						<ul class="footer-links">
 							<li><a href={home}>{t(locale, "footer.home")}</a></li>
 							<li><a href={localePath(locale, "/posts")}>{t(locale, "posts.title")}</a></li>
@@ -211,7 +211,7 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 						</ul>
 					</div>
 					<div class="footer-nav">
-						<h4 class="footer-heading">{t(locale, "footer.connect")}</h4>
+						<h2 class="footer-heading">{t(locale, "footer.connect")}</h2>
 						<ul class="footer-links">
 							{
 								socialMenu?.items.map((item) => (

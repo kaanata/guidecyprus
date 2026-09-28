@@ -18,7 +18,7 @@ export function createPlugin(): ReturnType<typeof definePlugin> {
       "plugin:install": async (_event, ctx) => ensureRollupSafely(ctx),
       "plugin:activate": async (_event, ctx) => ensureRollupSafely(ctx),
       cron: cronHook,
-      "page:fragments": () => fragmentsHook(),
+      "page:fragments": async (_event, ctx) => fragmentsHook(ctx),
     },
     routes,
   });
