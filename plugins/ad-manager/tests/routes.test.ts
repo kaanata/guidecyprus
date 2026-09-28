@@ -2,6 +2,7 @@ import { cronHook, fragmentsHook } from "../src/hooks";
 import { LOADER_SOURCE } from "../src/loader";
 import { runRollup } from "../src/lib/stats";
 import { routes } from "../src/routes";
+import { makeAd } from "./helpers/fixtures";
 import { memoryStores } from "./helpers/memory";
 
 vi.mock("../src/lib/stats", async (importOriginal) => {
@@ -138,8 +139,11 @@ describe("routes", () => {
 });
 
 describe("hooks", () => {
-  it("injects the loader at the end of the body", () => {
-    expect(fragmentsHook()).toEqual({
+  it("injects the loader at the end of the body when an ad is live", async () => {
+    const stores = memoryStores();
+    await stores.ads.put("a", makeAd());
+    const ctx = { storage: { ads: stores.ads, events: stores.events, stats: stores.stats }, kv: stores.kv };
+    expect(await fragmentsHook(ctx, new Date("2026-09-15T00:00:00.000Z"))).toEqual({
       kind: "inline-script",
       placement: "body:end",
       key: "ad-manager-loader",

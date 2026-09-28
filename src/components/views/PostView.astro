@@ -912,6 +912,11 @@ const publishDate = post.data.publishedAt ? formatDate(locale, post.data.publish
 		border-top: 1px solid var(--color-border);
 	}
 
+	/* Comments are off for posts; the components then render nothing. */
+	.article-comments:not(:has(*)) {
+		display: none;
+	}
+
 	.article-comments :global(.ec-comments) {
 		--ec-comment-border: 1px solid var(--color-border);
 	}

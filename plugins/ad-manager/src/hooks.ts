@@ -1,16 +1,36 @@
 import type { LogAccess } from "emdash";
 import { ROLLUP_CRON, ROLLUP_SCHEDULE } from "./constants";
 import { LOADER_SOURCE } from "./loader";
+import { hasServableAd } from "./lib/serving";
 import { runRollup } from "./lib/stats";
 import { storesOf } from "./lib/store";
 
-export function fragmentsHook() {
-  return {
-    kind: "inline-script" as const,
-    placement: "body:end" as const,
-    key: "ad-manager-loader",
-    code: LOADER_SOURCE,
-  };
+const LOADER_FRAGMENT = {
+  kind: "inline-script" as const,
+  placement: "body:end" as const,
+  key: "ad-manager-loader",
+  code: LOADER_SOURCE,
+};
+
+/**
+ * Injects the loader only when some ad could be served. The loader turns on
+ * html[data-ads="on"], which reserves the ad spaces; with nothing to serve it would reserve
+ * them and then collapse them again (layout shift on every page). Returning null tells
+ * EmDash this plugin contributes nothing to the page.
+ *
+ * A storage error fails open -- a transient read failure must not make ads disappear -- and
+ * is caught here because EmDash drops a throwing page:fragments handler's output entirely.
+ */
+export async function fragmentsHook(
+  ctx: { storage: unknown; kv: unknown; log?: Pick<LogAccess, "warn"> },
+  now: Date = new Date(),
+): Promise<typeof LOADER_FRAGMENT | null> {
+  try {
+    return (await hasServableAd(storesOf(ctx), now)) ? LOADER_FRAGMENT : null;
+  } catch (error) {
+    ctx.log?.warn?.(`[ad-manager] could not check for servable ads, injecting the loader anyway: ${(error as Error)?.message ?? error}`);
+    return LOADER_FRAGMENT;
+  }
 }
 
 interface RollupCtx {
