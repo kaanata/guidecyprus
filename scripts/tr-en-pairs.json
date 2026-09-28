@@ -1,0 +1,569 @@
+[
+ {
+  "tr_slug": "acapulco-resort-otel",
+  "tr_id": "01M3J3DWC3W1WKED65QXCKE5SF",
+  "tr_group": "01M3J3DWC3W1WKED65QXCKE5SF",
+  "en_slug": "acapulco-resort-convention-spa-hotel",
+  "en_id": "01M3J3FHMETWVY7MWS1978MNH8",
+  "en_group": "01M3J3FHMETWVY7MWS1978MNH8",
+  "link": true
+ },
+ {
+  "tr_slug": "altinkaya-hotel-resort",
+  "tr_id": "01M3J3DX1W4PHK8J18D8KKZ2SW",
+  "tr_group": "01M3J3DX1W4PHK8J18D8KKZ2SW",
+  "en_slug": "altinkaya-holiday-resort",
+  "en_id": "01M3J3FKC2G6SR3ZYXE3XVNJF9",
+  "en_group": "01M3J3FKC2G6SR3ZYXE3XVNJF9",
+  "link": true
+ },
+ {
+  "tr_slug": "ambiance-restoran-girne",
+  "tr_id": "01M3J3DK0EQ5ZYHA57TBG4FHY0",
+  "tr_group": "01M3J3DK0EQ5ZYHA57TBG4FHY0",
+  "en_slug": "ambiance-restaurant-kyrenia",
+  "en_id": "01M3J3FSW97NMR27XXWZKBMQYJ",
+  "en_group": "01M3J3FSW97NMR27XXWZKBMQYJ",
+  "link": true
+ },
+ {
+  "tr_slug": "anchor-restoran",
+  "tr_id": "01M3J3DVD753QSXJJ4D5E45RTF",
+  "tr_group": "01M3J3DVD753QSXJJ4D5E45RTF",
+  "en_slug": "anchor-restaurant",
+  "en_id": "01M3J3FE1SG63V2W2VN3N5ZE13",
+  "en_group": "01M3J3FE1SG63V2W2VN3N5ZE13",
+  "link": true
+ },
+ {
+  "tr_slug": "archway-restoran-bar",
+  "tr_id": "01M3J3DTQ8A04WD71GJT8N1JAD",
+  "tr_group": "01M3J3DTQ8A04WD71GJT8N1JAD",
+  "en_slug": "archway-restaurant-bar",
+  "en_id": "01M3J3FCJHF6EDJZMKJFF3T3HF",
+  "en_group": "01M3J3FCJHF6EDJZMKJFF3T3HF",
+  "link": true
+ },
+ {
+  "tr_slug": "avanti-patisserie-and-brasserie",
+  "tr_id": "01M3J3DAMVQ9H9GPX5WQSWEMGA",
+  "tr_group": "01M3J3DAMVQ9H9GPX5WQSWEMGA",
+  "en_slug": "avanti-patisserie-and-brasserie",
+  "en_id": "01M3J3ERKT5TNER5XY80DZREQK",
+  "en_group": "01M3J3ERKT5TNER5XY80DZREQK",
+  "link": true
+ },
+ {
+  "tr_slug": "beer-point",
+  "tr_id": "01M3J3C69DE1H337DH467M4XN8",
+  "tr_group": "01M3J3C69DE1H337DH467M4XN8",
+  "en_slug": "beer-point",
+  "en_id": "01M3J3E7RMFM05VWWRTCQ317R4",
+  "en_group": "01M3J3E7RMFM05VWWRTCQ317R4",
+  "link": true
+ },
+ {
+  "tr_slug": "beyti-restaurant-girne",
+  "tr_id": "01M3J3DGTXDD54PQR725ASGZM2",
+  "tr_group": "01M3J3DGTXDD54PQR725ASGZM2",
+  "en_slug": "beyti-restaurant-kyrenia",
+  "en_id": "01M3J3FS5FRX2BSCY7FGN6FKVX",
+  "en_group": "01M3J3FS5FRX2BSCY7FGN6FKVX",
+  "link": true
+ },
+ {
+  "tr_slug": "bomond-bar",
+  "tr_id": "01M3J3DRMT5SF1BTWPG5YS3XD8",
+  "tr_group": "01M3J3DRMT5SF1BTWPG5YS3XD8",
+  "en_slug": "bomond-bar",
+  "en_id": "01M3J3F95H7Y61J0E05B48G18R",
+  "en_group": "01M3J3F95H7Y61J0E05B48G18R",
+  "link": true
+ },
+ {
+  "tr_slug": "bufavento-kalesi",
+  "tr_id": "01M3J3DQDX88R0M7XG5SPMCVG1",
+  "tr_group": "01M3J3DQDX88R0M7XG5SPMCVG1",
+  "en_slug": "buffavento-castle",
+  "en_id": "01M3J3F7KC0XT28TETTEZMNQX1",
+  "en_group": "01M3J3F7KC0XT28TETTEZMNQX1",
+  "link": true
+ },
+ {
+  "tr_slug": "cage-club",
+  "tr_id": "01M3J3DM4AM2NSH6CDKR1MY7ZV",
+  "tr_group": "01M3J3DM4AM2NSH6CDKR1MY7ZV",
+  "en_slug": "cage-club",
+  "en_id": "01M3J3EZ0EZDKW0654N51GEPWW",
+  "en_group": "01M3J3EZ0EZDKW0654N51GEPWW",
+  "link": true
+ },
+ {
+  "tr_slug": "camelot-plaji",
+  "tr_id": "01M3J3CBB1AKDHCX8KP40DD7T3",
+  "tr_group": "01M3J3CBB1AKDHCX8KP40DD7T3",
+  "en_slug": "camelot-beach",
+  "en_id": "01M3J3G2KS1B31J681EZTB068C",
+  "en_group": "01M3J3G2KS1B31J681EZTB068C",
+  "link": true
+ },
+ {
+  "tr_slug": "carob-restoran-bar",
+  "tr_id": "01M3J3C1N77BXKECE6K7BNYF7D",
+  "tr_group": "01M3J3C1N77BXKECE6K7BNYF7D",
+  "en_slug": "carob-restaurant-bar",
+  "en_id": "01M3J3EB6907Q19MYRHTC4NT87",
+  "en_group": "01M3J3EB6907Q19MYRHTC4NT87",
+  "link": true
+ },
+ {
+  "tr_slug": "casablanca-bar",
+  "tr_id": "01M3J3DY2RC9GQW0W85JK0WT3S",
+  "tr_group": "01M3J3DY2RC9GQW0W85JK0WT3S",
+  "en_slug": "casablanca-bar",
+  "en_id": "01M3J3FMS9T0KDJP644S0FKTW0",
+  "en_group": "01M3J3FMS9T0KDJP644S0FKTW0",
+  "link": true
+ },
+ {
+  "tr_slug": "cielo-lounge",
+  "tr_id": "01M3J3DJ0S7HTSMYTQTJK8RJKY",
+  "tr_group": "01M3J3DJ0S7HTSMYTQTJK8RJKY",
+  "en_slug": "cielo-lounge",
+  "en_id": "01M3J3EZKF7HH8JEN3FACKYMBK",
+  "en_group": "01M3J3EZKF7HH8JEN3FACKYMBK",
+  "link": true
+ },
+ {
+  "tr_slug": "cinemiles",
+  "tr_id": "01M3J3C7RE7K93M05P8VKXJE0V",
+  "tr_group": "01M3J3C7RE7K93M05P8VKXJE0V",
+  "en_slug": "cinemiles",
+  "en_id": "01M3J3ETFNHAE1X4J07FF4REK1",
+  "en_group": "01M3J3ETFNHAE1X4J07FF4REK1",
+  "link": true
+ },
+ {
+  "tr_slug": "cinemiles-2",
+  "tr_id": "01M3J3DCKACEVTJP58NZPSZB26",
+  "tr_group": "01M3J3DCKACEVTJP58NZPSZB26",
+  "en_slug": "cinemiles",
+  "en_id": "01M3J3ETFNHAE1X4J07FF4REK1",
+  "en_group": "01M3J3ETFNHAE1X4J07FF4REK1",
+  "link": false
+ },
+ {
+  "tr_slug": "colony-casino-girne",
+  "tr_id": "01M3J3CWAR3V5Z787W1C6Y46BJ",
+  "tr_group": "01M3J3CWAR3V5Z787W1C6Y46BJ",
+  "en_slug": "colony-casino-kyrenia",
+  "en_id": "01M3J3FVN4BAZ48XCP5X0CS7S3",
+  "en_group": "01M3J3FVN4BAZ48XCP5X0CS7S3",
+  "link": true
+ },
+ {
+  "tr_slug": "cratos-premium-casino-girne",
+  "tr_id": "01M3J3CGB7EA2PJYQHMD1CYY4B",
+  "tr_group": "01M3J3CGB7EA2PJYQHMD1CYY4B",
+  "en_slug": "cratos-premium-casino-kyrenia",
+  "en_id": "01M3J3G6BAAD73S7KS21NW0WXZ",
+  "en_group": "01M3J3G6BAAD73S7KS21NW0WXZ",
+  "link": true
+ },
+ {
+  "tr_slug": "deniz-kizi-plaji",
+  "tr_id": "01M3J3CC1TK4JTFD695VPRKD0W",
+  "tr_group": "01M3J3CC1TK4JTFD695VPRKD0W",
+  "en_slug": "deniz-kizi-beach",
+  "en_id": "01M3J3G3DTS2Y5W2Q4G6KFAMF2",
+  "en_group": "01M3J3G3DTS2Y5W2Q4G6KFAMF2",
+  "link": true
+ },
+ {
+  "tr_slug": "dome-otel",
+  "tr_id": "01M3J3D4NBXM7E03YWV12GF25P",
+  "tr_group": "01M3J3D4NBXM7E03YWV12GF25P",
+  "en_slug": "dome-hotel",
+  "en_id": "01M3J3EJTJPRFXM9AB4JPHQ0YF",
+  "en_group": "01M3J3EJTJPRFXM9AB4JPHQ0YF",
+  "link": true
+ },
+ {
+  "tr_slug": "elexus-otel-girne",
+  "tr_id": "01M3J3CET9TZ0QYAJGYR2A8W3W",
+  "tr_group": "01M3J3CET9TZ0QYAJGYR2A8W3W",
+  "en_slug": "elexus-hotel-kyrenia",
+  "en_id": "01M3J3G5MG6Q8V00C1FBRMD0RF",
+  "en_group": "01M3J3G5MG6Q8V00C1FBRMD0RF",
+  "link": true
+ },
+ {
+  "tr_slug": "escape-beach",
+  "tr_id": "01M3J3CCQ3FQ7JV473J9FAYWY6",
+  "tr_group": "01M3J3CCQ3FQ7JV473J9FAYWY6",
+  "en_slug": "escape-beach",
+  "en_id": "01M3J3G4134ZV6ZAQCBRSGBGMT",
+  "en_group": "01M3J3G4134ZV6ZAQCBRSGBGMT",
+  "link": true
+ },
+ {
+  "tr_slug": "ezic-peanuts-restoran-girne",
+  "tr_id": "01M3J3CJQ73AMG6WEP4YM4XVKY",
+  "tr_group": "01M3J3CJQ73AMG6WEP4YM4XVKY",
+  "en_slug": "ezic-peanuts-restaurant-kyrenia",
+  "en_id": "01M3J3G93661Q58Q7ZQVMCZ27C",
+  "en_group": "01M3J3G93661Q58Q7ZQVMCZ27C",
+  "link": true
+ },
+ {
+  "tr_slug": "ezic-premier-restoran-girne",
+  "tr_id": "01M3J3CKD4KR74XZKKG7F7WG68",
+  "tr_group": "01M3J3CKD4KR74XZKKG7F7WG68",
+  "en_slug": "ezic-premier-restaurant-kyrenia",
+  "en_id": "01M3J3G9RM4GBN2W9CR0C67256",
+  "en_group": "01M3J3G9RM4GBN2W9CR0C67256",
+  "link": true
+ },
+ {
+  "tr_slug": "gate-cafe-bar",
+  "tr_id": "01M3J3DYR1PXFVNNQTF102WJJ3",
+  "tr_group": "01M3J3DYR1PXFVNNQTF102WJJ3",
+  "en_slug": "gate-cafe-bar-kyrenia",
+  "en_id": "01M3J3FQSM2R2TY15HF0RY9GBF",
+  "en_group": "01M3J3FQSM2R2TY15HF0RY9GBF",
+  "link": true
+ },
+ {
+  "tr_slug": "gloria-jeans-coffee",
+  "tr_id": "01M3J3DB9FXZ1Z783S5YAAQCKQ",
+  "tr_group": "01M3J3DB9FXZ1Z783S5YAAQCKQ",
+  "en_slug": "gloria-jeans-coffee",
+  "en_id": "01M3J3ESQB43VCZ6CHB12AT488",
+  "en_group": "01M3J3ESQB43VCZ6CHB12AT488",
+  "link": true
+ },
+ {
+  "tr_slug": "grand-pasha-otel-spa-girne",
+  "tr_id": "01M3J3D3Y7DZS2N1YPSNTS8J17",
+  "tr_group": "01M3J3D3Y7DZS2N1YPSNTS8J17",
+  "en_slug": "grand-pasha-hotel-spa-kyrenia",
+  "en_id": "01M3J3EJ5WM89P31GAM6V4JT4F",
+  "en_group": "01M3J3EJ5WM89P31GAM6V4JT4F",
+  "link": true
+ },
+ {
+  "tr_slug": "harbour-balikci",
+  "tr_id": "01M3J3CDFNRN8FRZFDVCZZMJMS",
+  "tr_group": "01M3J3CDFNRN8FRZFDVCZZMJMS",
+  "en_slug": "harbour-balikci",
+  "en_id": "01M3J3E5EXT8N4SAZRQ3E7QYER",
+  "en_group": "01M3J3E5EXT8N4SAZRQ3E7QYER",
+  "link": true
+ },
+ {
+  "tr_slug": "harbour-cafe",
+  "tr_id": "01M3J3C8J62Z4ES6SMMC8W8S89",
+  "tr_group": "01M3J3C8J62Z4ES6SMMC8W8S89",
+  "en_slug": "harbour-cafe",
+  "en_id": "01M3J3EV4NM5HJKRVHPKMXJ5FM",
+  "en_group": "01M3J3EV4NM5HJKRVHPKMXJ5FM",
+  "link": true
+ },
+ {
+  "tr_slug": "harbour-midpoint",
+  "tr_id": "01M3J3DBYXFPEQQ0NMQD8C99ZA",
+  "tr_group": "01M3J3DBYXFPEQQ0NMQD8C99ZA",
+  "en_slug": "harbour-midpoint",
+  "en_id": "01M3J3EVTTSBC31FAGAKFS0B8W",
+  "en_group": "01M3J3EVTTSBC31FAGAKFS0B8W",
+  "link": true
+ },
+ {
+  "tr_slug": "hazreti-omer-turbesi",
+  "tr_id": "01M3J3DR0B5Y3ZPP6DRC96YZWE",
+  "tr_group": "01M3J3DR0B5Y3ZPP6DRC96YZWE",
+  "en_slug": "the-tomb-of-omar",
+  "en_id": "01M3J3F8JP008NN7PKPEVDCTWR",
+  "en_group": "01M3J3F8JP008NN7PKPEVDCTWR",
+  "link": true
+ },
+ {
+  "tr_slug": "ice-club",
+  "tr_id": "01M3J3DMTB0E8DPA6TV4MEEAFK",
+  "tr_group": "01M3J3DMTB0E8DPA6TV4MEEAFK",
+  "en_slug": "ice-club",
+  "en_id": "01M3J3EYDAGB86SCYM0V9DZRWM",
+  "en_group": "01M3J3EYDAGB86SCYM0V9DZRWM",
+  "link": true
+ },
+ {
+  "tr_slug": "lagoon-sea-food-restaurants",
+  "tr_id": "01M3J3DSAKNFAF6ZNSQ6KG29CT",
+  "tr_group": "01M3J3DSAKNFAF6ZNSQ6KG29CT",
+  "en_slug": "lagoon-sea-food-restaurants",
+  "en_id": "01M3J3F9VW55S6QR4T27N0A1AC",
+  "en_group": "01M3J3F9VW55S6QR4T27N0A1AC",
+  "link": true
+ },
+ {
+  "tr_slug": "liman-casino-girne",
+  "tr_id": "01M3J3CS42G52RMKJ15W79PKXN",
+  "tr_group": "01M3J3CS42G52RMKJ15W79PKXN",
+  "en_slug": "liman-casino-kyrenia",
+  "en_id": "01M3J3FW8Z91YW522JEZNV89PR",
+  "en_group": "01M3J3FW8Z91YW522JEZNV89PR",
+  "link": true
+ },
+ {
+  "tr_slug": "liman-otel-girne",
+  "tr_id": "01M3J3D78VYT7SMVETH2SS2QB2",
+  "tr_group": "01M3J3D78VYT7SMVETH2SS2QB2",
+  "en_slug": "liman-hotel-kyrenia",
+  "en_id": "01M3J3EPP9226XZD8VXEXWKB88",
+  "en_group": "01M3J3EPP9226XZD8VXEXWKB88",
+  "link": true
+ },
+ {
+  "tr_slug": "lords-palace-casino-girne",
+  "tr_id": "01M3J3CRER6PZB1DPZ67A12D3M",
+  "tr_group": "01M3J3CRER6PZB1DPZ67A12D3M",
+  "en_slug": "lords-palace-casino-kyrenia",
+  "en_id": "01M3J3FWXBMR8QKD3FVQ777F62",
+  "en_group": "01M3J3FWXBMR8QKD3FVQ777F62",
+  "link": true
+ },
+ {
+  "tr_slug": "lords-palace-hotel-spa",
+  "tr_id": "01M3J3DHD81QEWGZV1QFF8984E",
+  "tr_group": "01M3J3DHD81QEWGZV1QFF8984E",
+  "en_slug": "lords-palace-hotel-spa-kyrenia",
+  "en_id": "01M3J3FRJV8QKFDDAJBAA4C5AX",
+  "en_group": "01M3J3FRJV8QKFDDAJBAA4C5AX",
+  "link": true
+ },
+ {
+  "tr_slug": "mad-club",
+  "tr_id": "01M3J3DNJN70K7DQ3W651ZM38H",
+  "tr_group": "01M3J3DNJN70K7DQ3W651ZM38H",
+  "en_slug": "mad-club",
+  "en_id": "01M3J3F1HQPSWG7C9NH49S1SWR",
+  "en_group": "01M3J3F1HQPSWG7C9NH49S1SWR",
+  "link": true
+ },
+ {
+  "tr_slug": "malpas-casino-girne",
+  "tr_id": "01M3J3CH29PJ7JYK98NHAYVGPS",
+  "tr_group": "01M3J3CH29PJ7JYK98NHAYVGPS",
+  "en_slug": "malpas-casino-kyrenia",
+  "en_id": "01M3J3G75BAQBDG0Q3T44TVDS3",
+  "en_group": "01M3J3G75BAQBDG0Q3T44TVDS3",
+  "link": true
+ },
+ {
+  "tr_slug": "malpas-otel-girne",
+  "tr_id": "01M3J3CHRTE0F8YVYFSWCCNFG8",
+  "tr_group": "01M3J3CHRTE0F8YVYFSWCCNFG8",
+  "en_slug": "malpas-hotel-kyrenia",
+  "en_id": "01M3J3G7SKCP5NPTYG0ERCWG3H",
+  "en_group": "01M3J3G7SKCP5NPTYG0ERCWG3H",
+  "link": true
+ },
+ {
+  "tr_slug": "merit-crystal-cove-casino-girne",
+  "tr_id": "01M3J3CPBMH5D3HQTWY663RGF1",
+  "tr_group": "01M3J3CPBMH5D3HQTWY663RGF1",
+  "en_slug": "merit-crystal-cove-casino-kyrenia",
+  "en_id": "01M3J3FYCN8J6HQN0MV993R45E",
+  "en_group": "01M3J3FYCN8J6HQN0MV993R45E",
+  "link": true
+ },
+ {
+  "tr_slug": "merit-crystal-cove-otel",
+  "tr_id": "01M3J3CXJ10EPFVHT5RT1FBAY7",
+  "tr_group": "01M3J3CXJ10EPFVHT5RT1FBAY7",
+  "en_slug": "merit-crystal-cove-hotel",
+  "en_id": "01M3J3DZN8JMF62YDEGJKQE42E",
+  "en_group": "01M3J3DZN8JMF62YDEGJKQE42E",
+  "link": true
+ },
+ {
+  "tr_slug": "merit-crystal-cove-poker-texas-holdem",
+  "tr_id": "01M3J3CNPT0Z7N6FEGJG56W0SM",
+  "tr_group": "01M3J3CNPT0Z7N6FEGJG56W0SM",
+  "en_slug": "merit-crystal-cove-poker-texas-holdem",
+  "en_id": "01M3J3FXQF5V14JG88VX111S03",
+  "en_group": "01M3J3FXQF5V14JG88VX111S03",
+  "link": true
+ },
+ {
+  "tr_slug": "merit-park-casino-girne",
+  "tr_id": "01M3J3CQ80DGB5H2T8KWW1XZX2",
+  "tr_group": "01M3J3CQ80DGB5H2T8KWW1XZX2",
+  "en_slug": "merit-park-casino-kyrenia",
+  "en_id": "01M3J3FZ149HNGAE3HZ3BZPK9C",
+  "en_group": "01M3J3FZ149HNGAE3HZ3BZPK9C",
+  "link": true
+ },
+ {
+  "tr_slug": "merit-park-otel",
+  "tr_id": "01M3J3D8T1HARN565WTDV77V5F",
+  "tr_group": "01M3J3D8T1HARN565WTDV77V5F",
+  "en_slug": "merit-park-hotel",
+  "en_id": "01M3J3EQBTJDY50Z0QRPZN59DW",
+  "en_group": "01M3J3EQBTJDY50Z0QRPZN59DW",
+  "link": true
+ },
+ {
+  "tr_slug": "merit-royal-casino-girne",
+  "tr_id": "01M3J3CMYTPVZV76KVDEX13MC7",
+  "tr_group": "01M3J3CMYTPVZV76KVDEX13MC7",
+  "en_slug": "merit-royal-casino-kyrenia",
+  "en_id": "01M3J3G19A9FFM6M28HWTB79K8",
+  "en_group": "01M3J3G19A9FFM6M28HWTB79K8",
+  "link": true
+ },
+ {
+  "tr_slug": "merit-royal-otel",
+  "tr_id": "01M3J3D1NADB3ET5SGF1HF2G4Z",
+  "tr_group": "01M3J3D1NADB3ET5SGF1HF2G4Z",
+  "en_slug": "meric-royal-hotel",
+  "en_id": "01M3J3E1YAPVZCE5EQC05QH8VQ",
+  "en_group": "01M3J3E1YAPVZCE5EQC05QH8VQ",
+  "link": true
+ },
+ {
+  "tr_slug": "merit-royal-premium-otel",
+  "tr_id": "01M3J3CZ33KVEKFA07GTP78F4X",
+  "tr_group": "01M3J3CZ33KVEKFA07GTP78F4X",
+  "en_slug": "merit-royal-premium-hotel",
+  "en_id": "01M3J3E2HBKNT3D0X099X2M15J",
+  "en_group": "01M3J3E2HBKNT3D0X099X2M15J",
+  "link": true
+ },
+ {
+  "tr_slug": "murfys-restaurant-cafe",
+  "tr_id": "01M3J3C732Q9748PFB2NT429Y5",
+  "tr_group": "01M3J3C732Q9748PFB2NT429Y5",
+  "en_slug": "murfys-restaurant-cafe",
+  "en_id": "01M3J3E6EDAC7E1TK46RXDS7QE",
+  "en_group": "01M3J3E6EDAC7E1TK46RXDS7QE",
+  "link": true
+ },
+ {
+  "tr_slug": "niazis-restaurants",
+  "tr_id": "01M3J3DT1EMZJ34EHJ9GKAECGF",
+  "tr_group": "01M3J3DT1EMZJ34EHJ9GKAECGF",
+  "en_slug": "niazis-restaurants-bar",
+  "en_id": "01M3J3FB2XBSWCT2ED96B2MR1S",
+  "en_group": "01M3J3FB2XBSWCT2ED96B2MR1S",
+  "link": true
+ },
+ {
+  "tr_slug": "onyx-temple-club-restoran",
+  "tr_id": "01M3J3D0AZZ5BT4TSE3PHF3F8S",
+  "tr_group": "01M3J3D0AZZ5BT4TSE3PHF3F8S",
+  "en_slug": "onyx-temple-club-restaurant",
+  "en_id": "01M3J3E71VFNKD8M5BNV3306VZ",
+  "en_group": "01M3J3E71VFNKD8M5BNV3306VZ",
+  "link": true
+ },
+ {
+  "tr_slug": "oscar-resort-hotel",
+  "tr_id": "01M3J3D7WJY3EYB69TD7H17N3R",
+  "tr_group": "01M3J3D7WJY3EYB69TD7H17N3R",
+  "en_slug": "oscar-resort-hotel",
+  "en_id": "01M3J3ENZTMBMH760YBM3RYYDN",
+  "en_group": "01M3J3ENZTMBMH760YBM3RYYDN",
+  "link": true
+ },
+ {
+  "tr_slug": "pia-bella-otel",
+  "tr_id": "01M3J3D6NH99T3EJVYNZMPP93W",
+  "tr_group": "01M3J3D6NH99T3EJVYNZMPP93W",
+  "en_slug": "pia-bella-hotel",
+  "en_id": "01M3J3EN7NTRXG1X2NQTJQ2DE7",
+  "en_group": "01M3J3EN7NTRXG1X2NQTJQ2DE7",
+  "link": true
+ },
+ {
+  "tr_slug": "rocks-casino-girne",
+  "tr_id": "01M3J3C97TZAQST2YFX9Y5G54B",
+  "tr_group": "01M3J3C97TZAQST2YFX9Y5G54B",
+  "en_slug": "rocks-casino-kyrenia",
+  "en_id": "01M3J3G1ZF8BM9KJJV0G8YWRZP",
+  "en_group": "01M3J3G1ZF8BM9KJJV0G8YWRZP",
+  "link": true
+ },
+ {
+  "tr_slug": "rocks-otel",
+  "tr_id": "01M3J3D5ZFMFYNNPY7326XBS6J",
+  "tr_group": "01M3J3D5ZFMFYNNPY7326XBS6J",
+  "en_slug": "rocks-hotel",
+  "en_id": "01M3J3EM7QWYWXGY60SS5D3A5M",
+  "en_group": "01M3J3EM7QWYWXGY60SS5D3A5M",
+  "link": true
+ },
+ {
+  "tr_slug": "saint-hilarion-kalesi",
+  "tr_id": "01M3J3DP9NSVX0R1ZWS33KFTH3",
+  "tr_group": "01M3J3DP9NSVX0R1ZWS33KFTH3",
+  "en_slug": "st-hilarion-castle",
+  "en_id": "01M3J3F6C584NAR269FVB10EKK",
+  "en_group": "01M3J3F6C584NAR269FVB10EKK",
+  "link": true
+ },
+ {
+  "tr_slug": "savoy-casino-girne",
+  "tr_id": "01M3J3CM409N8BFREC2A7HTYJY",
+  "tr_group": "01M3J3CM409N8BFREC2A7HTYJY",
+  "en_slug": "savoy-casino-kyrenia",
+  "en_id": "01M3J3G03TQ529T4BS0J3APXXY",
+  "en_group": "01M3J3G03TQ529T4BS0J3APXXY",
+  "link": true
+ },
+ {
+  "tr_slug": "savoy-ottoman-otel",
+  "tr_id": "01M3J3D5C5TNR8H9DEPN974RJW",
+  "tr_group": "01M3J3D5C5TNR8H9DEPN974RJW",
+  "en_slug": "savoy-ottoman-palace",
+  "en_id": "01M3J3EKJQGX4RSB2RNWCZDBCH",
+  "en_group": "01M3J3EKJQGX4RSB2RNWCZDBCH",
+  "link": true
+ },
+ {
+  "tr_slug": "shooters-coffee",
+  "tr_id": "01M3J3DA1AJJV495V0YSE1TMA4",
+  "tr_group": "01M3J3DA1AJJV495V0YSE1TMA4",
+  "en_slug": "shooters-coffee",
+  "en_id": "01M3J3ER0MV1017VD25HY9Z0AM",
+  "en_group": "01M3J3ER0MV1017VD25HY9Z0AM",
+  "link": true
+ },
+ {
+  "tr_slug": "skull-king-casino-girne",
+  "tr_id": "01M3J3CE46SB658J5321AN5XPN",
+  "tr_group": "01M3J3CE46SB658J5321AN5XPN",
+  "en_slug": "skull-king-casino-kyrenia",
+  "en_id": "01M3J3G4KX38H41HR4KJJ5QFGY",
+  "en_group": "01M3J3G4KX38H41HR4KJJ5QFGY",
+  "link": true
+ },
+ {
+  "tr_slug": "tango-to-buddha",
+  "tr_id": "01M3J3DG6NV2WQ29TFQJPX5YHP",
+  "tr_group": "01M3J3DG6NV2WQ29TFQJPX5YHP",
+  "en_slug": "tango-to-buddha",
+  "en_id": "01M3J3F0TAVAAEYJ218FGASFD9",
+  "en_group": "01M3J3F0TAVAAEYJ218FGASFD9",
+  "link": true
+ },
+ {
+  "tr_slug": "vuni-palace-hotel",
+  "tr_id": "01M3J3D2T2SJ9EQ9BHEJHSTMP6",
+  "tr_group": "01M3J3D2T2SJ9EQ9BHEJHSTMP6",
+  "en_slug": "vuni-palace-hotel",
+  "en_id": "01M3J3EHCXXA52HSPEB72CF0CS",
+  "en_group": "01M3J3EHCXXA52HSPEB72CF0CS",
+  "link": true
+ }
+]
