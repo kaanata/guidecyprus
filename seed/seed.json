@@ -7,14 +7,15 @@
 		"author": "EmDash"
 	},
 	"settings": {
-		"title": "My Blog",
-		"tagline": "Thoughts on building for the web"
+		"title": "Guide Cyprus",
+		"tagline": "Cyprus Guide - Cyprus Casinos - Cyprus Holidays"
 	},
 	"collections": [
 		{
 			"slug": "posts",
 			"label": "Posts",
 			"labelSingular": "Post",
+			"urlPattern": "/{slug}",
 			"supports": ["drafts", "revisions", "search", "seo"],
 			"commentsEnabled": true,
 			"fields": [
@@ -47,7 +48,8 @@
 			"slug": "pages",
 			"label": "Pages",
 			"labelSingular": "Page",
-			"supports": ["drafts", "revisions", "search"],
+			"urlPattern": "/{slug}",
+			"supports": ["drafts", "revisions", "search", "seo"],
 			"fields": [
 				{
 					"slug": "title",

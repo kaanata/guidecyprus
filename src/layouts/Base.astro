@@ -27,6 +27,13 @@ interface Props {
 	author?: string | null;
 	/** Pass content reference for plugin page contributions on content pages */
 	content?: { collection: string; id: string; slug?: string | null };
+	/** Use `title` as-is, without the site title suffix (the WordPress front pages had none). */
+	standaloneTitle?: boolean;
+	/**
+	 * hreflang alternates to render instead of EmDash's. The locale front pages
+	 * need this: EmDash would point them at their page slugs, which 301 home.
+	 */
+	alternates?: { hreflang: string; href: string }[];
 }
 
 const {
@@ -41,10 +48,13 @@ const {
 	modifiedTime,
 	author,
 	content,
+	standaloneTitle = false,
+	alternates,
 } = Astro.props;
 const { siteTitle, siteTagline, siteLogo } = resolveBlogSiteIdentity(await getSiteSettings());
 // If title already includes site title (from getSeoMeta), use as-is
-const fullTitle = title.includes(siteTitle) ? title : `${title}${TITLE_SEPARATOR}${siteTitle}`;
+const fullTitle =
+	standaloneTitle || title.includes(siteTitle) ? title : `${title}${TITLE_SEPARATOR}${siteTitle}`;
 
 // Fetch primary menu defined in seed
 const menu = await getMenu("primary", { locale: Astro.currentLocale });
@@ -59,6 +69,14 @@ const { entries: pages } = await getEmDashCollection("pages", {
 	locale: Astro.currentLocale,
 });
 
+// Archive and listing views pass no canonical; point them at themselves
+// (slash-less, like every other URL) unless this is an error page.
+// (Missing entries render through Astro.rewrite("/404"), so the path is the test.)
+const selfCanonical =
+	Astro.url.pathname === "/404"
+		? null
+		: `${Astro.url.origin}${Astro.url.pathname.replace(/(.)\/+$/, "$1")}`;
+
 // Build public page context for plugin contributions
 // SEO data is passed here and rendered securely by EmDashHead
 const pageCtx = createPublicPageContext({
@@ -68,7 +86,7 @@ const pageCtx = createPublicPageContext({
 	title: fullTitle,
 	pageTitle: pageTitle ?? title,
 	description,
-	canonical,
+	canonical: canonical ?? selfCanonical,
 	image,
 	content,
 	seo: { ogImage: image, robots },
@@ -92,6 +110,7 @@ const home = localePath(locale, "/");
 		<Font cssVariable="--font-mono" />
 		<title>{fullTitle}</title>
 		<EmDashHead page={pageCtx} />
+		{alternates?.map((a) => <link rel="alternate" hreflang={a.hreflang} href={a.href} />)}
 		<script is:inline>
 			// Apply an explicit theme choice immediately to prevent flash.
 			// With no cookie, color-scheme: light dark follows the OS.
