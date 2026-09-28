@@ -173,20 +173,29 @@ Known gaps:
 - One post still links to an origin image, probably a resized variant.
 - Menus aren't imported, because WXR doesn't carry them.
 
-### Phase 2 — Parallel run (≈ 2–5 days)
+### Phase 2 — Parallel run (done on staging 2026-09-27/28)
 
-- Create the D1 database and R2 bucket, then `wrangler deploy` to a `*.workers.dev` URL for staging.
-- Crawl or sample old public URLs and check each has an equivalent on staging: 200 OK, correct content, correct image. Enter a 301 in EmDash's redirects for every URL without a 1:1 match.
-- Confirm SEO meta (titles, descriptions, OG) and hreflang per post.
-- Confirm drafts aren't reachable when logged out.
-- Run a Lighthouse audit on staging and compare it against guidecyprus.com's current score.
+Staging: `https://guidecyprus.divine-queen-9624.workers.dev`, D1 `guidecyprus`, R2 `guidecyprus-media`.
+
+- **Import:** redone from the WPML-tagged WXR (`scripts/add-wpml-to-wxr.py`): 94 `en` + 65 `tr` posts, 7 pages, 23 categories and 128 tags per locale, 353 media. The first run used a stock WXR and landed everything as `en`; to purge trashed entries by SQL, delete `ec_*` rows before `revisions` (`live_revision_id` foreign key).
+- **Post-import fixes:** `fix-wxr-taxonomies.py`, `import-yoast-seo.py`, `backfill-image-sizes.py` (width/height on 268 image blocks and 91 featured images) and `generate-meta-descriptions.py` (115 missing descriptions).
+- **URLs:** EmDash URLs have no trailing slash. `src/middleware.ts` 301s `/path/` to `/path`, and serves the WordPress-only redirects: feeds, pagination, authors, `wp-admin`, and 1,161 exact upload/attachment URLs from `src/data/legacy-redirects.json` (built by `scripts/build-legacy-redirects.py`). Don't set Astro `trailingSlash: "always"`: it breaks plugin routes and the ad loader. Collections use `url_pattern` `/{slug}`.
+- **Audit result:** all 514 old URLs reach a 200 in at most one hop; titles, canonicals and hreflang are correct, and every canonical/hreflang target is a direct 200.
+- **Drafts:** not reachable when logged out; the content API returns 401 and search returns published entries only.
+- **Lighthouse** (mobile, median of 3), old → staging: home 85 → 99, post 70 → 95, category 82 → 94, tr home 92 → 99, tr post 96 → 99, tr category 96 → 99. Accessibility 100 and CLS 0 on all six.
+- **Also:** comments off for posts, favicon added, en/tr theme labels, tr menu.
 
 ### Phase 3 — Cutover (≈ 30 minutes, then 30 days of monitoring)
 
-- Point `legacy.guidecyprus.com` at the WordPress origin and keep it online for 30 days, so content can be compared or re-imported.
-- Attach the Worker to `guidecyprus.com` as a custom domain. The zone is already on Cloudflare, so there is no nameserver change or TTL wait.
-- Watch 404 logs daily. Add redirects as gaps appear.
-- After 30 days with no significant traffic on legacy, retire WP. Keep the backup.
+1. **Keep WordPress reachable.** Add a DNS record `legacy.guidecyprus.com` → `172.245.161.234` (proxied). On the server, make WordPress answer on that hostname instead of redirecting to `guidecyprus.com`: in `wp-config.php`, set `WP_HOME` and `WP_SITEURL` to `https://legacy.guidecyprus.com`. Check that `https://legacy.guidecyprus.com/` loads.
+2. **Set the real site URL.** In `wrangler.jsonc`, set `EMDASH_SITE_URL` to `https://guidecyprus.com`, then `pnpm run deploy`.
+3. **Attach the domain.** In Workers → `guidecyprus` → Settings → Domains & Routes, add custom domains `guidecyprus.com` and `www.guidecyprus.com`. Cloudflare replaces the existing DNS records for those names.
+4. **Sign in and re-register.** Passkeys are bound to the hostname, so the staging passkey won't work. Sign in with a magic link (email goes out from `noreply@notify.guidecyprus.com`) or email + password, then add a passkey on `guidecyprus.com`.
+5. **Re-audit** against the real domain: the URL audit, redirects, canonicals and a Lighthouse spot check.
+6. **Monitor for 30 days.** Check EmDash's 404 log daily (Admin → Redirects) and add redirects for real traffic.
+7. **Retire WordPress** after 30 days with no significant traffic on legacy. Keep the backup in `/root/backups/`.
+
+Rollback: remove the Worker's custom domains and restore the previous `guidecyprus.com` DNS record pointing at `172.245.161.234`.
 
 ---
 
@@ -205,9 +214,9 @@ Criteria: free to run and simplest to operate.
 
 ## 8. Open questions for the human
 
-1. **Credentials.** Rotate the origin root password, and switch to SSH key auth.
+1. **Credentials.** Rotate the origin root and database passwords (both were shared in a chat during the migration), and switch to SSH key auth.
 2. **Editors.** Who needs a login on the new site?
-3. **Cloudflare account.** Which account holds the guidecyprus.com zone? `wrangler login` must use it.
+3. ~~Cloudflare account.~~ Resolved: the zone is in the account `wrangler` is logged into (Email Sending for `notify.guidecyprus.com` was enabled there).
 
 ---
 
@@ -224,20 +233,10 @@ Total active work: **~20–40 hours** over 2–3 weeks of calendar time.
 
 ---
 
-## 10. Next commands
+## 10. Next step
 
-```bash
-pnpm wrangler login                      # account that holds the guidecyprus.com zone
-pnpm wrangler d1 create guidecyprus      # put the database_id in wrangler.jsonc
-pnpm wrangler r2 bucket create guidecyprus-media
-pnpm run deploy                          # → *.workers.dev staging URL
-```
-
-Then rerun the §6 Phase 1 import steps against the deployed site. The post-import SQL runs with `wrangler d1 execute guidecyprus --remote --file …`.
-
-Staging runs with `EMDASH_SITE_URL` set to the `workers.dev` URL (a `vars` entry in `wrangler.jsonc`). Passkeys are bound to that hostname. Before cutover, give the admin a second way to sign in: a magic link with an email provider configured, or a GitHub/Google login. Then switch `EMDASH_SITE_URL` to `https://guidecyprus.com` and register a new passkey there.
+Staging is ready. The remaining work is the §6 Phase 3 cutover checklist. The second sign-in method it needs is in place: magic-link email through the `cloudflare-email` plugin, and email + password through `email-password` (Admin → Plugins → Password).
 
 ## 11. Blockers
 
-- **Cloudflare account access** for `wrangler login` (§8, question 3).
-- **Media on R2:** the media step fetches from the WordPress origin, which must stay online.
+None. Keep the WordPress origin online until cutover and through the 30-day legacy period, for comparisons and any re-import.
