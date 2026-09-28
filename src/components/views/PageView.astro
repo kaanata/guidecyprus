@@ -16,22 +16,39 @@ const { page, adPage = "page" } = Astro.props;
 const slug = page.data.slug;
 const { siteTitle } = resolveBlogSiteIdentity(await getSiteSettings());
 
+const isHome = adPage === "home";
 const seo = getSeoMeta(page, {
-	siteTitle,
+	// The locale front page uses its SEO title alone, as WordPress did.
+	siteTitle: isHome ? undefined : siteTitle,
 	siteUrl: Astro.url.origin,
-	path: Astro.url.pathname.replace(/\/$/, ""),
+	// Keep "/" for the root so the home page gets a canonical too.
+	path: Astro.url.pathname.replace(/(.)\/$/, "$1"),
 	titleSeparator: TITLE_SEPARATOR,
 });
+
+// The front pages link to each other's locale homes, not to their page slugs
+// (which only 301 home). EmDash adds hreflang for content pages, so the home
+// pages render without a content reference and supply their own.
+const origin = Astro.url.origin;
+const homeAlternates = isHome
+	? [
+			{ hreflang: "en", href: `${origin}/` },
+			{ hreflang: "tr", href: `${origin}/tr` },
+			{ hreflang: "x-default", href: `${origin}/` },
+		]
+	: undefined;
 ---
 
 <Base
 	title={seo.title}
+	standaloneTitle={isHome}
 	pageTitle={seo.ogTitle}
 	description={seo.description}
 	image={seo.ogImage}
 	canonical={seo.canonical}
 	robots={seo.robots}
-	content={{ collection: "pages", id: page.data.id, slug }}
+	content={isHome ? undefined : { collection: "pages", id: page.data.id, slug }}
+	alternates={homeAlternates}
 >
 	<AdSpace space="top-banner" page={adPage} />
 	<article class="page-article">
