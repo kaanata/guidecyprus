@@ -15,9 +15,10 @@ import Base from "../../layouts/Base.astro";
 import PostCard from "../../components/PostCard.astro";
 import AdSpace from "../AdSpace.astro";
 import { splitForInArticle } from "../../utils/ads";
-import { getReadingTime } from "../../utils/reading-time";
+import { formatReadingTime, getReadingTime } from "../../utils/reading-time";
 import { resolveBlogSiteIdentity, TITLE_SEPARATOR } from "../../utils/site-identity";
 import { localePath } from "../../utils/i18n";
+import { formatDate, t } from "../../utils/strings";
 import type { ResolvedEntry } from "../../utils/resolve-entry";
 
 const locale = Astro.currentLocale;
@@ -96,12 +97,7 @@ const otherPostsWithTags = otherPosts.map((p) => ({
 // In-article ad after the 2nd paragraph; short posts get none.
 const inArticleSplit = splitForInArticle(post.data.content);
 
-const publishDate =
-	post.data.publishedAt?.toLocaleDateString("en-US", {
-		year: "numeric",
-		month: "long",
-		day: "numeric",
-	}) ?? null;
+const publishDate = post.data.publishedAt ? formatDate(locale, post.data.publishedAt) : null;
 ---
 
 <Base
@@ -136,7 +132,7 @@ const publishDate =
 						bylines.length > 0 && (
 							<div class="meta-block byline-block">
 								<span class="meta-label">
-									{bylines.length === 1 ? "Author" : "Authors"}
+									{t(locale, bylines.length === 1 ? "post.author" : "post.authors")}
 								</span>
 								<div class="bylines">
 									{bylines.map((credit) => (
@@ -165,19 +161,19 @@ const publishDate =
 					{
 						publishDate && (
 							<div class="meta-block">
-								<span class="meta-label">Published</span>
+								<span class="meta-label">{t(locale, "post.published")}</span>
 								<time class="meta-value">{publishDate}</time>
 							</div>
 						)
 					}
 					<div class="meta-block">
-						<span class="meta-label">Reading time</span>
-						<span class="meta-value">{readingTime} min</span>
+						<span class="meta-label">{t(locale, "post.readingTime")}</span>
+						<span class="meta-value">{formatReadingTime(readingTime, locale, "short")}</span>
 					</div>
 					{
 						tags.length > 0 && (
 							<div class="meta-block">
-								<span class="meta-label">Tags</span>
+								<span class="meta-label">{t(locale, "post.tags")}</span>
 								<div class="meta-tags">
 									{tags.map((t) => (
 										<a href={localePath(locale, `/tag/${t.slug}`)} class="meta-tag">
@@ -218,7 +214,7 @@ const publishDate =
 								</>
 							)
 						}
-						<span>{readingTime} min read</span>
+						<span>{formatReadingTime(readingTime, locale)}</span>
 					</div>
 					<h1 class="article-title" {...post.edit.title}>{post.data.title}</h1>
 					{
@@ -255,8 +251,8 @@ const publishDate =
 					<AdSpace space="article-sidebar" as="div" />
 				</div>
 				<div class="sidebar-sticky">
-					<nav class="toc" aria-label="Table of contents">
-						<h4 class="toc-title">On this page</h4>
+					<nav class="toc" aria-label={t(locale, "post.tocLabel")}>
+						<h4 class="toc-title">{t(locale, "post.toc")}</h4>
 						<div class="toc-content" id="toc-content">
 							<!-- Populated by JS -->
 						</div>
@@ -273,7 +269,7 @@ const publishDate =
 		otherPostsWithTags.length > 0 && (
 			<section class="more-posts">
 				<div class="more-inner">
-					<h2 class="more-title">Continue reading</h2>
+					<h2 class="more-title">{t(locale, "post.continueReading")}</h2>
 					<div class="more-grid">
 						{otherPostsWithTags.map(
 							({ post: p, tags: postTags, bylines: postBylines }) => (

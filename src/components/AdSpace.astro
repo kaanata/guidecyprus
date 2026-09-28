@@ -17,7 +17,7 @@
  * request is in flight, and disappears if it stays empty.
  */
 import { AD_SPACES, type AdSpaceId, type PageType } from "@main-aff/plugin-ad-manager/spaces";
-import { adLabel } from "../utils/ads";
+import { t } from "../utils/strings";
 
 interface Props {
 	space: AdSpaceId;
@@ -36,7 +36,7 @@ const { reserve } = AD_SPACES[space];
 const desktop = reserve.desktop;
 // A space with no mobile reserve is desktop-only (the article sidebar).
 const mobile = reserve.mobile;
-const label = adLabel(Astro.currentLocale);
+const label = t(Astro.currentLocale, "ad.label");
 
 const sizeVars = [
 	`--ad-w: ${desktop.width}px`,

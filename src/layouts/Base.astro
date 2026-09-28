@@ -11,6 +11,7 @@ import LiveSearch from "emdash/ui/search";
 import { Font } from "astro:assets";
 import { resolveBlogSiteIdentity, TITLE_SEPARATOR } from "../utils/site-identity";
 import { localePath } from "../utils/i18n";
+import { t } from "../utils/strings";
 import "../styles/tokens.css";
 import "../styles/theme.css";
 
@@ -99,6 +100,8 @@ const isLoggedIn = !!Astro.locals.user;
 
 const locale = Astro.currentLocale ?? "en";
 const home = localePath(locale, "/");
+// "Powered by {link}" puts the link at a different spot per language.
+const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").split("{link}");
 ---
 
 <!doctype html>
@@ -136,13 +139,25 @@ const home = localePath(locale, "/");
 				</a>
 				<div class="nav-right">
 					<LiveSearch
-						placeholder="Search..."
+						placeholder={t(locale, "header.searchPlaceholder")}
+						searchPage={localePath(locale, "/search")}
+						routeMap={{
+							posts: localePath(locale, "/:slug"),
+							pages: localePath(locale, "/:slug"),
+						}}
 						class="site-search"
 						inputClass="site-search-input"
 						resultsClass="site-search-results"
 						resultClass="site-search-result"
 						collections={["posts", "pages"]}
-					/>
+					>
+						<div slot="loading" class="emdash-live-search-loading">
+							{t(locale, "header.searchLoading")}
+						</div>
+						<div slot="no-results" class="emdash-live-search-no-results">
+							{t(locale, "header.searchNoResults")}
+						</div>
+					</LiveSearch>
 					<div class="nav-links">
 						{
 							menu?.items.map((item) => (
@@ -156,7 +171,7 @@ const home = localePath(locale, "/");
 				{
 					isLoggedIn && (
 						<a href="/_emdash/admin" class="nav-admin">
-							Admin
+							{t(locale, "header.admin")}
 						</a>
 					)
 				}
@@ -180,10 +195,10 @@ const home = localePath(locale, "/");
 						<p class="footer-tagline">{siteTagline}</p>
 					</div>
 					<div class="footer-nav">
-						<h4 class="footer-heading">Navigate</h4>
+						<h4 class="footer-heading">{t(locale, "footer.navigate")}</h4>
 						<ul class="footer-links">
-							<li><a href={home}>Home</a></li>
-							<li><a href={localePath(locale, "/posts")}>All Posts</a></li>
+							<li><a href={home}>{t(locale, "footer.home")}</a></li>
+							<li><a href={localePath(locale, "/posts")}>{t(locale, "posts.title")}</a></li>
 							{
 								pages.slice(0, 3).map((page) => (
 									<li>
@@ -196,7 +211,7 @@ const home = localePath(locale, "/");
 						</ul>
 					</div>
 					<div class="footer-nav">
-						<h4 class="footer-heading">Connect</h4>
+						<h4 class="footer-heading">{t(locale, "footer.connect")}</h4>
 						<ul class="footer-links">
 							{
 								socialMenu?.items.map((item) => (
@@ -215,7 +230,7 @@ const home = localePath(locale, "/");
 									</li>
 								))
 							}
-							<li><a href="/rss.xml">RSS Feed</a></li>
+							<li><a href={localePath(locale, "/rss.xml")}>{t(locale, "footer.rss")}</a></li>
 						</ul>
 					</div>
 					<div class="footer-widgets-section">
@@ -224,14 +239,14 @@ const home = localePath(locale, "/");
 				</div>
 				<div class="footer-bottom">
 					<p class="footer-copyright">
-						Powered by <a href="https://emdashcms.com">EmDash</a>
+						{poweredByBefore}<a href="https://emdashcms.com">EmDash</a>{poweredByAfter}
 					</p>
 					<div class="theme-switcher">
 						<button
 							type="button"
 							class="theme-btn"
 							data-theme="light"
-							aria-label="Light mode"
+							aria-label={t(locale, "theme.light")}
 						>
 							<svg
 								width="16"
@@ -262,7 +277,7 @@ const home = localePath(locale, "/");
 							type="button"
 							class="theme-btn"
 							data-theme="dark"
-							aria-label="Dark mode"
+							aria-label={t(locale, "theme.dark")}
 						>
 							<svg
 								width="16"
@@ -281,7 +296,7 @@ const home = localePath(locale, "/");
 							type="button"
 							class="theme-btn"
 							data-theme="system"
-							aria-label="System theme"
+							aria-label={t(locale, "theme.system")}
 						>
 							<svg
 								width="16"

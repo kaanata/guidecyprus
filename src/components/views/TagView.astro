@@ -10,6 +10,7 @@ import { inFeedAfter } from "../../utils/ads";
 import { getReadingTime } from "../../utils/reading-time";
 import type { TaxonomyTerm } from "emdash";
 import { localePath } from "../../utils/i18n";
+import { t, tn } from "../../utils/strings";
 
 const locale = Astro.currentLocale;
 
@@ -42,23 +43,20 @@ const filteredPosts = posts.map((post) => ({
 ---
 
 <Base
-	title={`Posts tagged "${term.label}"`}
-	description={`All posts tagged with ${term.label}`}
+	title={t(locale, "archive.title", { label: term.label })}
+	description={t(locale, "archive.tagDescription", { label: term.label })}
 >
 	<AdSpace space="top-banner" page="tag" />
 	<section class="archive-section">
 		<header class="archive-header">
-			<span class="archive-label">Tag</span>
+			<span class="archive-label">{t(locale, "archive.tag")}</span>
 			<h1 class="archive-title">{term.label}</h1>
-			<p class="archive-count">
-				{filteredPosts.length}
-				{filteredPosts.length === 1 ? "post" : "posts"}
-			</p>
+			<p class="archive-count">{tn(locale, "archive.count", filteredPosts.length)}</p>
 		</header>
 
 		{
 			filteredPosts.length === 0 ? (
-				<p class="no-posts">No posts with this tag yet.</p>
+				<p class="no-posts">{t(locale, "archive.tagEmpty")}</p>
 			) : (
 				<div class="posts-grid">
 					{filteredPosts.map(({ post, tags }, index) => (

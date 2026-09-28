@@ -3,8 +3,9 @@ import { getEmDashCollection, getTermsForEntries } from "emdash";
 import Base from "../../layouts/Base.astro";
 import AdSpace from "../AdSpace.astro";
 import { inFeedAfter } from "../../utils/ads";
-import { getReadingTime } from "../../utils/reading-time";
+import { formatReadingTime, getReadingTime } from "../../utils/reading-time";
 import { localePath } from "../../utils/i18n";
+import { formatDate, t, tn } from "../../utils/strings";
 
 const locale = Astro.currentLocale;
 
@@ -33,28 +34,19 @@ const postsWithTags = posts.map((post) => ({
 	bylines: post.data.bylines ?? [],
 }));
 
-const formatDate = (date: Date) =>
-	date.toLocaleDateString("en-US", {
-		year: "numeric",
-		month: "long",
-		day: "numeric",
-	});
 ---
 
-<Base title="All Posts" description="Browse all blog posts">
+<Base title={t(locale, "posts.title")} description={t(locale, "posts.description")}>
 	<AdSpace space="top-banner" page="latest" />
 	<div class="posts-page">
 		<header class="page-header">
-			<h1 class="page-title">All Posts</h1>
-			<p class="page-description">
-				{posts.length}
-				{posts.length === 1 ? "article" : "articles"}
-			</p>
+			<h1 class="page-title">{t(locale, "posts.title")}</h1>
+			<p class="page-description">{tn(locale, "posts.count", posts.length)}</p>
 		</header>
 
 		{
 			posts.length === 0 ? (
-				<p class="empty">No posts yet.</p>
+				<p class="empty">{t(locale, "posts.empty")}</p>
 			) : (
 				<div class="posts-list">
 					{postsWithTags.map(({ post, tags, bylines }, index) => (
@@ -90,10 +82,10 @@ const formatDate = (date: Date) =>
 										</>
 									)}
 									{post.data.publishedAt && (
-										<time>{formatDate(post.data.publishedAt)}</time>
+										<time>{formatDate(locale, post.data.publishedAt)}</time>
 									)}
 									{post.data.publishedAt && <span class="meta-dot" />}
-									<span>{getReadingTime(post.data.content)} min read</span>
+									<span>{formatReadingTime(getReadingTime(post.data.content), locale)}</span>
 								</div>
 								<h2 class="post-title">{post.data.title}</h2>
 								{post.data.excerpt && (
