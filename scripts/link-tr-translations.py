@@ -44,12 +44,12 @@ def get(entry_id: str, url: str) -> dict:
 def images(url: str, dry_run: bool) -> None:
     changed = 0
     for pair in json.load(open(PAIRS, encoding="utf-8")):
-        image = get(pair["en_id"], url).get("featured_image")
+        image = get(pair["en_id"], url)["data"].get("featured_image")
         if not image:
             print(f"skip {pair['tr_slug']}: {pair['en_slug']} has no featured image")
             continue
         entry = get(pair["tr_id"], url)
-        if entry.get("featured_image"):
+        if entry["data"].get("featured_image"):
             continue
         changed += 1
         print(f"{'would set' if dry_run else 'set'} {pair['tr_slug']} <- {pair['en_slug']}")
