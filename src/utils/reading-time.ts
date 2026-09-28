@@ -1,5 +1,7 @@
 import type { PortableTextBlock } from "emdash";
 
+import { t } from "./strings";
+
 const WORDS_PER_MINUTE = 200;
 const CJK_CHARACTERS_PER_MINUTE = 500;
 const WHITESPACE_REGEX = /\s+/;
@@ -59,8 +61,13 @@ export function getReadingTime(content: PortableTextBlock[] | undefined): number
 }
 
 /**
- * Format reading time for display
+ * Format reading time for display: "5 min read" / "5 dk okuma", or the
+ * compact "5 min" / "5 dk" form used in tight meta rows.
  */
-export function formatReadingTime(minutes: number): string {
-	return `${minutes} min read`;
+export function formatReadingTime(
+	minutes: number,
+	locale?: string,
+	form: "long" | "short" = "long",
+): string {
+	return t(locale, form === "long" ? "readingTime.long" : "readingTime.short", { n: minutes });
 }

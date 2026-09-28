@@ -56,8 +56,3 @@ export function splitForInArticle<T>(
 	}
 	return null;
 }
-
-/** The small label above a filled space, per site locale. */
-export function adLabel(locale: string | undefined): string {
-	return locale === "tr" ? "Reklam" : "Advertisement";
-}

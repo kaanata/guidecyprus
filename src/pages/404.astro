@@ -1,14 +1,18 @@
 ---
 import AdSpace from "../components/AdSpace.astro";
 import Base from "../layouts/Base.astro";
+import { localePath } from "../utils/i18n";
+import { t } from "../utils/strings";
+
+const locale = Astro.currentLocale;
 ---
 
-<Base title="Page not found">
+<Base title={t(locale, "notFound.title")}>
 	<AdSpace space="top-banner" page="page" />
 	<div class="not-found">
 		<h1>404</h1>
-		<p>The page you're looking for doesn't exist.</p>
-		<a href="/">Go back home</a>
+		<p>{t(locale, "notFound.message")}</p>
+		<a href={localePath(locale, "/")}>{t(locale, "notFound.home")}</a>
 	</div>
 </Base>
 
