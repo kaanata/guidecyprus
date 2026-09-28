@@ -64,42 +64,123 @@ const homeAlternates = isHome
 
 <style>
 	.page-article {
-		max-width: var(--max-width);
+		max-width: var(--wide-width);
 		margin: 0 auto;
-		padding: var(--spacing-16) var(--spacing-6) var(--spacing-16);
+		padding: var(--spacing-12) var(--spacing-6) 0;
+	}
+
+	@media (max-width: 760px) {
+		.page-article {
+			padding: var(--spacing-8) var(--spacing-4) 0;
+		}
+	}
+
+	.page-header,
+	.page-content {
+		max-width: 68ch;
+		margin-inline: auto;
+	}
+
+	/* On wide screens the reading column sits exactly where a place page's body
+	 * column does (same three-track grid as PostView), so the two read alike. */
+	@media (min-width: 1101px) {
+		.page-article {
+			display: grid;
+			grid-template-columns:
+				var(--meta-col-width) minmax(0, var(--content-width))
+				var(--gutter-width);
+			column-gap: var(--spacing-10);
+			justify-content: center;
+		}
+
+		.page-header,
+		.page-content {
+			grid-column: 2;
+			width: 100%;
+			max-width: none;
+		}
 	}
 
 	.page-header {
-		margin-bottom: var(--spacing-8);
+		margin-bottom: var(--spacing-10);
+		padding-bottom: var(--spacing-8);
+		border-bottom: 1px solid var(--color-border);
 	}
 
 	.page-title {
-		font-size: clamp(var(--font-size-2xl), 4vw, var(--font-size-4xl));
+		font-family: var(--font-display);
 		font-weight: var(--font-weight-display);
-		line-height: var(--leading-tight);
+		font-size: clamp(var(--font-size-3xl), 2rem + 2.4vw, var(--font-size-5xl));
+		line-height: 1.05;
+		letter-spacing: var(--tracking-tight);
+		text-wrap: balance;
+	}
+
+	.page-content {
+		font-size: var(--font-size-base);
+		line-height: var(--leading-relaxed);
 	}
 
 	.page-content :global(p) {
-		margin-bottom: 1.5em;
+		margin-bottom: 1.25em;
+	}
+
+	.page-content :global(a) {
+		color: var(--color-brand);
+		text-decoration: underline;
+		text-decoration-thickness: 1px;
+		text-underline-offset: 0.18em;
+	}
+
+	.page-content :global(a:hover) {
+		color: var(--color-brand-hover);
 	}
 
 	.page-content :global(h2) {
+		font-family: var(--font-display);
+		font-weight: var(--font-weight-display);
 		font-size: var(--font-size-2xl);
-		margin-top: 2em;
-		margin-bottom: 0.75em;
+		line-height: var(--leading-tight);
+		letter-spacing: var(--tracking-tight);
+		margin-top: 1.75em;
+		margin-bottom: 0.6em;
 	}
 
 	.page-content :global(h3) {
-		font-size: var(--font-size-xl);
+		font-size: var(--font-size-lg);
+		font-weight: var(--font-weight-heading);
+		line-height: var(--leading-snug);
 		margin-top: 1.75em;
 		margin-bottom: 0.5em;
+	}
+
+	.page-content > :global(:first-child) {
+		margin-top: 0;
+	}
+
+	.page-content :global(img) {
+		display: block;
+		width: 100%;
+		max-width: 100%;
+		height: auto;
+		border-radius: var(--radius);
+	}
+
+	.page-content :global(figure) {
+		margin: 2em 0;
+	}
+
+	.page-content :global(figcaption) {
+		margin-top: var(--spacing-2);
+		font-size: var(--font-size-sm);
+		color: var(--color-muted);
 	}
 
 	.page-content :global(blockquote) {
 		margin: 1.5em 0;
 		padding-left: var(--spacing-6);
-		border-left: 3px solid var(--color-border);
-		color: var(--color-muted);
+		border-left: 2px solid var(--color-brand);
+		color: var(--color-text-secondary);
 	}
 
 	.page-content :global(pre) {
@@ -127,11 +208,11 @@ const homeAlternates = isHome
 
 	.page-content :global(ul),
 	.page-content :global(ol) {
-		margin-bottom: 1.5em;
+		margin-bottom: 1.25em;
 		padding-left: var(--spacing-5);
 	}
 
 	.page-content :global(li) {
-		margin-bottom: 0.5em;
+		margin-bottom: 0.4em;
 	}
 </style>

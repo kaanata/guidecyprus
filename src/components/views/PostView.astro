@@ -12,14 +12,16 @@ import {
 } from "emdash/ui";
 import { Comments, CommentForm } from "emdash/ui/comments";
 import Base from "../../layouts/Base.astro";
+import type { TaxonomyTerm } from "emdash";
 import PostCard from "../../components/PostCard.astro";
+import TagList from "../../components/TagList.astro";
 import AdSpace from "../AdSpace.astro";
 import { splitForInArticle } from "../../utils/ads";
-import { formatReadingTime, getReadingTime } from "../../utils/reading-time";
 import { resolveBlogSiteIdentity, TITLE_SEPARATOR } from "../../utils/site-identity";
 import { localePath } from "../../utils/i18n";
 import { formatDate, t } from "../../utils/strings";
 import type { ResolvedEntry } from "../../utils/resolve-entry";
+import { orderKinds } from "../../utils/kind";
 
 const locale = Astro.currentLocale;
 
@@ -62,42 +64,70 @@ const seo = getSeoMeta(post, {
 	titleSeparator: TITLE_SEPARATOR,
 });
 
-// Bylines are already hydrated by getEmDashEntry
-const bylines = post.data.bylines ?? [];
+// A place's kind is its category. "Uncategorized" says nothing to a traveller,
+// so it is left out.
+function kindsOf(terms: TaxonomyTerm[] | undefined): TaxonomyTerm[] {
+	return orderKinds(terms);
+}
 
-// Get reading time
-const readingTime = getReadingTime(post.data.content);
-
-// This post's tags are already hydrated onto the entry by getEmDashEntry —
-// no extra query needed.
+// Tags are hydrated onto the entry by getEmDashEntry; categories usually are
+// too, with a single-entry lookup as the fallback.
 const tags = post.data.terms?.tag ?? [];
+const kinds = kindsOf(
+	post.data.terms?.category ??
+		(await getTermsForEntries("posts", [post.data.id], "category", { locale })).get(
+			post.data.id,
+		),
+);
+const primaryKind = kinds[0];
 
-// Fetch a few extra recent posts in case the current post is among them.
-const { entries: recentPosts } = await getEmDashCollection("posts", {
+// "More places": others of the same kind first, topped up with the latest
+// places when the kind has fewer than three others.
+const MORE_COUNT = 3;
+let otherPosts: Awaited<ReturnType<typeof getEmDashCollection<"posts">>>["entries"] = [];
+if (primaryKind) {
+	const { entries } = await getEmDashCollection("posts", {
 		locale,
-	orderBy: { published_at: "desc" },
-	limit: 4,
-});
-const otherPosts = recentPosts.filter((p) => p.id !== post.id).slice(0, 3);
+		where: { category: primaryKind.slug },
+		orderBy: { published_at: "desc" },
+		limit: MORE_COUNT + 1,
+	});
+	otherPosts = entries.filter((p) => p.id !== post.id).slice(0, MORE_COUNT);
+}
+const sameKind = primaryKind !== undefined && otherPosts.length === MORE_COUNT;
+if (otherPosts.length < MORE_COUNT) {
+	const { entries: recent } = await getEmDashCollection("posts", {
+		locale,
+		orderBy: { published_at: "desc" },
+		limit: MORE_COUNT * 2 + 1,
+	});
+	const seen = new Set([post.id, ...otherPosts.map((p) => p.id)]);
+	for (const p of recent) {
+		if (otherPosts.length >= MORE_COUNT) break;
+		if (!seen.has(p.id)) {
+			otherPosts.push(p);
+			seen.add(p.id);
+		}
+	}
+}
 
-// Single batched query for related-posts tags, rather than one
-// getEntryTerms() call per related post.
-const otherTagsByEntry = await getTermsForEntries(
+// One batched query for the cards' kinds, rather than one per card.
+const otherKindsByEntry = await getTermsForEntries(
 	"posts",
 	otherPosts.map((p) => p.data.id),
-	"tag",
+	"category",
 	{ locale },
 );
-const otherPostsWithTags = otherPosts.map((p) => ({
+const morePlaces = otherPosts.map((p) => ({
 	post: p,
-	tags: otherTagsByEntry.get(p.data.id) ?? [],
-	bylines: p.data.bylines ?? [],
+	kind: kindsOf(otherKindsByEntry.get(p.data.id))[0]?.label,
 }));
 
 // In-article ad after the 2nd paragraph; short posts get none.
 const inArticleSplit = splitForInArticle(post.data.content);
 
-const publishDate = post.data.publishedAt ? formatDate(locale, post.data.publishedAt) : null;
+const addedDate = post.data.publishedAt ?? null;
+const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 ---
 
 <Base
@@ -114,116 +144,80 @@ const publishDate = post.data.publishedAt ? formatDate(locale, post.data.publish
 >
 	<AdSpace space="top-banner" page="article" />
 	<article class="article">
-		{/* Hero: Full-width featured image */}
-		{
-			post.data.featured_image && (
-				<div class="article-hero" {...post.edit.featured_image}>
-					<Image image={post.data.featured_image} />
-				</div>
-			)
-		}
-
-		{/* Three-column layout */}
 		<div class="article-grid">
-			{/* Left gutter: Meta information */}
-			<aside class="article-meta-col">
-				<div class="meta-sticky">
-					{
-						bylines.length > 0 && (
-							<div class="meta-block byline-block">
-								<span class="meta-label">
-									{t(locale, bylines.length === 1 ? "post.author" : "post.authors")}
-								</span>
-								<div class="bylines">
-									{bylines.map((credit) => (
-										<div class="byline">
-											{credit.byline.avatarMediaId && (
-												<img
-													src={`/_emdash/api/media/file/${credit.byline.avatarMediaId}`}
-													alt={credit.byline.displayName}
-													class="byline-avatar"
-												/>
-											)}
-											<div class="byline-info">
-												<span class="byline-name">
-													{credit.byline.displayName}
-												</span>
-												{credit.roleLabel && (
-													<span class="byline-role">{credit.roleLabel}</span>
-												)}
-											</div>
-										</div>
-									))}
-								</div>
-							</div>
-						)
-					}
-					{
-						publishDate && (
-							<div class="meta-block">
-								<span class="meta-label">{t(locale, "post.published")}</span>
-								<time class="meta-value">{publishDate}</time>
-							</div>
-						)
-					}
-					<div class="meta-block">
-						<span class="meta-label">{t(locale, "post.readingTime")}</span>
-						<span class="meta-value">{formatReadingTime(readingTime, locale, "short")}</span>
+			<header class="article-header">
+				<nav class="breadcrumb" aria-label={t(locale, "place.breadcrumb")}>
+					<ol>
+						<li>
+							{
+								primaryKind ? (
+									<a href={categoryHref(primaryKind.slug)}>{primaryKind.label}</a>
+								) : (
+									<a href={localePath(locale, "/posts")}>{t(locale, "place.places")}</a>
+								)
+							}
+						</li>
+						<li aria-current="page">{post.data.title}</li>
+					</ol>
+				</nav>
+				<h1 class="article-title" {...post.edit.title}>{post.data.title}</h1>
+				{
+					post.data.excerpt && (
+						<p class="article-excerpt" {...post.edit.excerpt}>{post.data.excerpt}</p>
+					)
+				}
+			</header>
+
+			{
+				post.data.featured_image && (
+					<div class="article-hero" data-photo-frame data-fit="contain" {...post.edit.featured_image}>
+						<Image image={post.data.featured_image} priority />
 					</div>
+				)
+			}
+
+			{/* Left column: what a traveller needs to place this */}
+			<aside class="article-meta-col">
+				<dl class="meta-list">
+					{
+						kinds.length > 0 && (
+							<div class="meta-block">
+								<dt class="meta-label">{t(locale, "place.kind")}</dt>
+								<dd class="meta-value">
+									{kinds.map((kind, i) => (
+										<>
+											{i > 0 && ", "}
+											<a href={categoryHref(kind.slug)}>{kind.label}</a>
+										</>
+									))}
+								</dd>
+							</div>
+						)
+					}
+					{
+						addedDate && (
+							<div class="meta-block">
+								<dt class="meta-label">{t(locale, "place.added")}</dt>
+								<dd class="meta-value">
+									<time datetime={addedDate.toISOString()}>{formatDate(locale, addedDate)}</time>
+								</dd>
+							</div>
+						)
+					}
 					{
 						tags.length > 0 && (
-							<div class="meta-block">
-								<span class="meta-label">{t(locale, "post.tags")}</span>
-								<div class="meta-tags">
-									{tags.map((t) => (
-										<a href={localePath(locale, `/tag/${t.slug}`)} class="meta-tag">
-											{t.label}
-										</a>
-									))}
-								</div>
+							<div class="meta-block meta-block--tags">
+								<dt class="meta-label">{t(locale, "place.tags")}</dt>
+								<dd class="meta-value">
+									<TagList tags={tags.map((tag) => ({ slug: tag.slug, label: tag.label }))} />
+								</dd>
 							</div>
 						)
 					}
-				</div>
+				</dl>
 			</aside>
 
-			{/* Main content */}
 			<div class="article-main">
-				<header class="article-header">
-					<div class="article-meta">
-						{
-							bylines.length > 0 && (
-								<>
-									<span class="article-meta-byline">
-										{bylines.map((credit, i) => (
-											<>
-												{i > 0 && ", "}
-												{credit.byline.displayName}
-											</>
-										))}
-									</span>
-									<span class="meta-dot" />
-								</>
-							)
-						}
-						{
-							publishDate && (
-								<>
-									<time>{publishDate}</time>
-									<span class="meta-dot" />
-								</>
-							)
-						}
-						<span>{formatReadingTime(readingTime, locale)}</span>
-					</div>
-					<h1 class="article-title" {...post.edit.title}>{post.data.title}</h1>
-					{
-						post.data.excerpt && (
-							<p class="article-excerpt" {...post.edit.excerpt}>{post.data.excerpt}</p>
-						)
-					}
-				</header>
-
 				<div class="article-content">
 					{
 						inArticleSplit ? (
@@ -244,7 +238,7 @@ const publishDate = post.data.publishedAt ? formatDate(locale, post.data.publish
 				</div>
 			</div>
 
-			{/* Right gutter: TOC + Sidebar widgets */}
+			{/* Right gutter: TOC + sidebar widgets */}
 			<aside class="article-sidebar">
 				{/* Not inside the sticky block: a 600px ad would push the TOC off short screens. */}
 				<div class="sidebar-ad">
@@ -252,7 +246,7 @@ const publishDate = post.data.publishedAt ? formatDate(locale, post.data.publish
 				</div>
 				<div class="sidebar-sticky">
 					<nav class="toc" aria-label={t(locale, "post.tocLabel")}>
-						<h4 class="toc-title">{t(locale, "post.toc")}</h4>
+						<h2 class="toc-title">{t(locale, "post.toc")}</h2>
 						<div class="toc-content" id="toc-content">
 							<!-- Populated by JS -->
 						</div>
@@ -266,25 +260,31 @@ const publishDate = post.data.publishedAt ? formatDate(locale, post.data.publish
 	</article>
 
 	{
-		otherPostsWithTags.length > 0 && (
-			<section class="more-posts">
+		morePlaces.length > 0 && (
+			<section class="more-posts" aria-labelledby="more-places-title">
 				<div class="more-inner">
-					<h2 class="more-title">{t(locale, "post.continueReading")}</h2>
-					<div class="more-grid">
-						{otherPostsWithTags.map(
-							({ post: p, tags: postTags, bylines: postBylines }) => (
-								<PostCard
-									title={p.data.title}
-									excerpt={p.data.excerpt}
-									featuredImage={p.data.featured_image}
-									href={localePath(locale, `/${p.id}`)}
-									date={p.data.publishedAt ?? undefined}
-									readingTime={getReadingTime(p.data.content)}
-									tags={postTags.map((t) => ({ slug: t.slug, label: t.label }))}
-									bylines={postBylines}
-								/>
-							)
+					<div class="more-head">
+						<h2 class="more-title" id="more-places-title">
+							{sameKind && primaryKind
+								? t(locale, "place.moreKind", { label: primaryKind.label })
+								: t(locale, "place.more")}
+						</h2>
+						{sameKind && primaryKind && (
+							<a class="more-all" href={categoryHref(primaryKind.slug)}>
+								{t(locale, "place.moreAll", { label: primaryKind.label })}
+							</a>
 						)}
+					</div>
+					<div class="more-grid">
+						{morePlaces.map(({ post: p, kind }) => (
+							<PostCard
+								title={p.data.title}
+								featuredImage={p.data.featured_image}
+								href={localePath(locale, `/${p.id}`)}
+								kind={kind}
+								headingLevel={3}
+							/>
+						))}
 					</div>
 				</div>
 			</section>
@@ -353,224 +353,309 @@ const publishDate = post.data.publishedAt ? formatDate(locale, post.data.publish
 		}
 
 		buildToc();
+
+		// Mark contact labels: a <strong> that opens a paragraph (or a line
+		// after a <br>) and ends with a colon, like "Address:" or "Telefon:".
+		function markContactLines() {
+			const content = document.querySelector(".article-content");
+			if (!content) return;
+			const startsLine = (node: Node) => {
+				let prev = node.previousSibling;
+				while (prev && prev.nodeType === Node.TEXT_NODE && !prev.textContent?.trim()) {
+					prev = prev.previousSibling;
+				}
+				return !prev || (prev instanceof HTMLElement && prev.tagName === "BR");
+			};
+			content.querySelectorAll("p > strong, p > b").forEach((label) => {
+				if (!/:\s*$/.test(label.textContent ?? "")) return;
+				if ((label.textContent ?? "").trim().length > 24) return;
+				if (!startsLine(label)) return;
+				label.classList.add("contact-label");
+				label.parentElement?.classList.add("contact-line");
+			});
+			// Imported contact blocks often double the line break before each
+			// label; drop the second one so the lines sit together.
+			const isBr = (n: Node | null) => n instanceof HTMLElement && n.tagName === "BR";
+			content.querySelectorAll(".contact-label").forEach((label) => {
+				// Keep the gap before the first label, which ends the prose.
+				if (label.parentElement?.querySelector(".contact-label") === label) return;
+				const prev = label.previousSibling;
+				if (!isBr(prev)) return;
+				const before = prev?.previousSibling ?? null;
+				if (isBr(before)) prev?.remove();
+			});
+		}
+
+		markContactLines();
 	</script>
 </Base>
 
 <style>
-	/* Article container */
+	/* ---------------------------------------------------------------
+	 * Place page. Desktop is a three-column reading view: the meta
+	 * column (kind, date added, tags), the body, and a gutter for the
+	 * TOC and widgets. The header sits over the body column; the photo
+	 * spans all three.
+	 * ------------------------------------------------------------- */
 	.article {
 		max-width: var(--wide-width);
 		margin: 0 auto;
 	}
 
-	/* Hero image - full width within container */
-	.article-hero {
-		margin: var(--spacing-16) var(--spacing-6);
-		border-radius: var(--radius-lg);
-		overflow: hidden;
-		background: var(--color-surface);
-	}
-
-	.article-hero img {
-		width: 100%;
-		height: auto;
-		max-height: 500px;
-		object-fit: cover;
-	}
-
-	/* Three-column grid */
 	.article-grid {
 		display: grid;
 		grid-template-columns:
 			var(--meta-col-width) minmax(0, var(--content-width))
 			var(--gutter-width);
-		gap: var(--spacing-10);
+		grid-template-areas:
+			". header ."
+			"hero hero hero"
+			"meta main side";
+		column-gap: var(--spacing-10);
 		justify-content: center;
-		padding: 0 var(--spacing-6);
-		margin: var(--spacing-16) 0;
+		padding: var(--spacing-12) var(--spacing-6) 0;
+		margin-bottom: var(--spacing-16);
 	}
 
-	/* Left column: Meta */
-	.article-meta-col {
+	/* Header */
+	.article-header {
+		grid-area: header;
+		min-width: 0;
+		margin-bottom: var(--spacing-8);
+	}
+
+	.breadcrumb ol {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		list-style: none;
+		margin: 0 0 var(--spacing-4);
+		padding: 0;
+		font-size: var(--font-size-sm);
+		line-height: var(--leading-snug);
+		color: var(--color-muted);
+	}
+
+	.breadcrumb li {
+		min-width: 0;
+	}
+
+	.breadcrumb li + li::before {
+		content: "/";
+		padding-inline: var(--spacing-2);
+		color: var(--color-border);
+	}
+
+	.breadcrumb a {
+		color: var(--color-brand);
+		font-weight: 600;
+		text-decoration: underline;
+		text-decoration-color: transparent;
+		text-underline-offset: 3px;
+	}
+
+	.breadcrumb a:hover {
+		text-decoration-color: currentColor;
+	}
+
+	.breadcrumb [aria-current] {
+		overflow-wrap: anywhere;
+	}
+
+	.article-title {
+		font-family: var(--font-display);
+		font-weight: var(--font-weight-display);
+		font-size: clamp(var(--font-size-3xl), 4.2vw, var(--font-size-5xl));
+		line-height: 1.08;
+		letter-spacing: var(--tracking-tight);
+		color: var(--color-text);
+		margin: 0;
+		text-wrap: balance;
+		overflow-wrap: break-word;
+	}
+
+	.article-excerpt {
+		margin: var(--spacing-4) 0 0;
+		max-width: 60ch;
+		font-size: var(--font-size-lg);
+		line-height: var(--leading-normal);
+		color: var(--color-text-secondary);
+	}
+
+	/* Photo: across the body and both gutters. width/height stay on the
+	 * img, and the box ratio is fixed, so nothing shifts as it loads. */
+	.article-hero {
+		grid-area: hero;
+		margin: 0 0 var(--spacing-12);
+		border-radius: var(--radius);
+		overflow: hidden;
+		background: var(--color-surface);
+	}
+
+	/* Imported media has no stored dimensions, so the fixed box ratio is what
+	 * keeps CLS at 0. Many places use a logo as their photo; contain keeps a
+	 * logo whole, and a photo near 3:2 still fills the box. */
+	.article-hero :global(img) {
 		display: block;
+		width: 100%;
+		height: auto;
+		aspect-ratio: 3 / 2;
+		object-fit: contain;
 	}
 
-	.meta-sticky {
+	/* Left column: kind, date added, tags */
+	.article-meta-col {
+		grid-area: meta;
+		min-width: 0;
+	}
+
+	.meta-list {
 		position: sticky;
 		top: calc(var(--nav-height) + var(--spacing-8));
+		margin: 0;
+		padding-top: var(--spacing-1);
 	}
 
 	.meta-block {
-		margin-bottom: var(--spacing-6);
+		margin: 0 0 var(--spacing-6);
 	}
 
 	.meta-label {
-		display: block;
 		font-size: var(--font-size-xs);
-		font-weight: 500;
-		text-transform: uppercase;
-		letter-spacing: var(--tracking-wide);
+		font-weight: 600;
+		line-height: var(--leading-snug);
 		color: var(--color-muted);
 		margin-bottom: var(--spacing-1);
 	}
 
 	.meta-value {
-		display: block;
+		margin: 0;
 		font-size: var(--font-size-sm);
-		color: var(--color-text-secondary);
-	}
-
-	.meta-tags {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--spacing-1);
-	}
-
-	.meta-tag {
-		display: inline-block;
-		padding: var(--tag-padding-y) var(--spacing-2);
-		font-size: var(--font-size-xs);
-		color: var(--color-text-secondary);
-		background: var(--color-surface);
-		border-radius: var(--radius);
-		text-decoration: none;
-		transition:
-			color var(--transition-fast),
-			background var(--transition-fast);
-	}
-
-	.meta-tag:hover {
-		color: var(--color-text);
-		background: var(--color-border);
-	}
-
-	/* Byline styles */
-	.bylines {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-1);
-	}
-
-	.byline {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-2);
-	}
-
-	.byline-avatar {
-		width: var(--avatar-size-lg);
-		height: var(--avatar-size-lg);
-		border-radius: 50%;
-		object-fit: cover;
-	}
-
-	.byline-info {
-		display: flex;
-		flex-direction: column;
-	}
-
-	.byline-name {
-		font-size: var(--font-size-sm);
-		font-weight: 500;
+		line-height: var(--leading-snug);
 		color: var(--color-text);
 	}
 
-	.byline-role {
-		font-size: var(--font-size-xs);
-		color: var(--color-muted);
+	.meta-value a {
+		color: var(--color-brand);
+		text-decoration: underline;
+		text-decoration-thickness: 1px;
+		text-underline-offset: 3px;
 	}
 
-	/* Main content column */
+	.meta-value a:hover {
+		color: var(--color-brand-hover);
+	}
+
+	.meta-block--tags .meta-value :global(.tag-list) {
+		flex-direction: column;
+		row-gap: var(--spacing-2);
+	}
+
+	/* Main column */
 	.article-main {
+		grid-area: main;
 		min-width: 0;
 	}
 
-	.article-header {
-		margin-bottom: var(--spacing-10);
-	}
-
-	.article-header .article-meta {
-		display: none;
-		align-items: center;
-		flex-wrap: wrap;
-		column-gap: var(--spacing-3);
-		row-gap: var(--spacing-1);
-		font-size: var(--font-size-sm);
-		color: var(--color-muted);
-		margin-bottom: var(--spacing-4);
-	}
-
-	.article-meta-byline {
-		font-weight: 500;
-		color: var(--color-text-secondary);
-	}
-
-	.article-title {
-		font-size: clamp(2rem, 5vw, var(--font-size-5xl));
-		font-weight: var(--font-weight-display);
-		line-height: var(--leading-tight);
-		letter-spacing: var(--tracking-tight);
-		margin-bottom: var(--spacing-4);
-	}
-
-	.article-excerpt {
-		font-size: var(--font-size-xl);
-		line-height: var(--leading-relaxed);
-		color: var(--color-text-secondary);
-	}
-
-	/* Article content typography */
+	/* Body: set for reading. */
 	.article-content {
-		font-size: var(--font-size-lg);
-		line-height: var(--leading-relaxed);
+		max-width: 68ch;
+		overflow-wrap: break-word;
+		font-size: var(--font-size-base);
+		line-height: 1.7;
+		color: var(--color-text);
+	}
+
+	.article-content > :global(:first-child),
+	.article-content > :global(:first-child > :first-child) {
+		margin-top: 0;
 	}
 
 	.article-content :global(p) {
-		margin-bottom: 1.5em;
+		margin: 0 0 1.25em;
 	}
 
 	.article-content :global(h2) {
-		font-size: var(--font-size-2xl);
-		margin-top: 2.5em;
-		margin-bottom: 0.75em;
+		font-family: var(--font-display);
+		font-weight: var(--font-weight-display);
+		font-size: var(--font-size-xl);
+		line-height: var(--leading-snug);
+		letter-spacing: 0;
+		margin: 2.2em 0 0.6em;
 		scroll-margin-top: calc(var(--nav-height) + var(--spacing-4));
 	}
 
 	.article-content :global(h3) {
-		font-size: var(--font-size-xl);
-		margin-top: 2em;
-		margin-bottom: 0.5em;
+		font-family: var(--font-body);
+		font-weight: 600;
+		font-size: var(--font-size-lg);
+		line-height: var(--leading-snug);
+		letter-spacing: 0;
+		margin: 1.8em 0 0.5em;
 		scroll-margin-top: calc(var(--nav-height) + var(--spacing-4));
+	}
+
+	.article-content :global(h4) {
+		font-family: var(--font-body);
+		font-weight: 600;
+		font-size: var(--font-size-base);
+		margin: 1.6em 0 0.4em;
+	}
+
+	/*
+	 * Contact lines. Addresses and phone numbers come in as paragraphs that
+	 * open with a bold label ("Address:", "Phone:"), one per paragraph or
+	 * several split by line breaks. A script below marks those labels (CSS
+	 * alone can't tell a leading label from bold text mid-sentence); the
+	 * label becomes a small quiet column so the value, the part people copy,
+	 * reads first.
+	 */
+	.article-content :global(.contact-label) {
+		display: inline-block;
+		min-width: 6.5em;
+		margin-inline-end: var(--spacing-2);
+		font-size: var(--font-size-sm);
+		font-weight: 600;
+		color: var(--color-muted);
+	}
+
+	.article-content :global(p.contact-line:has(+ p.contact-line)) {
+		margin-bottom: 0.35em;
+	}
+
+	.article-content :global(strong),
+	.article-content :global(b) {
+		font-weight: 600;
 	}
 
 	.article-content :global(blockquote) {
 		margin: 2em 0;
-		padding: var(--spacing-4) var(--spacing-6);
-		border-left: 3px solid var(--color-border);
-		background: var(--color-bg-subtle);
-		border-radius: 0 var(--radius) var(--radius) 0;
+		padding: 0 0 0 var(--spacing-5);
+		border-left: 2px solid var(--color-brand);
 		color: var(--color-text-secondary);
-		font-style: italic;
 	}
 
 	.article-content :global(pre) {
 		margin: 2em 0;
 		padding: var(--spacing-5);
 		background: var(--color-surface);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius);
 		overflow-x: auto;
 		font-family: var(--font-mono);
 		font-size: var(--font-size-sm);
 		line-height: 1.6;
 	}
 
-	.article-content :global(code) {
+	/* The WordPress import marked some place names as inline code. On a
+	 * travel guide that is never code, so it reads as the surrounding text. */
+	.article-content :global(:not(pre) > code) {
+		font: inherit;
+		background: none;
+		padding: 0;
+	}
+
+	.article-content :global(pre code) {
 		font-family: var(--font-mono);
-		font-size: 0.9em;
-		background: var(--color-surface);
-		padding: 0.2em 0.4em;
-		border-radius: var(--radius);
 	}
 
 	.article-content :global(pre code) {
@@ -580,21 +665,47 @@ const publishDate = post.data.publishedAt ? formatDate(locale, post.data.publish
 
 	.article-content :global(ul),
 	.article-content :global(ol) {
-		margin-bottom: 1.5em;
-		padding-left: 1.5em;
+		margin: 0 0 1.25em;
+		padding-left: 1.4em;
 	}
 
 	.article-content :global(li) {
-		margin-bottom: 0.5em;
+		margin-bottom: 0.4em;
+	}
+
+	.article-content :global(li::marker) {
+		color: var(--color-muted);
+	}
+
+	/* Photos in the body sit at column width. */
+	.article-content :global(figure) {
+		margin: 2em 0;
+		max-width: 100%;
 	}
 
 	.article-content :global(img) {
+		display: block;
+		width: 100%;
+		max-width: 100%;
+		height: auto;
+		border-radius: var(--radius);
+		background: var(--color-limestone);
+	}
+
+	.article-content :global(p > img),
+	.article-content :global(a > img) {
 		margin: 2em 0;
-		border-radius: var(--radius-lg);
+	}
+
+	.article-content :global(figcaption) {
+		margin-top: var(--spacing-2);
+		font-size: var(--font-size-sm);
+		line-height: var(--leading-snug);
+		color: var(--color-muted);
 	}
 
 	.article-content :global(hr) {
-		margin: 3em 0;
+		margin: 2.5em 0;
 		border: none;
 		border-top: 1px solid var(--color-border);
 	}
@@ -607,12 +718,28 @@ const publishDate = post.data.publishedAt ? formatDate(locale, post.data.publish
 	}
 
 	.article-content :global(a:hover) {
+		color: var(--color-brand-hover);
 		text-decoration-thickness: 2px;
 	}
 
-	/* Right column: TOC + Sidebar */
+	.article-content :global(table) {
+		width: 100%;
+		border-collapse: collapse;
+		margin: 0 0 1.5em;
+		font-size: var(--font-size-sm);
+	}
+
+	.article-content :global(th),
+	.article-content :global(td) {
+		text-align: start;
+		padding: var(--spacing-2) var(--spacing-3) var(--spacing-2) 0;
+		border-bottom: 1px solid var(--color-border-subtle);
+	}
+
+	/* Right gutter */
 	.article-sidebar {
-		display: block;
+		grid-area: side;
+		min-width: 0;
 	}
 
 	/*
@@ -650,8 +777,10 @@ const publishDate = post.data.publishedAt ? formatDate(locale, post.data.publish
 
 	/* Keep the body's image and paragraph rules off the ad and its disclosure line. */
 	.article-content :global(.ad-slot img) {
+		width: auto;
 		margin: 0 auto;
 		border-radius: 0;
+		background: none;
 	}
 
 	.article-content :global(.ad-slot__disclosure) {
@@ -665,27 +794,24 @@ const publishDate = post.data.publishedAt ? formatDate(locale, post.data.publish
 
 	.toc {
 		margin-bottom: var(--spacing-8);
-		padding-bottom: var(--spacing-6);
-		border-bottom: 1px solid var(--color-border-subtle);
 	}
 
-	.toc-title {
-		font-size: var(--font-size-xs);
-		font-weight: 500;
-		text-transform: uppercase;
-		letter-spacing: var(--tracking-wide);
-		color: var(--color-muted);
-		margin-bottom: var(--spacing-3);
+	.toc-title,
+	.sidebar-widgets :global(.widget__title) {
+		font-family: var(--font-body);
+		font-size: var(--font-size-sm);
+		font-weight: 600;
+		line-height: var(--leading-snug);
+		letter-spacing: 0;
+		color: var(--color-text);
+		margin: 0 0 var(--spacing-3);
 	}
 
 	.toc-content :global(.toc-list) {
 		list-style: none;
 		padding: 0;
 		margin: 0;
-	}
-
-	.toc-content :global(.toc-item) {
-		margin-bottom: var(--spacing-1);
+		border-left: 1px solid var(--color-border);
 	}
 
 	.toc-content :global(.toc-item--nested) {
@@ -694,45 +820,59 @@ const publishDate = post.data.publishedAt ? formatDate(locale, post.data.publish
 
 	.toc-content :global(.toc-link) {
 		display: block;
+		margin-left: -1px;
+		padding: var(--spacing-1) 0 var(--spacing-1) var(--spacing-3);
+		border-left: 1px solid transparent;
 		font-size: var(--font-size-sm);
+		line-height: var(--leading-snug);
 		color: var(--color-muted);
 		text-decoration: none;
-		padding: var(--spacing-1) 0;
-		transition: color var(--transition-fast);
-		line-height: var(--leading-snug);
 	}
 
-	.toc-content :global(.toc-link:hover),
-	.toc-content :global(.toc-link.active) {
+	.toc-content :global(.toc-link:hover) {
 		color: var(--color-text);
 	}
 
-	/* Sidebar widgets */
+	.toc-content :global(.toc-link.active) {
+		color: var(--color-brand);
+		border-left-color: var(--color-brand);
+	}
+
+	/* Sidebar widgets: quiet lists, no pills, no boxes. */
 	.sidebar-widgets :global(.widget-area) {
 		display: flex;
 		flex-direction: column;
-		gap: var(--spacing-6);
+		gap: var(--spacing-8);
 	}
 
 	.sidebar-widgets :global(.widget) {
 		font-size: var(--font-size-sm);
-	}
-
-	.sidebar-widgets :global(.widget__title) {
-		font-size: var(--font-size-xs);
-		font-weight: 500;
-		text-transform: uppercase;
-		letter-spacing: var(--tracking-wide);
-		color: var(--color-muted);
-		margin-bottom: var(--spacing-3);
+		line-height: var(--leading-snug);
 	}
 
 	.sidebar-widgets :global(.widget__content) {
 		color: var(--color-text-secondary);
-		line-height: var(--leading-relaxed);
 	}
 
-	/* Sidebar search widget */
+	.sidebar-widgets :global(ul) {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+	}
+
+	.sidebar-widgets :global(.widget a) {
+		color: var(--color-text-secondary);
+		text-decoration: underline;
+		text-decoration-color: transparent;
+		text-underline-offset: 3px;
+	}
+
+	.sidebar-widgets :global(.widget a:hover) {
+		color: var(--color-brand);
+		text-decoration-color: currentColor;
+	}
+
+	/* Search */
 	.sidebar-widgets :global(.widget-search) {
 		display: flex;
 		flex-direction: column;
@@ -748,161 +888,62 @@ const publishDate = post.data.publishedAt ? formatDate(locale, post.data.publish
 		border-radius: var(--radius);
 		background: var(--color-bg);
 		color: var(--color-text);
-		transition:
-			border-color var(--transition-fast),
-			box-shadow var(--transition-fast);
 	}
 
 	.sidebar-widgets :global(.widget-search__input)::placeholder {
 		color: var(--color-muted);
 	}
 
-	.sidebar-widgets :global(.widget-search__input):focus,
 	.sidebar-widgets :global(.widget-search__input):focus-visible {
-		outline: none;
+		outline: 2px solid var(--color-brand);
+		outline-offset: 2px;
 		border-color: var(--color-brand);
-		box-shadow: 0 0 0 3px var(--color-brand-ring);
 	}
 
 	.sidebar-widgets :global(.widget-search__button) {
 		display: none;
 	}
 
-	/* Sidebar categories widget */
-	.sidebar-widgets :global(.widget-categories) {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-	}
-
-	.sidebar-widgets :global(.widget-categories li) {
+	/* Categories and archives: name on the left, count on the right. */
+	.sidebar-widgets :global(.widget-categories li),
+	.sidebar-widgets :global(.widget-archives li) {
 		display: flex;
 		justify-content: space-between;
-		align-items: center;
-		padding: var(--spacing-2) 0;
-		border-bottom: 1px solid var(--color-border-subtle);
+		align-items: baseline;
+		gap: var(--spacing-3);
+		padding: var(--spacing-1) 0;
 	}
 
-	.sidebar-widgets :global(.widget-categories li:last-child) {
-		border-bottom: none;
-	}
-
-	.sidebar-widgets :global(.widget-categories__link) {
-		color: var(--color-text-secondary);
-		text-decoration: none;
-		transition: color var(--transition-fast);
-	}
-
-	.sidebar-widgets :global(.widget-categories__link:hover) {
-		color: var(--color-text);
-	}
-
-	.sidebar-widgets :global(.widget-categories__count) {
+	.sidebar-widgets :global(.widget-categories__count),
+	.sidebar-widgets :global(.widget-archives__count) {
 		font-size: var(--font-size-xs);
+		font-variant-numeric: tabular-nums;
 		color: var(--color-muted);
-		background: var(--color-surface);
-		padding: var(--tag-padding-y) var(--spacing-2);
-		border-radius: var(--radius);
 	}
 
-	/* Sidebar tags widget - pill style */
+	/* Tag cloud: plain inline links in small text. */
 	.sidebar-widgets :global(.widget-tags__cloud) {
-		list-style: none;
-		padding: 0;
-		margin: 0;
 		display: flex;
 		flex-wrap: wrap;
-		gap: var(--spacing-2);
-	}
-
-	.sidebar-widgets :global(.widget-tags__cloud li) {
-		margin: 0;
-	}
-
-	.sidebar-widgets :global(.widget-tags__link) {
-		display: inline-block;
-		padding: var(--tag-padding-y) var(--spacing-2);
+		column-gap: var(--spacing-3);
+		row-gap: var(--spacing-1);
 		font-size: var(--font-size-xs);
-		color: var(--color-text-secondary);
-		background: var(--color-surface);
-		border-radius: var(--radius);
-		text-decoration: none;
-		transition:
-			color var(--transition-fast),
-			background var(--transition-fast);
-	}
-
-	.sidebar-widgets :global(.widget-tags__link:hover) {
-		color: var(--color-text);
-		background: var(--color-border);
+		line-height: var(--leading-normal);
 	}
 
 	.sidebar-widgets :global(.widget-tags__count) {
 		display: none;
 	}
 
-	/* Sidebar recent posts widget */
-	.sidebar-widgets :global(.widget-recent-posts) {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-	}
-
+	/* Recent posts */
 	.sidebar-widgets :global(.widget-recent-posts li) {
-		padding: var(--spacing-2) 0;
-		border-bottom: 1px solid var(--color-border-subtle);
+		padding: var(--spacing-1) 0;
 	}
 
-	.sidebar-widgets :global(.widget-recent-posts li:last-child) {
-		border-bottom: none;
-	}
-
-	.sidebar-widgets :global(.widget-recent-posts a) {
-		color: var(--color-text-secondary);
-		text-decoration: none;
-		transition: color var(--transition-fast);
-		line-height: var(--leading-snug);
-	}
-
-	.sidebar-widgets :global(.widget-recent-posts a:hover) {
-		color: var(--color-text);
-	}
-
-	/* Sidebar archives widget */
-	.sidebar-widgets :global(.widget-archives) {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-	}
-
-	.sidebar-widgets :global(.widget-archives li) {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: var(--spacing-2) 0;
-		border-bottom: 1px solid var(--color-border-subtle);
-	}
-
-	.sidebar-widgets :global(.widget-archives li:last-child) {
-		border-bottom: none;
-	}
-
-	.sidebar-widgets :global(.widget-archives__link) {
-		color: var(--color-text-secondary);
-		text-decoration: none;
-		transition: color var(--transition-fast);
-	}
-
-	.sidebar-widgets :global(.widget-archives__link:hover) {
-		color: var(--color-text);
-	}
-
-	.sidebar-widgets :global(.widget-archives__count) {
+	.sidebar-widgets :global(.widget-recent-posts__date) {
+		display: block;
 		font-size: var(--font-size-xs);
 		color: var(--color-muted);
-		background: var(--color-surface);
-		padding: var(--tag-padding-y) var(--spacing-2);
-		border-radius: var(--radius);
 	}
 
 	/* Comments section */
@@ -922,8 +963,9 @@ const publishDate = post.data.publishedAt ? formatDate(locale, post.data.publish
 	}
 
 	.article-comments :global(.ec-comments-heading) {
-		font-size: var(--font-size-2xl);
-		font-weight: var(--font-weight-heading);
+		font-family: var(--font-display);
+		font-size: var(--font-size-xl);
+		font-weight: var(--font-weight-display);
 		margin-bottom: var(--spacing-8);
 	}
 
@@ -932,7 +974,6 @@ const publishDate = post.data.publishedAt ? formatDate(locale, post.data.publish
 	}
 
 	.article-comments :global(.ec-comment-date) {
-		font-family: var(--font-mono);
 		color: var(--color-muted);
 	}
 
@@ -957,11 +998,16 @@ const publishDate = post.data.publishedAt ? formatDate(locale, post.data.publish
 		color: var(--color-on-brand) !important;
 	}
 
-	/* More posts section */
+	/* More places */
+	/* Same hairline-and-heading rhythm as the home page's sections; no tinted
+	 * band, so the page runs straight into the ink footer. */
 	.more-posts {
-		background: var(--color-bg-subtle);
-		padding: var(--spacing-16) 0;
-		margin-top: var(--spacing-16);
+		padding: 0;
+	}
+
+	.more-inner > .more-head {
+		border-top: 1px solid var(--color-border);
+		padding-top: var(--spacing-12);
 	}
 
 	.more-inner {
@@ -970,57 +1016,159 @@ const publishDate = post.data.publishedAt ? formatDate(locale, post.data.publish
 		padding: 0 var(--spacing-6);
 	}
 
+	.more-head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: var(--spacing-2) var(--spacing-6);
+		margin-bottom: var(--spacing-8);
+	}
+
 	.more-title {
+		font-family: var(--font-display);
 		font-size: var(--font-size-2xl);
-		font-weight: var(--font-weight-heading);
-		margin-bottom: var(--spacing-10);
+		font-weight: var(--font-weight-display);
+		line-height: var(--leading-tight);
+		letter-spacing: 0;
+		margin: 0;
+	}
+
+	.more-all {
+		font-size: var(--font-size-sm);
+		font-weight: 600;
+		color: var(--color-brand);
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	.more-all:hover {
+		color: var(--color-brand-hover);
 	}
 
 	.more-grid {
 		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: var(--spacing-8);
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: var(--spacing-10) var(--spacing-8);
 	}
 
-	/* Responsive */
+	/* Focus rings for the page's own links. */
+	.breadcrumb a:focus-visible,
+	.meta-value a:focus-visible,
+	.more-all:focus-visible,
+	.toc-content :global(.toc-link:focus-visible),
+	.sidebar-widgets :global(.widget a:focus-visible),
+	.article-content :global(a:focus-visible) {
+		outline: 2px solid var(--color-brand);
+		outline-offset: 2px;
+		border-radius: var(--radius);
+	}
+
+	/* ---------------------------------------------------------------
+	 * Below desktop: one column. The meta column becomes a short row of
+	 * facts between the photo and the body; the gutter is dropped.
+	 * ------------------------------------------------------------- */
 	@media (max-width: 1100px) {
 		.article-grid {
 			grid-template-columns: minmax(0, var(--content-width));
-			gap: 0;
+			grid-template-areas:
+				"header"
+				"hero"
+				"meta"
+				"main";
 		}
 
-		.article-meta-col,
 		.article-sidebar {
 			display: none;
 		}
 
-		.article-header .article-meta {
+		.article-hero {
+			margin-bottom: var(--spacing-6);
+		}
+
+		.meta-list {
+			position: static;
 			display: flex;
+			flex-wrap: wrap;
+			gap: var(--spacing-4) var(--spacing-10);
+			padding: 0 0 var(--spacing-6);
+			margin-bottom: var(--spacing-8);
+			border-bottom: 1px solid var(--color-border-subtle);
+		}
+
+		.meta-block {
+			margin: 0;
+		}
+
+		.meta-block--tags {
+			flex-basis: 100%;
+		}
+
+		.meta-block--tags .meta-value :global(.tag-list) {
+			flex-direction: row;
 		}
 	}
 
 	@media (max-width: 900px) {
-		.article-hero {
-			margin: var(--spacing-4) var(--spacing-4) var(--spacing-8);
-			border-radius: var(--radius);
-		}
-
-		.article-grid {
-			padding: 0 var(--spacing-4);
-		}
-
 		.more-grid {
-			grid-template-columns: repeat(2, 1fr);
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: var(--spacing-8) var(--spacing-5);
 		}
 	}
 
-	@media (max-width: 600px) {
-		.article-title {
-			font-size: var(--font-size-3xl);
+	/* Same 16px gutter as the header and footer once they go mobile. */
+	@media (max-width: 760px) {
+		.article-grid,
+		.more-inner {
+			padding-inline: var(--spacing-4);
+		}
+	}
+
+	@media (max-width: 640px) {
+		.article-grid {
+			padding: var(--spacing-6) var(--spacing-4) 0;
+			margin-bottom: var(--spacing-12);
 		}
 
+		.article-header {
+			margin-bottom: var(--spacing-6);
+		}
+
+		.article-title {
+			font-size: var(--font-size-2xl);
+			line-height: 1.12;
+		}
+
+		.article-excerpt {
+			font-size: var(--font-size-base);
+		}
+
+		/* The photo runs to the screen edges on phones. */
+		.article-hero {
+			margin-inline: calc(var(--spacing-4) * -1);
+			border-radius: 0;
+		}
+
+		.article-hero :global(img) {
+			aspect-ratio: 4 / 3;
+		}
+
+		.more-inner > .more-head {
+			padding-top: var(--spacing-8);
+		}
+
+		.more-inner {
+			padding: 0 var(--spacing-4);
+		}
+
+		.more-title {
+			font-size: var(--font-size-xl);
+		}
+	}
+
+	@media (max-width: 480px) {
 		.more-grid {
-			grid-template-columns: 1fr;
+			grid-template-columns: minmax(0, 1fr);
 		}
 	}
 </style>

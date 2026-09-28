@@ -1,0 +1,97 @@
+---
+/**
+ * The Guide Cyprus wordmark: a tiny outline of the island next to the site
+ * title in the display face. With a site logo set in EmDash, the logo image
+ * replaces both. `tone="light"` is for the dark footer band.
+ */
+import { ISLAND_GLYPH_PATH, ISLAND_VIEWBOX } from "../utils/island";
+
+interface Props {
+	title: string;
+	href: string;
+	logo?: { url?: string; alt?: string } | null;
+	tone?: "default" | "light";
+	class?: string;
+}
+
+const { title, href, logo, tone = "default", class: className } = Astro.props;
+---
+
+<a href={href} class:list={["wordmark", `wordmark--${tone}`, className]}>
+	{
+		logo?.url ? (
+			<img src={logo.url} alt={logo.alt || title} class="wordmark-logo" />
+		) : (
+			<>
+				<svg
+					class="wordmark-glyph"
+					viewBox={ISLAND_VIEWBOX}
+					width="28"
+					height="17"
+					aria-hidden="true"
+					focusable="false"
+				>
+					<path d={ISLAND_GLYPH_PATH} />
+				</svg>
+				<span class="wordmark-title">{title}</span>
+			</>
+		)
+	}
+</a>
+
+<style>
+	.wordmark {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.55rem;
+		color: var(--color-text);
+		text-decoration: none;
+		min-width: 0;
+	}
+
+	.wordmark-glyph {
+		flex: none;
+		width: 28px;
+		height: auto;
+		fill: var(--color-brand);
+		/* The glyph's centre of mass sits low; nudge it onto the x-height. */
+		transform: translateY(-1px);
+	}
+
+	.wordmark-title {
+		font-family: var(--font-display);
+		font-weight: 400;
+		font-synthesis: none;
+		font-size: var(--font-size-lg);
+		line-height: 1;
+		letter-spacing: 0;
+		white-space: nowrap;
+	}
+
+	.wordmark:hover {
+		color: var(--color-text);
+	}
+
+	.wordmark:hover .wordmark-title {
+		text-decoration: underline;
+		text-decoration-thickness: 1px;
+		text-underline-offset: 0.2em;
+	}
+
+	.wordmark-logo {
+		display: block;
+		height: 40px;
+		width: auto;
+	}
+
+	.wordmark--light,
+	.wordmark--light:hover {
+		color: var(--color-on-ink-band);
+	}
+
+	/* On the ink band the glyph takes the band's text colour: verdigris on
+	   harbour ink is too low-contrast to read as a shape. */
+	.wordmark--light .wordmark-glyph {
+		fill: var(--color-on-ink-band);
+	}
+</style>

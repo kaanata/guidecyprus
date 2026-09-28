@@ -1,0 +1,65 @@
+---
+/** A short, directional empty state for archive views with nothing in them. */
+import { localePath } from "../../utils/i18n";
+import { t } from "../../utils/strings";
+
+interface Props {
+	message: string;
+	/** Hide the "all places" link (on the all-places page itself). */
+	showAll?: boolean;
+}
+
+const { message, showAll = true } = Astro.props;
+const locale = Astro.currentLocale;
+---
+
+<div class="listing-empty">
+	<p class="empty-message">{message}</p>
+	<ul class="empty-actions">
+		{
+			showAll && (
+				<li>
+					<a href={localePath(locale, "/posts")}>{t(locale, "listing.emptyAll")}</a>
+				</li>
+			)
+		}
+		<li>
+			<a href={localePath(locale, "/search")}>{t(locale, "listing.emptySearch")}</a>
+		</li>
+	</ul>
+</div>
+
+<style>
+	.listing-empty {
+		max-width: 68ch;
+		padding: var(--spacing-8) 0 var(--spacing-12);
+		border-top: 1px solid var(--color-border-subtle);
+	}
+
+	.empty-message {
+		font-size: var(--font-size-lg);
+		line-height: var(--leading-normal);
+		color: var(--color-text);
+		margin: 0 0 var(--spacing-4);
+	}
+
+	.empty-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--spacing-3) var(--spacing-6);
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	.empty-actions a {
+		font-weight: 600;
+		color: var(--color-brand);
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
+	}
+
+	.empty-actions a:hover {
+		color: var(--color-brand-hover);
+	}
+</style>

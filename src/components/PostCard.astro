@@ -1,277 +1,114 @@
 ---
+/**
+ * A place card: photo first, then the place name and what kind of place it is.
+ * The whole card is one link. Blog meta (author, date, reading time, tag chips)
+ * is not shown; those props are still accepted so older callers keep working.
+ */
 import type { MediaValue, ContentBylineCredit } from "emdash";
 import { Image } from "emdash/ui";
-import { localePath } from "../utils/i18n";
-import { formatReadingTime } from "../utils/reading-time";
-import { formatDate } from "../utils/strings";
 
 interface Props {
 	title: string;
 	excerpt?: string;
 	featuredImage?: MediaValue | string;
 	href: string;
+	/** The place's kind, usually its category label. Shown under the title. */
+	kind?: string;
+	/** Heading level for the title; defaults to h2 (cards under a page h1). */
+	headingLevel?: 2 | 3;
+	/** Load the photo eagerly (first row above the fold). */
+	priority?: boolean;
+	/** @deprecated Not shown on place cards. */
 	date?: Date;
+	/** @deprecated Not shown on place cards. */
 	readingTime?: number;
+	/** @deprecated Not shown on place cards. */
 	tags?: Array<{ slug: string; label: string }>;
+	/** @deprecated Not shown on place cards. */
 	bylines?: ContentBylineCredit[];
 }
 
-const {
-	title,
-	excerpt,
-	featuredImage,
-	href,
-	date,
-	readingTime,
-	tags,
-	bylines,
-} = Astro.props;
+const { title, featuredImage, href, kind, headingLevel = 2, priority = false } = Astro.props;
 
-const locale = Astro.currentLocale;
-const formattedDate = date ? formatDate(locale, date, "short") : null;
+const Heading = headingLevel === 3 ? "h3" : "h2";
 ---
 
-<article class="post-card">
-	<a href={href} class="card-link">
-		{
-			featuredImage ? (
-				<div class="card-image">
-					<Image image={featuredImage} />
-				</div>
-			) : (
-				<div class="card-placeholder" />
-			)
-		}
-		<div class="card-body">
-			<div class="card-meta">
-				{
-					bylines && bylines.length > 0 && (
-						<>
-							<div class="card-bylines">
-								{bylines.slice(0, 1).map((credit) => (
-									<span class="card-byline">
-										{credit.byline.avatarMediaId && (
-											<img
-												src={`/_emdash/api/media/file/${credit.byline.avatarMediaId}`}
-												alt={credit.byline.displayName}
-												class="card-byline-avatar"
-											/>
-										)}
-										<span class="card-byline-name">
-											{credit.byline.displayName}
-										</span>
-									</span>
-								))}
-								{bylines.length > 1 && (
-									<span
-										class="byline-more"
-										data-tooltip={bylines
-											.slice(1)
-											.map((c) => c.byline.displayName)
-											.join(", ")}
-										title={bylines
-											.slice(1)
-											.map((c) => c.byline.displayName)
-											.join(", ")}
-										tabindex="0"
-									>
-										+{bylines.length - 1}
-									</span>
-								)}
-							</div>
-							{(formattedDate || readingTime) && <span class="meta-dot" />}
-						</>
-					)
-				}
-				{formattedDate && <time>{formattedDate}</time>}
-				{formattedDate && readingTime && <span class="meta-dot" />}
-				{readingTime && <span>{formatReadingTime(readingTime, locale, "short")}</span>}
-			</div>
-			<h2 class="card-title">{title}</h2>
-			{excerpt && <p class="card-excerpt">{excerpt}</p>}
+<article class="place-card">
+	<a href={href} class="place-card__link">
+		<div class="place-card__photo" data-photo-frame>
+			{featuredImage ? <Image image={featuredImage} priority={priority} /> : <div class="place-card__blank" />}
 		</div>
+		<Heading class="place-card__title">{title}</Heading>
+		{kind && <p class="place-card__kind">{kind}</p>}
 	</a>
-	{
-		tags && tags.length > 0 && (
-			<div class="card-tags">
-				{tags.slice(0, 2).map((tag) => (
-					<a href={localePath(locale, `/tag/${tag.slug}`)} class="card-tag">
-						{tag.label}
-					</a>
-				))}
-			</div>
-		)
-	}
 </article>
 
 <style>
-	.post-card {
-		display: flex;
-		flex-direction: column;
+	.place-card {
+		min-width: 0;
 	}
 
-	.card-link {
+	.place-card__link {
 		display: block;
-		text-decoration: none;
 		color: inherit;
+		text-decoration: none;
+		border-radius: var(--radius);
 	}
 
-	.card-image {
-		aspect-ratio: 16 / 10;
+	.place-card__link:focus-visible {
+		outline: 2px solid var(--color-brand);
+		outline-offset: 4px;
+	}
+
+	.place-card__photo {
+		aspect-ratio: 4 / 3;
 		overflow: hidden;
-		border-radius: var(--radius-lg);
-		background: var(--color-surface);
-		margin-bottom: var(--spacing-4);
+		border-radius: var(--radius);
+		background: var(--color-limestone);
+		margin-bottom: var(--spacing-3);
 	}
 
-	.card-image img {
+	.place-card__photo :global(img),
+	.place-card__photo :global(picture) {
+		display: block;
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
-		transition: transform 0.3s ease;
 	}
 
-	.card-link:hover .card-image img {
-		transform: scale(1.03);
+	.place-card__blank {
+		width: 100%;
+		height: 100%;
 	}
 
-	.card-placeholder {
-		aspect-ratio: 16 / 10;
-		border-radius: var(--radius-lg);
-		background: var(--color-surface);
-		margin-bottom: var(--spacing-4);
-	}
-
-	.card-body {
-		flex: 1;
-	}
-
-	.card-meta {
-		display: flex;
-		align-items: center;
-		flex-wrap: wrap;
-		column-gap: var(--spacing-3);
-		row-gap: 0;
-		font-size: var(--font-size-sm);
-		color: var(--color-muted);
-		margin-bottom: var(--spacing-2);
-	}
-
-	.card-meta time,
-	.card-meta span:not(.meta-dot) {
-		white-space: nowrap;
-	}
-
-	.meta-dot {
-		width: 3px;
-		height: 3px;
-		border-radius: 50%;
-		background: var(--color-muted);
-	}
-
-	.card-title {
-		font-size: var(--font-size-xl);
-		font-weight: var(--font-weight-heading);
-		line-height: var(--leading-snug);
-		letter-spacing: var(--tracking-snug);
-		margin-bottom: var(--spacing-2);
-		transition: color var(--transition-fast);
-	}
-
-	.card-link:hover .card-title {
-		color: var(--color-brand);
-	}
-
-	.card-excerpt {
+	.place-card__title {
+		font-family: var(--font-body);
 		font-size: var(--font-size-base);
-		line-height: var(--leading-relaxed);
-		color: var(--color-text-secondary);
-		display: -webkit-box;
-		-webkit-line-clamp: 2;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
-	}
-
-	.card-tags {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--spacing-2);
-		margin-top: var(--spacing-3);
-	}
-
-	.card-tag {
-		display: inline-block;
-		padding: var(--tag-padding-y) var(--spacing-2);
-		font-size: var(--font-size-xs);
-		color: var(--color-text-secondary);
-		background: var(--color-surface);
-		border-radius: var(--radius);
-		text-decoration: none;
-		transition:
-			color var(--transition-fast),
-			background var(--transition-fast);
-	}
-
-	.card-tag:hover {
+		font-weight: 600;
+		line-height: var(--leading-snug);
+		letter-spacing: 0;
 		color: var(--color-text);
-		background: var(--color-border);
+		margin: 0;
+		text-decoration-line: underline;
+		text-decoration-color: transparent;
+		text-decoration-thickness: 1px;
+		text-underline-offset: 3px;
 	}
 
-	/* Byline styles */
-	.card-bylines {
-		display: flex;
-		align-items: center;
-		gap: 2px;
-		white-space: nowrap;
+	.place-card__link:hover .place-card__title {
+		text-decoration-color: currentColor;
 	}
 
-	.card-byline {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--spacing-1);
+	@media (prefers-reduced-motion: no-preference) {
+		.place-card__title {
+			transition: text-decoration-color var(--transition-fast);
+		}
 	}
 
-	.card-byline-avatar {
-		width: var(--avatar-size-xs);
-		height: var(--avatar-size-xs);
-		border-radius: 50%;
-		object-fit: cover;
-	}
-
-	.card-byline-name {
-		font-weight: 500;
-		color: var(--color-text-secondary);
-	}
-
-	.byline-more {
-		position: relative;
-		font-size: var(--font-size-xs);
+	.place-card__kind {
+		margin: var(--spacing-1) 0 0;
+		font-size: var(--font-size-sm);
+		line-height: var(--leading-snug);
 		color: var(--color-muted);
-		margin-left: 2px;
-		cursor: default;
-		border-radius: var(--radius);
-		outline-offset: 2px;
-	}
-
-	.byline-more:focus-visible {
-		outline: 2px solid var(--color-brand);
-	}
-
-	.byline-more[data-tooltip]:hover::after,
-	.byline-more[data-tooltip]:focus-visible::after {
-		content: attr(data-tooltip);
-		position: absolute;
-		bottom: calc(100% + 6px);
-		left: 50%;
-		transform: translateX(-50%);
-		white-space: nowrap;
-		background: var(--color-text);
-		color: var(--color-bg);
-		font-size: var(--font-size-xs);
-		font-weight: 400;
-		padding: var(--spacing-1) var(--spacing-2);
-		border-radius: var(--radius);
-		pointer-events: none;
-		z-index: 10;
 	}
 </style>

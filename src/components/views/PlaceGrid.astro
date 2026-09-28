@@ -1,0 +1,32 @@
+---
+/** The responsive card grid shared by the archive views: 3 / 2 / 1 columns. */
+---
+
+<div class="place-grid"><slot /></div>
+
+<style>
+	.place-grid {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: var(--spacing-12) var(--spacing-8);
+	}
+
+	/* In-feed ads span the full row; their margins vanish with the space when unfilled. */
+	.place-grid > :global(.ad-slot) {
+		grid-column: 1 / -1;
+	}
+
+	@media (max-width: 960px) {
+		.place-grid {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: var(--spacing-10) var(--spacing-6);
+		}
+	}
+
+	@media (max-width: 560px) {
+		.place-grid {
+			grid-template-columns: minmax(0, 1fr);
+			gap: var(--spacing-8);
+		}
+	}
+</style>

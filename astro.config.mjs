@@ -46,10 +46,19 @@ export default defineConfig({
 	fonts: [
 		{
 			provider: fontProviders.google(),
-			name: "Inter",
+			name: "Schibsted Grotesk",
 			cssVariable: "--font-body",
 			weights: [400, 500, 600, 700],
+			subsets: ["latin", "latin-ext"],
 			fallbacks: ["sans-serif"],
+		},
+		{
+			provider: fontProviders.google(),
+			name: "Young Serif",
+			cssVariable: "--font-display",
+			weights: [400],
+			subsets: ["latin", "latin-ext"],
+			fallbacks: ["Georgia", "serif"],
 		},
 		{
 			provider: fontProviders.google(),

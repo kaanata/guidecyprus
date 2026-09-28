@@ -42,22 +42,22 @@ This template ships with `.mcp.json`, `.cursor/mcp.json`, and `.vscode/mcp.json`
 - Always call `Astro.cache.set(cacheHint)` on pages that query content.
 - Taxonomy names in queries must match the seed's `"name"` field exactly (e.g., `"category"` not `"categories"`).
 
-## This Template
+## This Site
 
-A blog with posts, pages, categories, tags, full-text search, and RSS. Designed for personal writing, technical writing, indie newsletters, and anything where the writing is the product. Editorial-tech aesthetic: confident sans-serif, restrained accent, real article structure with bylines and reading time.
+Guide Cyprus: a bilingual (en, tr under `/tr`) directory of places in North Cyprus, mostly around Kyrenia/Girne -- historical sites, hotels, restaurants, bars, casinos, beaches, banks. Posts are places; categories are kinds of place. Readers are visitors, often on a phone, who want to find a place by kind and get its essentials (photo, address, phone). Built from the EmDash blog template, now themed as "Kyrenia harbour".
 
 ## Pages
 
-| Page        | Path               | What it shows                                                                                          |
-| ----------- | ------------------ | ------------------------------------------------------------------------------------------------------ |
-| Home        | `/`                | Featured post hero (large image + excerpt), latest posts grid                                          |
-| All posts   | `/posts`           | Article count, full post list with excerpts and tag chips                                              |
-| Post detail | `/posts/[slug]`    | Featured image, title, body, left meta column (authors + date), right TOC + search + categories gutter |
-| Search      | `/search`          | Full-text search UI                                                                                    |
-| Page        | `/pages/[slug]`    | Static page content (Portable Text)                                                                    |
-| Category    | `/category/[slug]` | Posts filtered by category                                                                             |
-| Tag         | `/tag/[slug]`      | Posts filtered by tag                                                                                  |
-| RSS         | `/rss.xml`         | Generated feed                                                                                         |
+| Page        | Path               | What it shows                                                                                                        |
+| ----------- | ------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| Home        | `/`, `/tr`         | `HomeView`: hero with search and the island map, kinds with counts, recently added grid, the front page's CMS text   |
+| All places  | `/posts`           | Count, jump-to-kind row, grid of place cards                                                                         |
+| Place       | `/[slug]`          | Breadcrumb, name, wide photo, left facts column (kind, added, tags), body, right widget gutter, "More <kind>"        |
+| Page        | `/[slug]`          | Static page content (Portable Text) in a reading column                                                              |
+| Search      | `/search`          | Search form and result list                                                                                          |
+| Category    | `/category/[slug]` | Places of one kind                                                                                                   |
+| Tag         | `/tag/[slug]`      | Places with one tag                                                                                                  |
+| RSS         | `/rss.xml`         | Generated feed                                                                                                       |
 
 ## Schema
 
@@ -70,15 +70,16 @@ Site settings have `title` and `tagline` -- both render in the header / footer.
 
 ## Visual character
 
-Single typeface: **Inter** on `--font-body`, used for everything including headings (`--font-heading` defaults to the body face; tighter letter-spacing on h1/h2). **JetBrains Mono** on `--font-mono` for inline code and code blocks. Body and headings share the same family; weight and size carry the hierarchy (`--font-weight-heading` 600, `--font-weight-display` 700 for h1/page titles).
-
-The brand colour is `#0066cc` (`--color-brand`) -- used for links, the post-card title hover, and the search input focus ring. There's also a secondary text colour (`--color-text-secondary`) and a `--color-muted` for meta info. Don't add a second accent.
-
-The article layout is the standout feature: a three-column reading view with a left meta column (author bylines, date), centred 680px body column, and a right gutter for search, table of contents, and categories. Don't flatten that into one column on desktop -- the layout signals "this is something to read".
+- **Colour.** Harbour ink `#102a3a` text on white; sea mist `#eff5f5` for quiet surfaces; **verdigris `#17766a`** (`--color-brand`) is the only accent -- links, focus rings, active states, the map marker. Limestone (`--color-limestone`) is only for image placeholders and the island map. The footer is an ink band (`--color-ink-band`). Dark mode is "night sea", via `light-dark()` in the tokens. Photos carry the colour.
+- **Type.** **Young Serif** on `--font-display` (= `--font-heading`) for h1/h2, page titles and place names. It has one weight (400); never bold it (`font-synthesis: none`). **Schibsted Grotesk** on `--font-body` for everything else, card titles at 600. Both load with latin-ext for Turkish. Major-third scale on a 17px base.
+- **The island.** One outline of the whole island (`src/utils/island.ts`, Natural Earth land data, no internal lines) is the brand: large in the home hero (`IslandMap.astro`), tiny in the wordmark (`Wordmark.astro`). Use it nowhere else.
+- **Places, not posts.** No author bylines, reading time or "continue reading". Show the place's kind instead; `src/utils/kind.ts` picks it (the town category `girne` only as a fallback, `uncategorized` never).
+- **Logos as photos.** Many places have a logo as their featured image. A script in `Base.astro` checks images inside `[data-photo-frame]`: if the border (or the four corners) is one flat colour, it sets `data-logo` and a tile of that colour, and `theme.css` shows the image whole instead of cropped.
+- The place page keeps the three-column reading layout (facts column, ~68ch body, widget gutter). Don't flatten it on desktop.
 
 ## Customisation
 
-Design tokens live in `src/styles/tokens.css` with their default values. To restyle the site, override tokens in `src/styles/theme.css` -- declarations there are unlayered, so they always beat the `@layer base` defaults. Don't edit `tokens.css` or `Base.astro` for visual changes.
+Design tokens live in `src/styles/tokens.css` with their default values. To restyle the site, override tokens in `src/styles/theme.css` -- declarations there are unlayered, so they always beat the `@layer base` defaults. Don't edit `tokens.css`; the theme's tokens and shared rules are in `theme.css`, the header/footer in `Base.astro`.
 
 Colours are defined with `light-dark(<light>, <dark>)`, so each token carries both modes. Overriding with a plain colour changes light and dark at once; use `light-dark()` in the override to keep them distinct. There is no separate dark palette to maintain.
 
@@ -88,20 +89,19 @@ CSS variables worth knowing (see `tokens.css` for the full list):
 
 - `--color-brand`, `--color-brand-hover`, `--color-on-brand`, `--color-brand-ring`
 - `--color-bg`, `--color-bg-subtle`, `--color-surface`, `--color-text`, `--color-text-secondary`, `--color-muted`, `--color-border`, `--color-border-subtle`
-- `--font-body`, `--font-heading`, `--font-mono`
-- `--font-weight-heading` (600) / `--font-weight-display` (700) -- heading weights; lower them if you switch to a serif
+- `--font-body`, `--font-display`, `--font-heading`, `--font-mono`
+- `--color-limestone`, `--color-ink-band`, `--color-on-ink-band`, `--color-on-ink-band-muted`
+- `--font-weight-heading` (600) / `--font-weight-display` (400, Young Serif's only weight)
 - `--tracking-tight` / `--tracking-snug` / `--tracking-wide` / `--tracking-wider` -- letter-spacing tokens used across headings and meta labels
 - `--content-width` (680px) -- article body column
 - `--wide-width` (1200px) -- max container
 - `--gutter-width` (200px) -- right sidebar (TOC) on article pages
 - `--meta-col-width` (180px) -- left meta column on article pages
-- `--avatar-size-{xs,sm,md,lg}` -- byline avatar sizes at different scales
 
 ## What not to do
 
-- Don't add a second accent colour or coloured section backgrounds. The page should be black, white, and one blue.
-- Don't replace Inter with a display sans (Bebas, Anton, etc.). Headings rely on weight contrast, not novelty faces.
-- Don't collapse the article gutter on desktop -- it's part of the reading experience.
-- Don't use stock blog copy ("Welcome to my blog", "Stay tuned for more"). Write a real tagline that says what this blog is about.
-- Don't seed the home page with three identical placeholder posts. If you only have one real post, show one real post.
-- Don't enable comments without a plan to moderate them. The template doesn't ship a comments system by default for a reason.
+- Don't add a second accent colour. Verdigris is the only one; limestone is a neutral for placeholders and the map.
+- No template tells: no `text-transform: uppercase` labels, no "A · B" meta strings, no "→" on links, no monospace labels, no hover lift or shadows on cards (the search dropdown is the only shadow), no scroll-triggered animation. The only automatic motion is the home map marker, off under reduced motion.
+- Every user-visible string goes through `t()` in `src/utils/strings.ts` with en and tr values.
+- Don't collapse the place-page gutter on desktop.
+- Don't enable comments without a plan to moderate them.

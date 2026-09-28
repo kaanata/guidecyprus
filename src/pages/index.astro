@@ -1,5 +1,5 @@
 ---
-import PageView from "../components/views/PageView.astro";
+import HomeView from "../components/views/HomeView.astro";
 import { frontPageSlug } from "../utils/front-page";
 import { resolveEntry } from "../utils/resolve-entry";
 
@@ -13,4 +13,4 @@ if (resolved?.collection !== "pages") {
 if (Astro.cache?.enabled) Astro.cache.set(resolved.cacheHint);
 ---
 
-<PageView page={resolved.entry} adPage="home" />
+<HomeView page={resolved.entry} />

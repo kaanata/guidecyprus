@@ -12,6 +12,7 @@ import { Font } from "astro:assets";
 import { resolveBlogSiteIdentity, TITLE_SEPARATOR } from "../utils/site-identity";
 import { localePath } from "../utils/i18n";
 import { t } from "../utils/strings";
+import Wordmark from "../components/Wordmark.astro";
 import "../styles/tokens.css";
 import "../styles/theme.css";
 
@@ -100,6 +101,20 @@ const isLoggedIn = !!Astro.locals.user;
 
 const locale = Astro.currentLocale ?? "en";
 const home = localePath(locale, "/");
+/** Menu items that point at the page being viewed (home only matches itself). */
+const currentPath = Astro.url.pathname.replace(/(.)\/+$/, "$1");
+function isCurrent(url: string): boolean {
+	let path: string;
+	try {
+		const u = new URL(url, Astro.url);
+		if (u.origin !== Astro.url.origin) return false;
+		path = u.pathname.replace(/(.)\/+$/, "$1");
+	} catch {
+		return false;
+	}
+	if (path === home) return currentPath === home;
+	return currentPath === path || currentPath.startsWith(path + "/");
+}
 // "Powered by {link}" puts the link at a different spot per language.
 const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").split("{link}");
 ---
@@ -110,6 +125,7 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<Font cssVariable="--font-body" preload />
+		<Font cssVariable="--font-display" preload />
 		<Font cssVariable="--font-mono" />
 		<title>{fullTitle}</title>
 		<EmDashHead page={pageCtx} />
@@ -130,44 +146,45 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 	<body>
 		<EmDashBodyStart page={pageCtx} />
 		<header class="site-header">
-			<nav class="nav">
-				<a href={home} class="site-title">
-					{siteLogo
-						? <img src={siteLogo.url} alt={siteLogo.alt || siteTitle} class="site-logo-img" />
-						: siteTitle
-					}
-				</a>
-				<div class="nav-right">
-					<LiveSearch
-						placeholder={t(locale, "header.searchPlaceholder")}
-						searchPage={localePath(locale, "/search")}
-						routeMap={{
-							posts: localePath(locale, "/:slug"),
-							pages: localePath(locale, "/:slug"),
-						}}
-						class="site-search"
-						inputClass="site-search-input"
-						resultsClass="site-search-results"
-						resultClass="site-search-result"
-						collections={["posts", "pages"]}
-					>
-						<div slot="loading" class="emdash-live-search-loading">
-							{t(locale, "header.searchLoading")}
-						</div>
-						<div slot="no-results" class="emdash-live-search-no-results">
-							{t(locale, "header.searchNoResults")}
-						</div>
-					</LiveSearch>
-					<div class="nav-links">
+			<div class="header-inner">
+				<Wordmark title={siteTitle} href={home} logo={siteLogo} class="header-brand" />
+				<nav class="nav-links" aria-label={t(locale, "header.nav")}>
+					<ul>
 						{
 							menu?.items.map((item) => (
-								<a href={item.url} target={item.target}>
-									{item.label}
-								</a>
+								<li>
+									<a
+										href={item.url}
+										target={item.target}
+										aria-current={isCurrent(item.url) ? "page" : undefined}
+									>
+										{item.label}
+									</a>
+								</li>
 							))
 						}
+					</ul>
+				</nav>
+				<LiveSearch
+					placeholder={t(locale, "header.searchPlaceholder")}
+					searchPage={localePath(locale, "/search")}
+					routeMap={{
+						posts: localePath(locale, "/:slug"),
+						pages: localePath(locale, "/:slug"),
+					}}
+					class="site-search"
+					inputClass="site-search-input"
+					resultsClass="site-search-results"
+					resultClass="site-search-result"
+					collections={["posts", "pages"]}
+				>
+					<div slot="loading" class="emdash-live-search-loading">
+						{t(locale, "header.searchLoading")}
 					</div>
-				</div>
+					<div slot="no-results" class="emdash-live-search-no-results">
+						{t(locale, "header.searchNoResults")}
+					</div>
+				</LiveSearch>
 				{
 					isLoggedIn && (
 						<a href="/_emdash/admin" class="nav-admin">
@@ -175,7 +192,7 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 						</a>
 					)
 				}
-			</nav>
+			</div>
 		</header>
 
 		<main>
@@ -186,19 +203,14 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 			<div class="footer-inner">
 				<div class="footer-grid">
 					<div class="footer-brand">
-						<a href={home} class="footer-logo">
-							{siteLogo
-								? <img src={siteLogo.url} alt={siteLogo.alt || siteTitle} class="footer-logo-img" />
-								: siteTitle
-							}
-						</a>
+						<Wordmark title={siteTitle} href={home} logo={siteLogo} tone="light" />
 						<p class="footer-tagline">{siteTagline}</p>
 					</div>
-					<div class="footer-nav">
-						<h2 class="footer-heading">{t(locale, "footer.navigate")}</h2>
+					<nav class="footer-nav" aria-labelledby="footer-navigate">
+						<h2 class="footer-heading" id="footer-navigate">{t(locale, "footer.navigate")}</h2>
 						<ul class="footer-links">
 							<li><a href={home}>{t(locale, "footer.home")}</a></li>
-							<li><a href={localePath(locale, "/posts")}>{t(locale, "posts.title")}</a></li>
+							<li><a href={localePath(locale, "/posts")}>{t(locale, "listing.allPlaces")}</a></li>
 							{
 								pages.slice(0, 3).map((page) => (
 									<li>
@@ -209,7 +221,7 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 								))
 							}
 						</ul>
-					</div>
+					</nav>
 					<div class="footer-nav">
 						<h2 class="footer-heading">{t(locale, "footer.connect")}</h2>
 						<ul class="footer-links">
@@ -241,7 +253,7 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 					<p class="footer-copyright">
 						{poweredByBefore}<a href="https://emdashcms.com">EmDash</a>{poweredByAfter}
 					</p>
-					<div class="theme-switcher">
+					<div class="theme-switcher" role="group" aria-label={t(locale, "footer.theme")}>
 						<button
 							type="button"
 							class="theme-btn"
@@ -257,6 +269,7 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 								stroke-width="2"
 								stroke-linecap="round"
 								stroke-linejoin="round"
+								aria-hidden="true"
 								><circle cx="12" cy="12" r="5"></circle><line
 									x1="12"
 									y1="1"
@@ -288,6 +301,7 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 								stroke-width="2"
 								stroke-linecap="round"
 								stroke-linejoin="round"
+								aria-hidden="true"
 								><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
 								></path></svg
 							>
@@ -307,6 +321,7 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 								stroke-width="2"
 								stroke-linecap="round"
 								stroke-linejoin="round"
+								aria-hidden="true"
 								><rect x="2" y="3" width="20" height="14" rx="2" ry="2"
 								></rect><line x1="8" y1="21" x2="16" y2="21"></line><line
 									x1="12"
@@ -355,6 +370,7 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 			function updateActiveBtn(theme: string) {
 				themeBtns.forEach((btn) => {
 					btn.classList.toggle("active", btn.dataset.theme === theme);
+					btn.setAttribute("aria-pressed", String(btn.dataset.theme === theme));
 				});
 			}
 
@@ -373,6 +389,7 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 				});
 			});
 		</script>
+
 
 		<style is:global>
 			/*
@@ -431,17 +448,26 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 
 				html {
 					scroll-behavior: smooth;
+					scroll-padding-top: calc(var(--nav-height) + var(--spacing-4));
+					-webkit-text-size-adjust: 100%;
+					text-size-adjust: 100%;
 				}
 
 				body {
 					font-family: var(--font-body);
 					font-size: var(--font-size-base);
-					line-height: var(--leading-relaxed);
+					line-height: 1.6;
 					color: var(--color-text);
 					background: var(--color-bg);
 					-webkit-font-smoothing: antialiased;
 					-moz-osx-font-smoothing: grayscale;
 					min-height: 100vh;
+					display: flex;
+					flex-direction: column;
+				}
+
+				main {
+					flex: 1 0 auto;
 				}
 
 				a:where(:not([class*="emdash"]):not([class*="ec-"])) {
@@ -454,221 +480,283 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 					color: var(--color-brand-hover);
 				}
 
+				/* Links inside running text stay underlined; components that
+				   need bare links style their own classes. */
+				:where(p, li, blockquote, dd, td, figcaption) a:where(:not([class])) {
+					text-decoration: underline;
+					text-decoration-thickness: 1px;
+					text-underline-offset: 0.18em;
+				}
+
+				:where(p, li, blockquote, dd, td, figcaption) a:where(:not([class])):hover {
+					text-decoration-thickness: 2px;
+				}
+
 				img {
 					max-width: 100%;
 					height: auto;
 					display: block;
 				}
 
+				/* h1/h2 are display type: Young Serif, which ships one weight.
+				   font-synthesis: none stops the browser faking a bold. */
 				h1,
-				h2,
+				h2 {
+					font-family: var(--font-display);
+					font-weight: 400;
+					font-synthesis: none;
+					line-height: var(--leading-tight);
+					letter-spacing: var(--tracking-tight);
+					text-wrap: balance;
+				}
+
 				h3,
 				h4,
 				h5,
 				h6 {
-					font-family: var(--font-heading);
-					line-height: var(--leading-tight);
+					font-family: var(--font-body);
 					font-weight: var(--font-weight-heading);
+					line-height: var(--leading-snug);
 					letter-spacing: var(--tracking-snug);
 				}
 
-				h1 {
-					font-weight: var(--font-weight-display);
-					letter-spacing: var(--tracking-tight);
+				strong,
+				b {
+					font-weight: 650;
+				}
+
+				:focus-visible {
+					outline: 2px solid var(--color-brand);
+					outline-offset: 2px;
+				}
+
+				:focus:not(:focus-visible) {
+					outline: none;
 				}
 
 				::selection {
-					background: var(--color-brand);
-					color: var(--color-on-brand);
+					background: color-mix(in srgb, var(--color-brand) 24%, transparent);
+					color: inherit;
+				}
+
+				@media (prefers-reduced-motion: reduce) {
+					html {
+						scroll-behavior: auto;
+					}
+
+					*,
+					*::before,
+					*::after {
+						transition-duration: 0.01ms !important;
+						animation-duration: 0.01ms !important;
+						animation-iteration-count: 1 !important;
+					}
 				}
 			}
 		</style>
 
 		<style>
+			/* Header: paper, one hairline, no shadow. */
 			.site-header {
 				position: sticky;
 				top: 0;
 				z-index: 100;
-				background: color-mix(in srgb, var(--color-bg) 65%, transparent);
-				backdrop-filter: blur(12px);
-				-webkit-backdrop-filter: blur(12px);
-				border-bottom: 1px solid var(--color-border-subtle);
+				background: var(--color-bg);
+				border-bottom: 1px solid var(--color-border);
 			}
 
-			.nav {
+			.header-inner {
 				display: flex;
-				justify-content: space-between;
 				align-items: center;
+				gap: var(--spacing-8);
 				max-width: var(--wide-width);
 				margin: 0 auto;
-				padding: var(--spacing-4) var(--spacing-6);
+				padding: 0 var(--spacing-6);
 				height: var(--nav-height);
 			}
 
-			.site-title {
-				font-size: var(--font-size-lg);
-				font-weight: 600;
-				color: var(--color-text);
-				text-decoration: none;
-				letter-spacing: var(--tracking-snug);
-			}
-
-			.site-title:hover {
-				color: var(--color-brand);
-			}
-
-			.site-logo-img {
-				height: 48px;
-				width: auto;
-				display: block;
-				margin: -8px 0;
-			}
-
-			.nav-right {
-				display: flex;
-				align-items: center;
-				gap: var(--spacing-6);
-				margin-inline-start: auto;
+			.header-inner > :global(.header-brand) {
+				flex: none;
 			}
 
 			.nav-links {
+				margin-inline-start: auto;
+			}
+
+			.nav-links ul {
 				display: flex;
-				gap: var(--spacing-5);
-				font-size: var(--font-size-sm);
+				gap: var(--spacing-6);
+				list-style: none;
 			}
 
 			.nav-links a {
-				text-decoration: none;
+				display: block;
+				padding: var(--spacing-2) 0;
+				font-size: var(--font-size-sm);
+				font-weight: 500;
 				color: var(--color-text);
-				transition: color var(--transition-fast);
+				text-decoration: none;
+				white-space: nowrap;
+				text-underline-offset: 0.45em;
+				text-decoration-thickness: 2px;
 			}
 
 			.nav-links a:hover {
 				color: var(--color-brand);
 			}
 
+			.nav-links a[aria-current="page"] {
+				color: var(--color-brand);
+				text-decoration: underline;
+			}
+
 			.nav-admin {
+				flex: none;
 				font-size: var(--font-size-sm);
-				color: var(--color-text-secondary);
+				color: var(--color-muted);
 				text-decoration: none;
-				transition: color var(--transition-fast);
 			}
 
 			.nav-admin:hover {
 				color: var(--color-text);
 			}
 
-			/* Search styling */
-			.site-search {
+			/* Search. LiveSearch ships scoped styles (two classes deep), so
+			   these selectors carry the extra weight to beat them. */
+			.site-header :global(.site-search) {
 				position: relative;
-				width: var(--search-input-width);
+				flex: none;
+				width: 15rem;
 				--emdash-search-border-focus: var(--color-brand);
 			}
 
-			:global(.site-search-input) {
-				width: var(--search-input-width);
-				padding: var(--spacing-2) var(--spacing-3);
+			.site-header :global(.site-search input.site-search-input) {
+				width: 100%;
+				height: 2.5rem;
+				padding: 0 var(--spacing-3) 0 2.25rem;
 				font-family: var(--font-body);
 				font-size: var(--font-size-sm);
 				border: 1px solid var(--color-border);
 				border-radius: var(--radius);
-				background: var(--color-bg);
+				background-color: var(--color-bg-subtle);
 				color: var(--color-text);
+				box-shadow: none;
 				transition:
 					border-color var(--transition-fast),
-					box-shadow var(--transition-fast);
+					background-color var(--transition-fast);
 			}
 
-			:global(.site-search-input)::placeholder {
+			/* A magnifier in the muted tone, so the box reads as search before
+			   anything is typed. The SVG is only a mask; the colour is a token. */
+			.site-header :global(.site-search)::before {
+				content: "";
+				position: absolute;
+				top: 50%;
+				left: 0.75rem;
+				width: 16px;
+				height: 16px;
+				margin-top: -8px;
+				background-color: var(--color-muted);
+				-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") center / contain no-repeat;
+				mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") center / contain no-repeat;
+				pointer-events: none;
+				z-index: 1;
+			}
+
+			.site-header :global(.site-search input.site-search-input::placeholder) {
 				color: var(--color-muted);
+				opacity: 1;
 			}
 
-			:global(.site-search-input):focus,
-			:global(.site-search-input):focus-visible {
-				outline: none;
-				border-color: var(--color-brand) !important;
-				box-shadow: 0 0 0 3px var(--color-brand-ring);
+			.site-header :global(.site-search input.site-search-input:hover) {
+				border-color: var(--color-muted);
 			}
 
-			:global(.site-search-results) {
+			.site-header :global(.site-search input.site-search-input:focus),
+			.site-header :global(.site-search input.site-search-input:focus-visible) {
+				outline: 2px solid var(--color-brand);
+				outline-offset: 2px;
+				border-color: var(--color-brand);
+				background-color: var(--color-bg);
+				box-shadow: none;
+			}
+
+			/* The results dropdown is the one element on the site that floats. */
+			.site-header :global(.site-search .site-search-results) {
 				position: absolute;
 				top: 100%;
-				left: 0;
 				right: 0;
+				left: auto;
+				width: min(26rem, calc(100vw - 2rem));
 				margin-top: var(--spacing-2);
+				padding: var(--spacing-1) 0;
 				background: var(--color-bg);
 				border: 1px solid var(--color-border);
 				border-radius: var(--radius-lg);
 				box-shadow: var(--shadow-lg);
-				max-height: 400px;
+				max-height: min(26rem, 70vh);
 				overflow-y: auto;
 				z-index: 1000;
 			}
 
-			:global(.site-search-results .emdash-live-search-loading),
-			:global(.site-search-results .emdash-live-search-no-results) {
+			.site-header :global(.site-search-results .emdash-live-search-loading),
+			.site-header :global(.site-search-results .emdash-live-search-no-results) {
 				padding: var(--spacing-4);
-				text-align: center;
 				color: var(--color-muted);
 				font-size: var(--font-size-sm);
 			}
 
-			:global(.site-search-result) {
-				display: block;
-				padding: var(--spacing-3) var(--spacing-4);
+			.site-header :global(.site-search-results a.site-search-result) {
+				display: grid;
+								padding: var(--spacing-3) var(--spacing-4);
 				text-decoration: none;
 				color: var(--color-text);
 				border-bottom: 1px solid var(--color-border-subtle);
-				transition: background var(--transition-fast);
+				border-inline-start: 2px solid transparent;
 			}
 
-			:global(.site-search-result):last-child {
+			.site-header :global(.site-search-results a.site-search-result:last-child) {
 				border-bottom: none;
 			}
 
-			:global(.site-search-result):hover,
-			:global(.site-search-result):focus,
-			:global(.site-search-result.focused) {
-				background: var(--color-surface);
+			.site-header :global(.site-search-results a.site-search-result:hover),
+			.site-header :global(.site-search-results a.site-search-result:focus),
+			.site-header :global(.site-search-results a.site-search-result.focused) {
+				background: var(--color-bg-subtle);
+				border-inline-start-color: var(--color-brand);
 				outline: none;
 			}
 
-			:global(.site-search-result .emdash-live-search-result-title) {
-				display: block;
-				font-weight: 500;
+			.site-header :global(.site-search-result .emdash-live-search-result-title) {
+				font-weight: 600;
 				font-size: var(--font-size-sm);
+				line-height: var(--leading-snug);
 			}
 
-			:global(.site-search-result .emdash-live-search-result-collection) {
-				display: block;
+			/* LiveSearch prints the raw collection name ("posts", "pages"), which
+			   means nothing to a traveller; every result is a place or a page. */
+			.site-header :global(.site-search-result .emdash-live-search-result-collection) {
+				display: none;
+			}
+
+			.site-header :global(.site-search-result .emdash-live-search-result-snippet) {
 				font-size: var(--font-size-xs);
-				color: var(--color-muted);
-				text-transform: uppercase;
-				letter-spacing: var(--tracking-wide);
-				margin-top: 2px;
-			}
-
-			:global(.site-search-result .emdash-live-search-result-snippet) {
-				display: block;
-				font-size: var(--font-size-sm);
-				color: var(--color-muted);
+				color: var(--color-text-secondary);
 				margin-top: var(--spacing-1);
 				line-height: var(--leading-snug);
 			}
 
-			:global(.site-search-result .emdash-live-search-result-snippet mark) {
-				font-weight: 600;
+			.site-header :global(.site-search-result .emdash-live-search-result-snippet mark) {
+				background: none;
+				font-weight: 650;
 				color: var(--color-text);
 			}
 
-			main {
-				min-height: calc(100vh - var(--nav-height) - 300px);
-			}
-
-			/* Footer */
+			/* Footer: the night-harbour band. */
 			.site-footer {
-				background: var(--color-bg-subtle);
-				border-top: 1px solid var(--color-border-subtle);
+				margin-top: var(--spacing-16);
+				background: var(--color-ink-band);
+				color: var(--color-on-ink-band);
 			}
 
 			.footer-inner {
@@ -677,140 +765,152 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 				padding: var(--spacing-16) var(--spacing-6) var(--spacing-8);
 			}
 
+			.site-footer :focus-visible {
+				outline-color: var(--color-on-ink-band);
+			}
+
 			.footer-grid {
 				display: grid;
-				grid-template-columns: 2fr 1fr 1fr 1fr;
+				grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr));
 				gap: var(--spacing-12);
 				margin-bottom: var(--spacing-12);
 			}
 
 			.footer-brand {
-				max-width: 280px;
+				max-width: 20rem;
 			}
 
-			.footer-logo {
-				font-size: var(--font-size-lg);
-				font-weight: 600;
-				color: var(--color-text);
-				text-decoration: none;
-				letter-spacing: var(--tracking-snug);
+			.footer-brand :global(.wordmark-title) {
+				font-size: var(--font-size-xl);
 			}
 
-			.footer-logo-img {
-				height: 24px;
-				width: auto;
+			.footer-brand :global(.wordmark-glyph) {
+				width: 34px;
 			}
 
 			.footer-tagline {
-				margin-top: var(--spacing-3);
+				margin-top: var(--spacing-4);
 				font-size: var(--font-size-sm);
-				color: var(--color-muted);
-				line-height: var(--leading-relaxed);
+				color: var(--color-on-ink-band-muted);
+				line-height: var(--leading-normal);
 			}
 
 			.footer-nav {
 				min-width: 0;
 			}
 
-			.footer-heading {
-				font-size: var(--font-size-xs);
-				font-weight: 500;
-				text-transform: uppercase;
-				letter-spacing: var(--tracking-wider);
-				color: var(--color-muted);
-				margin-bottom: var(--spacing-4);
+			/* Sentence case, weight not tracking. */
+			.footer-heading,
+			.footer-widgets-section :global(.widget__title) {
+				font-family: var(--font-body);
+				font-size: var(--font-size-sm);
+				font-weight: 600;
+				letter-spacing: 0;
+				text-transform: none;
+				color: var(--color-on-ink-band);
+				margin-bottom: var(--spacing-3);
 			}
 
 			.footer-links {
 				list-style: none;
 			}
 
-			.footer-links li {
-				margin-bottom: var(--spacing-2);
+			.footer-links li + li {
+				margin-top: var(--spacing-1);
 			}
 
 			.footer-links a {
-				color: var(--color-text-secondary);
+				display: inline-block;
+				padding: var(--spacing-1) 0;
+				color: var(--color-on-ink-band-muted);
 				text-decoration: none;
 				font-size: var(--font-size-sm);
-				transition: color var(--transition-fast);
 			}
 
 			.footer-links a:hover {
-				color: var(--color-text);
+				color: var(--color-on-ink-band);
+				text-decoration: underline;
+				text-underline-offset: 0.2em;
 			}
 
 			.footer-widgets-section :global(.widget-area) {
 				display: block;
 			}
 
-			.footer-widgets-section :global(.widget) {
-				color: var(--color-text-secondary);
-			}
-
-			.footer-widgets-section :global(.widget__title) {
-				font-size: var(--font-size-xs);
-				font-weight: 500;
-				text-transform: uppercase;
-				letter-spacing: var(--tracking-wider);
-				color: var(--color-muted);
-				margin-bottom: var(--spacing-4);
-			}
-
+			.footer-widgets-section :global(.widget),
 			.footer-widgets-section :global(.widget__content) {
-				color: var(--color-text-secondary);
+				color: var(--color-on-ink-band-muted);
 				font-size: var(--font-size-sm);
-				line-height: var(--leading-relaxed);
+				line-height: var(--leading-normal);
+			}
+
+			.footer-widgets-section :global(.widget + .widget) {
+				margin-top: var(--spacing-8);
+			}
+
+			.footer-widgets-section :global(a) {
+				color: var(--color-on-ink-band);
+				text-decoration: underline;
+				text-underline-offset: 0.2em;
 			}
 
 			.footer-bottom {
 				display: flex;
 				justify-content: space-between;
 				align-items: center;
+				gap: var(--spacing-4);
 				padding-top: var(--spacing-6);
-				border-top: 1px solid var(--color-border);
+				border-top: 1px solid color-mix(in srgb, var(--color-on-ink-band) 18%, transparent);
 			}
 
 			.footer-copyright {
-				font-size: var(--font-size-sm);
-				color: var(--color-muted);
+				font-size: var(--font-size-xs);
+				color: var(--color-on-ink-band-muted);
 			}
 
 			.footer-copyright a {
-				color: var(--color-text-secondary);
+				color: var(--color-on-ink-band);
+				text-decoration: underline;
+				text-underline-offset: 0.2em;
 			}
 
-			/* Theme switcher */
+			.footer-copyright a:hover {
+				color: var(--color-on-ink-band);
+				text-decoration-thickness: 2px;
+			}
+
+			/* Theme switcher, restyled for the dark band. */
 			.theme-switcher {
 				display: flex;
-				gap: var(--spacing-1);
-				padding: var(--spacing-1);
-				background: var(--color-surface);
-				border-radius: var(--radius);
+				gap: 2px;
+				padding: 2px;
+				border: 1px solid color-mix(in srgb, var(--color-on-ink-band) 22%, transparent);
+				border-radius: var(--radius-lg);
 			}
 
 			.theme-btn {
 				display: flex;
 				align-items: center;
 				justify-content: center;
-				width: 32px;
-				height: 28px;
+				width: 36px;
+				height: 32px;
 				background: transparent;
 				border: none;
-				color: var(--color-muted);
+				color: var(--color-on-ink-band-muted);
 				border-radius: var(--radius);
 				cursor: pointer;
-				transition: all var(--transition-fast);
+				transition:
+					color var(--transition-fast),
+					background-color var(--transition-fast);
 			}
 
 			.theme-btn:hover {
-				color: var(--color-text-secondary);
+				color: var(--color-on-ink-band);
 			}
 
 			.theme-btn.active {
-				background: var(--color-bg);
-				color: var(--color-text);
-				box-shadow: var(--shadow-sm);
+				background: color-mix(in srgb, var(--color-on-ink-band) 16%, transparent);
+				color: var(--color-on-ink-band);
 			}
 
 			.theme-btn svg {
@@ -818,98 +918,181 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 				height: 16px;
 			}
 
+			@media (max-width: 1080px) {
+				.header-inner {
+					gap: var(--spacing-6);
+				}
+
+				.site-header :global(.site-search) {
+					width: 12rem;
+				}
+			}
+
 			@media (max-width: 900px) {
 				.footer-grid {
-					grid-template-columns: 1fr 1fr;
-					gap: var(--spacing-8);
+					grid-template-columns: repeat(2, minmax(0, 1fr));
+					gap: var(--spacing-10) var(--spacing-8);
 				}
 
 				.footer-brand {
-					grid-column: span 2;
+					grid-column: 1 / -1;
 					max-width: none;
 				}
 			}
 
-			@media (max-width: 640px) {
+			/* Phones: wordmark (and admin) on top, search full width, then the
+			   menu as one line that scrolls sideways if it has to. */
+			@media (max-width: 760px) {
 				.site-header {
 					position: relative;
-					border-bottom: none;
 				}
 
-				.nav {
+				.header-inner {
 					display: grid;
 					grid-template-columns: minmax(0, 1fr) auto;
-					align-items: center;
+					grid-template-areas:
+						"brand admin"
+						"search search"
+						"links links";
 					height: auto;
-					column-gap: var(--spacing-3);
-					row-gap: var(--spacing-2);
-					padding: var(--spacing-3) var(--spacing-4);
+					gap: var(--spacing-3) var(--spacing-4);
+					padding: var(--spacing-4) var(--spacing-4) 0;
 				}
 
-				.site-title {
-					grid-column: 1;
-					grid-row: 1;
-					font-size: var(--font-size-base);
-					min-width: 0;
-				}
-
-				.nav-right {
-					grid-column: 1 / -1;
-					grid-row: 2;
-					display: grid;
-					row-gap: var(--spacing-2);
-				}
-
-				.site-search {
-					grid-column: 1;
-					width: 100%;
-					max-width: none;
-				}
-
-				:global(.site-search-input) {
-					width: 100% !important;
-					padding: var(--spacing-1) var(--spacing-2) !important;
-					font-size: var(--font-size-sm) !important;
-				}
-
-				.nav-links {
-					grid-column: 1;
-					display: flex;
-					column-gap: var(--spacing-3);
-					row-gap: var(--spacing-1);
-					flex-wrap: wrap;
-					justify-content: flex-start;
+				.header-inner > :global(.header-brand) {
+					grid-area: brand;
 				}
 
 				.nav-admin {
-					grid-column: 2;
-					grid-row: 1;
-					justify-self: end;
-					font-size: var(--font-size-xs);
-					margin-inline-start: 0;
-					white-space: nowrap;
+					grid-area: admin;
 				}
 
+				.site-header :global(.site-search) {
+					grid-area: search;
+					width: 100%;
+				}
+
+				.site-header :global(.site-search input.site-search-input) {
+					height: 2.75rem;
+					font-size: var(--font-size-base);
+				}
+
+				.site-header :global(.site-search .site-search-results) {
+					left: 0;
+					right: 0;
+					width: auto;
+				}
+
+				.nav-links {
+					grid-area: links;
+					margin: 0 calc(-1 * var(--spacing-4));
+					overflow-x: auto;
+					scrollbar-width: none;
+					-webkit-overflow-scrolling: touch;
+				}
+
+				.nav-links::-webkit-scrollbar {
+					display: none;
+				}
+
+				.nav-links ul {
+					gap: var(--spacing-5);
+					padding: 0 var(--spacing-4);
+					width: max-content;
+				}
+
+				.nav-links a {
+					padding: var(--spacing-3) 0;
+					text-underline-offset: 0.6em;
+				}
+
+				.site-footer {
+					margin-top: var(--spacing-12);
+				}
+
+				.footer-inner {
+					padding: var(--spacing-12) var(--spacing-4) var(--spacing-6);
+				}
+			}
+
+			@media (max-width: 480px) {
 				.footer-grid {
-					grid-template-columns: 1fr;
-				}
-
-				.footer-brand {
-					grid-column: span 1;
+					grid-template-columns: minmax(0, 1fr);
+					gap: var(--spacing-8);
 				}
 
 				.footer-bottom {
-					flex-direction: column;
-					gap: var(--spacing-4);
-					text-align: center;
-				}
-
-				.footer-controls {
-					flex-wrap: wrap;
-					justify-content: center;
+					flex-direction: column-reverse;
+					align-items: flex-start;
 				}
 			}
 		</style>
+
+		<script>
+			// Many places use a logo as their photo. Cropping a logo to fill a
+			// card cuts it apart, so when an image's border is one flat colour
+			// (a logo on a plain ground), show it whole on a tile of that colour.
+			// Photos keep their crop.
+			const SAMPLE = 40;
+			const TOLERANCE = 28;
+			const FLAT_SHARE = 0.85;
+
+			function edgeColour(img: HTMLImageElement): string | null {
+				const canvas = document.createElement("canvas");
+				canvas.width = canvas.height = SAMPLE;
+				const ctx = canvas.getContext("2d", { willReadFrequently: true });
+				if (!ctx) return null;
+				let data: Uint8ClampedArray;
+				try {
+					ctx.drawImage(img, 0, 0, SAMPLE, SAMPLE);
+					data = ctx.getImageData(0, 0, SAMPLE, SAMPLE).data;
+				} catch {
+					return null; // cross-origin or undecodable
+				}
+				const edge: number[][] = [];
+				for (let i = 0; i < SAMPLE; i++) {
+					for (const [x, y] of [[i, 0], [i, SAMPLE - 1], [0, i], [SAMPLE - 1, i]]) {
+						const o = (y * SAMPLE + x) * 4;
+						// Transparent pixels sit on white, as the logo was designed.
+						const a = data[o + 3] / 255;
+						edge.push([0, 1, 2].map((c) => data[o + c] * a + 255 * (1 - a)));
+					}
+				}
+				const median = [0, 1, 2].map((c) => {
+					const v = edge.map((p) => p[c]).sort((a, b) => a - b);
+					return v[v.length >> 1];
+				});
+				const near = (p: number[], q: number[]) =>
+					Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]) < TOLERANCE;
+				if (edge.filter((p) => near(p, median)).length / edge.length >= FLAT_SHARE) {
+					return `rgb(${median.map(Math.round).join(" ")})`;
+				}
+				// Artwork that runs into the edges can still sit on plain corners.
+				const last = SAMPLE - 1;
+				const corners = [[0, 0], [last, 0], [0, last], [last, last]].map(([x, y]) => {
+					const o = (y * SAMPLE + x) * 4;
+					const a = data[o + 3] / 255;
+					return [0, 1, 2].map((c) => data[o + c] * a + 255 * (1 - a));
+				});
+				if (!corners.every((p) => near(p, corners[0]))) return null;
+				const mean = [0, 1, 2].map((c) => corners.reduce((s, p) => s + p[c], 0) / 4);
+				return `rgb(${mean.map(Math.round).join(" ")})`;
+			}
+
+			function fitPhoto(img: HTMLImageElement) {
+				const frame = img.closest<HTMLElement>("[data-photo-frame]");
+				if (!frame || frame.dataset.logo !== undefined) return;
+				const colour = edgeColour(img);
+				if (!colour) return;
+				frame.dataset.logo = "";
+				frame.style.backgroundColor = colour;
+			}
+
+			for (const img of document.querySelectorAll<HTMLImageElement>("[data-photo-frame] img")) {
+				if (img.complete && img.naturalWidth) fitPhoto(img);
+				else img.addEventListener("load", () => fitPhoto(img), { once: true });
+			}
+		</script>
 
 		<script>
 			// ⌘K / Ctrl+K to focus search

@@ -1,47 +1,107 @@
 /*
-  theme.css -- your theme overrides. This is the file to edit to
-  retheme the site.
+  theme.css -- Guide Cyprus theme ("Kyrenia harbour").
 
-  Every design token lives in src/styles/tokens.css (colors, type
-  scale, spacing, layout, shadows) with its default value. Override any
-  of them here: declarations in this file are unlayered, so they always
-  beat the @layer base defaults in tokens.css.
+  Overrides the defaults in src/styles/tokens.css. Declarations here are
+  unlayered, so they always beat the @layer base defaults.
 
-  Colors are defined with light-dark(). Overriding with a plain color
-  changes light and dark mode at once; use light-dark(<light>, <dark>)
-  to set different values per mode.
+  Palette: harbour ink for text, one accent (verdigris -- Cyprus is named
+  for copper, and this is its patina), sea mist for quiet surfaces, and
+  limestone only for image placeholders and the island map. Photos carry
+  the colour; the interface stays ink and verdigris.
 
-  Webfonts are loaded in astro.config.mjs (--font-body, --font-mono).
-  Swap the loaded font there; use overrides here for system fonts or a
-  separate heading face.
-
-  Example:
-
-  :root {
-    --color-brand: light-dark(#0f766e, #2dd4bf);
-    --font-heading: "Iowan Old Style", Georgia, serif;
-    --radius: 8px;
-  }
+  Type: Young Serif (--font-display) for place names and page titles,
+  Schibsted Grotesk (--font-body) for everything else. Both load in
+  astro.config.mjs with latin-ext for Turkish.
 */
 
 :root {
-	/* WCAG AA (4.5:1) for meta text on both --color-bg and --color-bg-subtle;
-	   the defaults (#8b8b8b / #6b6b6b) measure 3.3–3.6:1. */
-	--color-muted: light-dark(#707070, #8f8f8f);
+	/* Colour */
+	--color-bg: light-dark(#ffffff, #0b1b25);
+	--color-bg-subtle: light-dark(#eff5f5, #10232f);
+	--color-surface: light-dark(#eff5f5, #132a37);
+	--color-text: light-dark(#102a3a, #e3ecee);
+	--color-text-secondary: light-dark(#3f5666, #a8bac4);
+	/* WCAG AA (4.5:1) on both --color-bg and --color-bg-subtle. */
+	--color-muted: light-dark(#566a78, #8ea3af);
+	--color-border: light-dark(#d5e0e3, #24404f);
+	--color-border-subtle: light-dark(#e6eef0, #1a3240);
+	--color-brand: light-dark(#17766a, #5cc2b0);
+	--color-brand-hover: light-dark(#0f5a50, #84d6c7);
+	--color-on-brand: light-dark(#ffffff, #0b1b25);
+	--color-limestone: light-dark(#d6c8ac, #3b4a4f);
+	/* The footer is a night-harbour band in both modes. */
+	--color-ink-band: light-dark(#102a3a, #07131a);
+	--color-on-ink-band: #e3ecee;
+	--color-on-ink-band-muted: #a9bcc6;
+
+	/* Type */
+	--font-heading: var(--font-display);
+	--font-weight-heading: 600; /* sans headings: cards, widgets, h3+ */
+	--font-weight-display: 400; /* Young Serif ships one weight */
+	--tracking-tight: -0.01em;
+	--tracking-snug: -0.005em;
+	--tracking-wide: 0.01em;
+	--tracking-wider: 0.02em;
+
+	/* Major-third scale on a 17px base */
+	--font-size-xs: 0.8125rem;
+	--font-size-sm: 0.9375rem;
+	--font-size-base: 1.0625rem;
+	--font-size-lg: 1.25rem;
+	--font-size-xl: 1.5625rem;
+	--font-size-2xl: 1.9375rem;
+	--font-size-3xl: 2.4375rem;
+	--font-size-4xl: 3.0625rem;
+	--font-size-5xl: 3.8125rem;
+	--leading-normal: 1.55;
+	--leading-relaxed: 1.65;
+
+	/* Shape: photos get a small radius; nothing floats on shadows. */
+	--radius: 3px;
+	--radius-lg: 6px;
+	--shadow-sm: none;
+	--shadow-lg: 0 12px 32px color-mix(in srgb, #102a3a 18%, transparent);
+
+	--emdash-search-highlight: var(--color-brand);
 }
 
 @supports not (color: light-dark(#000, #fff)) {
 	:root {
-		--color-muted: #707070;
+		--color-bg: #ffffff;
+		--color-bg-subtle: #eff5f5;
+		--color-surface: #eff5f5;
+		--color-text: #102a3a;
+		--color-text-secondary: #3f5666;
+		--color-muted: #566a78;
+		--color-border: #d5e0e3;
+		--color-border-subtle: #e6eef0;
+		--color-brand: #17766a;
+		--color-brand-hover: #0f5a50;
+		--color-on-brand: #ffffff;
+		--color-limestone: #d6c8ac;
+		--color-ink-band: #102a3a;
 	}
 }
 
-/* Links inside running text need more than colour to stand out. */
-.footer-copyright a {
-	text-decoration: underline;
-	text-underline-offset: 2px;
+
+/* Shared visually-hidden utility: text for screen readers only. */
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
 }
 
-.nav-admin {
-	margin-inline-start: var(--spacing-5);
+/* Logos used as place photos (flagged by the photo-fit script in Base.astro):
+   shown whole, inset on a tile of their own background colour, instead of
+   cropped to fill. The place page hero already uses contain. */
+[data-photo-frame][data-logo]:not([data-fit="contain"]) img {
+	object-fit: contain;
+	padding: 9%;
+	box-sizing: border-box;
 }

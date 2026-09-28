@@ -1,13 +1,12 @@
 ---
-import {
-	getEmDashCollection,
-	getTermsForEntries,
-} from "emdash";
+import { getEmDashCollection } from "emdash";
 import Base from "../../layouts/Base.astro";
 import PostCard from "../../components/PostCard.astro";
 import AdSpace from "../AdSpace.astro";
+import ListingHeader from "./ListingHeader.astro";
+import ListingEmpty from "./ListingEmpty.astro";
+import PlaceGrid from "./PlaceGrid.astro";
 import { inFeedAfter } from "../../utils/ads";
-import { getReadingTime } from "../../utils/reading-time";
 import type { TaxonomyTerm } from "emdash";
 import { localePath } from "../../utils/i18n";
 import { t, tn } from "../../utils/strings";
@@ -21,120 +20,76 @@ interface Props {
 const { term } = Astro.props;
 
 const { entries: posts, cacheHint } = await getEmDashCollection("posts", {
-		locale,
+	locale,
 	where: { category: term.slug },
 	orderBy: { published_at: "desc" },
 });
 
 if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
 
-// Single batched query for tags on every post in this category, rather
-// than calling getEntryTerms() per post (which would be one round-trip
-// per post).
-const tagsByEntry = await getTermsForEntries(
-	"posts",
-	posts.map((p) => p.data.id),
-	"tag",
-	{ locale },
-);
-const filteredPosts = posts.map((post) => ({
-	post,
-	tags: tagsByEntry.get(post.data.id) ?? [],
-}));
+const crumbs = [
+	{ label: t(locale, "listing.home"), href: localePath(locale, "/") },
+	{ label: t(locale, "listing.allPlaces"), href: localePath(locale, "/posts") },
+];
 ---
 
 <Base
-	title={t(locale, "archive.title", { label: term.label })}
-	description={t(locale, "archive.categoryDescription", { label: term.label })}
+	title={t(locale, "listing.categoryTitle", { label: term.label })}
+	description={term.description || t(locale, "listing.categoryDescription", { label: term.label })}
 >
 	{/* ad-manager has no category page type; "tag" is the closest (a taxonomy archive). */}
 	<AdSpace space="top-banner" page="tag" />
-	<section class="archive-section">
-		<header class="archive-header">
-			<span class="archive-label">{t(locale, "archive.category")}</span>
-			<h1 class="archive-title">{term.label}</h1>
-			<p class="archive-count">{tn(locale, "archive.count", filteredPosts.length)}</p>
-		</header>
+	<section class="listing">
+		<ListingHeader
+			title={term.label}
+			count={posts.length > 0 ? tn(locale, "listing.place", posts.length) : undefined}
+			crumbs={crumbs}
+			crumbLabel={t(locale, "listing.breadcrumb")}
+		>
+			{term.description && <p class="listing-intro">{term.description}</p>}
+		</ListingHeader>
 
 		{
-			filteredPosts.length === 0 ? (
-				<p class="no-posts">{t(locale, "archive.categoryEmpty")}</p>
+			posts.length === 0 ? (
+				<ListingEmpty message={t(locale, "listing.categoryEmpty", { label: term.label })} />
 			) : (
-				<div class="posts-grid">
-					{filteredPosts.map(({ post, tags }, index) => (
+				<PlaceGrid>
+					{posts.map((post, index) => (
 						<>
-						<PostCard
-							title={post.data.title}
-							excerpt={post.data.excerpt}
-							featuredImage={post.data.featured_image}
-							href={localePath(locale, `/${post.id}`)}
-							date={post.data.publishedAt ?? undefined}
-							readingTime={getReadingTime(post.data.content)}
-							tags={tags.map((t) => ({ slug: t.slug, label: t.label }))}
-						/>
-						{inFeedAfter(index, filteredPosts.length) && <AdSpace space="in-feed" />}
+							<PostCard
+								title={post.data.title}
+								excerpt={post.data.excerpt}
+								featuredImage={post.data.featured_image}
+								href={localePath(locale, `/${post.id}`)}
+								priority={index < 3}
+							/>
+							{inFeedAfter(index, posts.length) && <AdSpace space="in-feed" />}
 						</>
 					))}
-				</div>
+				</PlaceGrid>
 			)
 		}
 	</section>
 </Base>
 
 <style>
-	.archive-section {
+	.listing {
 		max-width: var(--wide-width);
 		margin: 0 auto;
-		padding: var(--spacing-12) var(--spacing-6);
+		padding: var(--spacing-12) var(--spacing-6) 0;
 	}
 
-	.archive-header {
-		margin-bottom: var(--spacing-12);
-		padding-bottom: var(--spacing-8);
-		border-bottom: 1px solid var(--color-border-subtle);
+	.listing-intro {
+		max-width: 68ch;
+		margin: var(--spacing-4) 0 0;
+		font-size: var(--font-size-base);
+		line-height: var(--leading-relaxed);
+		color: var(--color-text-secondary);
 	}
 
-	.archive-label {
-		display: block;
-		font-size: var(--font-size-xs);
-		font-weight: 500;
-		color: var(--color-brand);
-		text-transform: uppercase;
-		letter-spacing: var(--tracking-wider);
-		margin-bottom: var(--spacing-2);
-	}
-
-	.archive-title {
-		font-size: var(--font-size-4xl);
-		font-weight: var(--font-weight-display);
-		letter-spacing: var(--tracking-tight);
-		margin-bottom: var(--spacing-2);
-	}
-
-	.archive-count {
-		font-size: var(--font-size-sm);
-		color: var(--color-muted);
-	}
-
-	.posts-grid {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: var(--spacing-12) var(--spacing-8);
-	}
-
-	.no-posts {
-		color: var(--color-muted);
-	}
-
-	@media (max-width: 900px) {
-		.posts-grid {
-			grid-template-columns: repeat(2, 1fr);
-		}
-	}
-
-	@media (max-width: 600px) {
-		.posts-grid {
-			grid-template-columns: 1fr;
+	@media (max-width: 760px) {
+		.listing {
+			padding: var(--spacing-8) var(--spacing-4) 0;
 		}
 	}
 </style>
