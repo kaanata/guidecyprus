@@ -1,280 +1,171 @@
 ---
-import { getEmDashCollection, getTermsForEntries } from "emdash";
+import { getEmDashCollection, getTaxonomyTermsWithCacheHint, getTermsForEntries } from "emdash";
 import Base from "../../layouts/Base.astro";
+import PostCard from "../../components/PostCard.astro";
 import AdSpace from "../AdSpace.astro";
+import ListingHeader from "./ListingHeader.astro";
+import ListingEmpty from "./ListingEmpty.astro";
+import PlaceGrid from "./PlaceGrid.astro";
 import { inFeedAfter } from "../../utils/ads";
-import { formatReadingTime, getReadingTime } from "../../utils/reading-time";
 import { localePath } from "../../utils/i18n";
-import { formatDate, t, tn } from "../../utils/strings";
+import { t, tn } from "../../utils/strings";
+import { primaryKind } from "../../utils/kind";
 
 const locale = Astro.currentLocale;
 
 // Sort in the database rather than in JS — lets the DB use its index on
 // published_at and avoids a full-table scan on the client.
-const { entries: posts, cacheHint } = await getEmDashCollection("posts", {
-		locale,
-	orderBy: { published_at: "desc" },
-});
+const [{ entries: posts, cacheHint }, { data: categories, cacheHint: termsHint }] =
+	await Promise.all([
+		getEmDashCollection("posts", {
+			locale,
+			orderBy: { published_at: "desc" },
+		}),
+		getTaxonomyTermsWithCacheHint("category", { locale }),
+	]);
 
-if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
+if (Astro.cache?.enabled) {
+	Astro.cache.set(cacheHint);
+	Astro.cache.set(termsHint);
+}
 
-// Single batched query for tags across all posts, instead of one
-// getEntryTerms() call per post (which would be N round-trips).
-// Bylines are already hydrated on entry.data.bylines.
-const tagsByEntry = await getTermsForEntries(
+// Each card's kind (its first category), in one batched query rather than
+// one getEntryTerms() round-trip per post.
+const kindsByEntry = await getTermsForEntries(
 	"posts",
 	posts.map((p) => p.data.id),
-	"tag",
+	"category",
 	{ locale },
 );
 
-const postsWithTags = posts.map((post) => ({
-	post,
-	tags: tagsByEntry.get(post.data.id) ?? [],
-	bylines: post.data.bylines ?? [],
-}));
-
+// "Jump to kind": only kinds that have places, biggest first.
+// Terms come back as a tree (Entertainment > Casino, Bar & Pub...); list every level.
+const flatten = (terms: typeof categories): typeof categories =>
+	terms.flatMap((term) => [term, ...flatten(term.children ?? [])]);
+const kinds = [...new Map(flatten(categories).map((term) => [term.slug, term])).values()]
+	.filter((term) => (term.count ?? 0) > 0 && term.slug !== "uncategorized")
+	.sort((a, b) => (b.count ?? 0) - (a.count ?? 0) || a.label.localeCompare(b.label));
 ---
 
-<Base title={t(locale, "posts.title")} description={t(locale, "posts.description")}>
+<Base title={t(locale, "listing.allPlaces")} description={t(locale, "listing.allDescription")}>
 	<AdSpace space="top-banner" page="latest" />
-	<div class="posts-page">
-		<header class="page-header">
-			<h1 class="page-title">{t(locale, "posts.title")}</h1>
-			<p class="page-description">{tn(locale, "posts.count", posts.length)}</p>
-		</header>
+	<section class="listing">
+		<ListingHeader
+			title={t(locale, "listing.allPlaces")}
+			count={posts.length > 0 ? tn(locale, "listing.place", posts.length) : undefined}
+		>
+			{
+				kinds.length > 0 && (
+					<nav class="kinds" aria-labelledby="kinds-label">
+						<h2 id="kinds-label" class="kinds-label">{t(locale, "listing.byKind")}</h2>
+						<ul class="kinds-list">
+							{kinds.map((term) => (
+								<li>
+									<a href={localePath(locale, `/category/${term.slug}`)} class="kind-link">
+										<span class="kind-name">{term.label}</span>
+										<span class="kind-count">{term.count}</span>
+									</a>
+								</li>
+							))}
+						</ul>
+					</nav>
+				)
+			}
+		</ListingHeader>
 
 		{
 			posts.length === 0 ? (
-				<p class="empty">{t(locale, "posts.empty")}</p>
+				<ListingEmpty message={t(locale, "listing.empty")} showAll={false} />
 			) : (
-				<div class="posts-list">
-					{postsWithTags.map(({ post, tags, bylines }, index) => (
+				<PlaceGrid>
+					{posts.map((post, index) => (
 						<>
-						<article class="post-item">
-							<a href={localePath(locale, `/${post.id}`)} class="post-link">
-								<div class="post-meta">
-									{bylines.length > 0 && (
-										<>
-											<div class="post-bylines">
-												{bylines.slice(0, 2).map((credit, index) => (
-													<>
-														{index > 0 && <span class="byline-sep">,</span>}
-														<span class="post-byline">
-															{credit.byline.avatarMediaId && (
-																<img
-																	src={`/_emdash/api/media/file/${credit.byline.avatarMediaId}`}
-																	alt={credit.byline.displayName}
-																	class="post-byline-avatar"
-																/>
-															)}
-															<span class="post-byline-name">
-																{credit.byline.displayName}
-															</span>
-														</span>
-													</>
-												))}
-												{bylines.length > 2 && (
-													<span class="byline-more">+{bylines.length - 2}</span>
-												)}
-											</div>
-											<span class="meta-dot" />
-										</>
-									)}
-									{post.data.publishedAt && (
-										<time>{formatDate(locale, post.data.publishedAt)}</time>
-									)}
-									{post.data.publishedAt && <span class="meta-dot" />}
-									<span>{formatReadingTime(getReadingTime(post.data.content), locale)}</span>
-								</div>
-								<h2 class="post-title">{post.data.title}</h2>
-								{post.data.excerpt && (
-									<p class="post-excerpt">{post.data.excerpt}</p>
-								)}
-							</a>
-							{tags.length > 0 && (
-								<div class="post-tags">
-									{tags.slice(0, 3).map((t) => (
-										<a href={localePath(locale, `/tag/${t.slug}`)} class="post-tag">
-											{t.label}
-										</a>
-									))}
-								</div>
-							)}
-						</article>
-						{inFeedAfter(index, postsWithTags.length) && <AdSpace space="in-feed" />}
+							<PostCard
+								title={post.data.title}
+								excerpt={post.data.excerpt}
+								featuredImage={post.data.featured_image}
+								href={localePath(locale, `/${post.id}`)}
+								kind={primaryKind(kindsByEntry.get(post.data.id))?.label}
+								priority={index < 3}
+							/>
+							{inFeedAfter(index, posts.length) && <AdSpace space="in-feed" />}
 						</>
 					))}
-				</div>
+				</PlaceGrid>
 			)
 		}
-	</div>
+	</section>
 </Base>
 
 <style>
-	.posts-page {
-		max-width: var(--content-width);
+	.listing {
+		max-width: var(--wide-width);
 		margin: 0 auto;
-		padding: var(--spacing-8) var(--spacing-6) var(--spacing-16);
+		padding: var(--spacing-12) var(--spacing-6) 0;
 	}
 
-	.page-header {
-		margin-bottom: var(--spacing-12);
+	.kinds {
+		margin-top: var(--spacing-8);
+		padding-top: var(--spacing-6);
+		border-top: 1px solid var(--color-border-subtle);
 	}
 
-	.page-title {
-		font-size: var(--font-size-4xl);
-		font-weight: var(--font-weight-display);
-		letter-spacing: var(--tracking-tight);
-		margin-bottom: var(--spacing-2);
-	}
-
-	.page-description {
-		font-size: var(--font-size-lg);
-		color: var(--color-muted);
-	}
-
-	.empty {
-		color: var(--color-muted);
-		font-size: var(--font-size-lg);
-	}
-
-	.posts-list {
-		display: flex;
-		flex-direction: column;
-	}
-
-	.post-item {
-		padding: var(--spacing-8) 0;
-		border-bottom: 1px solid var(--color-border-subtle);
-	}
-
-	.post-item:first-child {
-		padding-top: 0;
-	}
-
-	.post-item:last-child {
-		border-bottom: none;
-	}
-
-	/* In-feed ad between list items; margins vanish with the space when it is unfilled. */
-	.posts-list :global(.ad-slot) {
-		margin-block: var(--spacing-8);
-	}
-
-	.post-link {
-		display: block;
-		text-decoration: none;
-		color: inherit;
-	}
-
-	.post-meta {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-3);
+	.kinds-label {
+		font-family: var(--font-body);
 		font-size: var(--font-size-sm);
-		color: var(--color-muted);
-		margin-bottom: var(--spacing-2);
-	}
-
-	.meta-dot {
-		width: 3px;
-		height: 3px;
-		border-radius: 50%;
-		background: var(--color-muted);
-	}
-
-	/* Post bylines */
-	.post-bylines {
-		display: flex;
-		align-items: center;
-		gap: 2px;
-	}
-
-	.post-byline {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--spacing-1);
-	}
-
-	.post-byline-avatar {
-		width: var(--avatar-size-sm);
-		height: var(--avatar-size-sm);
-		border-radius: 50%;
-		object-fit: cover;
-	}
-
-	.post-byline-name {
-		font-weight: 500;
+		font-weight: 600;
+		letter-spacing: normal;
 		color: var(--color-text-secondary);
+		margin: 0 0 var(--spacing-3);
 	}
 
-	.byline-sep {
-		color: var(--color-muted);
-		margin-right: 2px;
-	}
-
-	.byline-more {
-		font-size: var(--font-size-xs);
-		color: var(--color-muted);
-		margin-left: 2px;
-	}
-
-	.post-title {
-		font-size: var(--font-size-2xl);
-		font-weight: var(--font-weight-heading);
-		line-height: var(--leading-snug);
-		letter-spacing: var(--tracking-snug);
-		margin-bottom: var(--spacing-2);
-		transition: color var(--transition-fast);
-	}
-
-	.post-link:hover .post-title {
-		color: var(--color-brand);
-	}
-
-	.post-excerpt {
-		font-size: var(--font-size-lg);
-		line-height: var(--leading-relaxed);
-		color: var(--color-text-secondary);
-	}
-
-	.post-tags {
+	.kinds-list {
 		display: flex;
 		flex-wrap: wrap;
 		gap: var(--spacing-2);
-		margin-top: var(--spacing-4);
+		list-style: none;
+		margin: 0;
+		padding: 0;
 	}
 
-	.post-tag {
-		display: inline-block;
-		padding: var(--tag-padding-y) var(--spacing-2);
-		font-size: var(--font-size-xs);
-		color: var(--color-text-secondary);
-		background: var(--color-surface);
+	.kind-link {
+		display: inline-flex;
+		align-items: baseline;
+		gap: var(--spacing-2);
+		padding: var(--spacing-2) var(--spacing-4);
+		min-height: 44px;
+		align-items: center;
+		border: 1px solid var(--color-border);
 		border-radius: var(--radius);
-		text-decoration: none;
-		transition:
-			color var(--transition-fast),
-			background var(--transition-fast);
-	}
-
-	.post-tag:hover {
 		color: var(--color-text);
-		background: var(--color-border);
+		text-decoration: none;
+		font-weight: 600;
+		font-size: var(--font-size-sm);
+		transition:
+			border-color var(--transition-fast),
+			color var(--transition-fast);
 	}
 
-	@media (max-width: 600px) {
-		.posts-page {
-			padding: var(--spacing-6) var(--spacing-4) var(--spacing-12);
-		}
+	.kind-link:hover {
+		border-color: var(--color-brand);
+		color: var(--color-brand);
+	}
 
-		.page-title {
-			font-size: var(--font-size-3xl);
-		}
+	.kind-count {
+		font-weight: 400;
+		color: var(--color-muted);
+		font-variant-numeric: tabular-nums;
+	}
 
-		.post-title {
-			font-size: var(--font-size-xl);
+	@media (prefers-reduced-motion: reduce) {
+		.kind-link {
+			transition: none;
+		}
+	}
+
+	@media (max-width: 760px) {
+		.listing {
+			padding: var(--spacing-8) var(--spacing-4) 0;
 		}
 	}
 </style>

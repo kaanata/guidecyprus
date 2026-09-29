@@ -1,0 +1,610 @@
+---
+/**
+ * The locale home page (/ and /tr): what the site is, a way in by search or
+ * by kind of place, the latest places, then the front page's own CMS text.
+ *
+ * SEO, canonical and hreflang are the ones the front page has always had:
+ * its SEO title stands alone, and the alternates point at the locale homes
+ * rather than at the page slugs (which only 301 home).
+ */
+import {
+	getEmDashCollection,
+	getSeoMeta,
+	getTaxonomyTermsWithCacheHint,
+	getTermsForEntries,
+	type TaxonomyTerm,
+} from "emdash";
+import { Image, PortableText } from "emdash/ui";
+import Base from "../../layouts/Base.astro";
+import AdSpace from "../AdSpace.astro";
+import IslandMap from "../IslandMap.astro";
+import type { ResolvedEntry } from "../../utils/resolve-entry";
+import { localePath } from "../../utils/i18n";
+import { TITLE_SEPARATOR } from "../../utils/site-identity";
+import { t, tn } from "../../utils/strings";
+import { primaryKind } from "../../utils/kind";
+
+interface Props {
+	page: Extract<ResolvedEntry, { collection: "pages" }>["entry"];
+}
+
+const { page } = Astro.props;
+const locale = Astro.currentLocale;
+
+// The front page uses its SEO title alone, as WordPress did.
+const seo = getSeoMeta(page, {
+	siteTitle: undefined,
+	siteUrl: Astro.url.origin,
+	// Keep "/" for the root so the home page gets a canonical too.
+	path: Astro.url.pathname.replace(/(.)\/$/, "$1"),
+	titleSeparator: TITLE_SEPARATOR,
+});
+
+const origin = Astro.url.origin;
+const homeAlternates = [
+	{ hreflang: "en", href: `${origin}/` },
+	{ hreflang: "tr", href: `${origin}/tr` },
+	{ hreflang: "x-default", href: `${origin}/` },
+];
+
+/** Places shown under "Recently added": one lead and five more. */
+const RECENT_COUNT = 6;
+
+const [recent, categoryTerms] = await Promise.all([
+	getEmDashCollection("posts", {
+		locale,
+		orderBy: { published_at: "desc" },
+		limit: RECENT_COUNT,
+	}),
+	getTaxonomyTermsWithCacheHint("category", { locale }),
+]);
+
+if (Astro.cache?.enabled) {
+	Astro.cache.set(recent.cacheHint);
+	Astro.cache.set(categoryTerms.cacheHint);
+}
+
+// Kinds of place: every category with posts in this locale, biggest first.
+// "Uncategorized" is an import leftover, not a kind a traveller looks for.
+function flatten(terms: TaxonomyTerm[]): TaxonomyTerm[] {
+	return terms.flatMap((term) => [term, ...flatten(term.children ?? [])]);
+}
+const kinds = flatten(categoryTerms.data)
+	.filter((term) => (term.count ?? 0) > 0 && term.slug !== "uncategorized")
+	.sort((a, b) => (b.count ?? 0) - (a.count ?? 0) || a.label.localeCompare(b.label, locale));
+
+const places = recent.entries;
+const kindByPlace = await getTermsForEntries(
+	"posts",
+	places.map((p) => p.data.id),
+	"category",
+	{ locale },
+);
+// A place's kind is its first category that names a kind of place, not the
+// town ("girne") or the import leftover.
+function kindOf(id: string): string | undefined {
+	return primaryKind(kindByPlace.get(id))?.label;
+}
+
+const [lead, ...rest] = places;
+const searchAction = localePath(locale, "/search");
+---
+
+<Base
+	title={seo.title}
+	standaloneTitle
+	pageTitle={seo.ogTitle}
+	description={seo.description}
+	image={seo.ogImage}
+	canonical={seo.canonical}
+	robots={seo.robots}
+	alternates={homeAlternates}
+>
+	<div class="home">
+		<section class="hero" aria-labelledby="home-title">
+			<div class="hero__text">
+				<h1 id="home-title" class="hero__title">{t(locale, "home.title")}</h1>
+				<p class="hero__intro">{t(locale, "home.intro")}</p>
+				<form class="hero__search" action={searchAction} method="get" role="search">
+					<label for="home-search" class="hero__search-label">
+						{t(locale, "home.searchLabel")}
+					</label>
+					<div class="hero__search-row">
+						<input
+							id="home-search"
+							class="hero__search-input"
+							type="search"
+							name="q"
+							placeholder={t(locale, "home.searchPlaceholder")}
+							autocomplete="off"
+							enterkeyhint="search"
+						/>
+						<button type="submit" class="hero__search-button">
+							{t(locale, "home.searchButton")}
+						</button>
+					</div>
+				</form>
+			</div>
+			<IslandMap class="hero__map" />
+		</section>
+
+		<AdSpace space="top-banner" page="home" />
+
+		{
+			kinds.length > 0 && (
+				<section class="home-section kinds" aria-labelledby="home-kinds">
+					<h2 id="home-kinds" class="section-title">
+						{t(locale, "home.browseTitle")}
+					</h2>
+					<ul class="kinds__list">
+						{kinds.map((kind) => (
+							<li>
+								<a class="kinds__link" href={localePath(locale, `/category/${kind.slug}`)}>
+									<span class="kinds__name">{kind.label}</span>
+									<span class="kinds__count" aria-hidden="true">
+										{kind.count}
+									</span>
+									<span class="sr-only">
+										{`, ${tn(locale, "home.browseCount", kind.count ?? 0)}`}
+									</span>
+								</a>
+							</li>
+						))}
+					</ul>
+				</section>
+			)
+		}
+
+		{
+			lead && (
+				<section class="home-section recent" aria-labelledby="home-recent">
+					<div class="section-head">
+						<h2 id="home-recent" class="section-title">
+							{t(locale, "home.recentTitle")}
+						</h2>
+						<a class="section-more" href={localePath(locale, "/posts")}>
+							{t(locale, "home.recentAll")}
+						</a>
+					</div>
+					<ul class="recent__grid">
+						{[lead, ...rest].map((place, index) => {
+							const kind = kindOf(place.data.id);
+							return (
+								<li class:list={["place", { "place--lead": index === 0 }]}>
+									<a class="place__link" href={localePath(locale, `/${place.id}`)}>
+										<div class="place__photo" data-photo-frame>
+											{place.data.featured_image ? (
+												<Image
+													image={place.data.featured_image}
+													sizes={
+														index === 0
+															? "(min-width: 900px) 760px, 100vw"
+															: "(min-width: 900px) 380px, 50vw"
+													}
+												/>
+											) : null}
+										</div>
+										<div class="place__text">
+											<h3 class="place__title">{place.data.title}</h3>
+											{kind && <p class="place__kind">{kind}</p>}
+										</div>
+									</a>
+								</li>
+							);
+						})}
+					</ul>
+				</section>
+			)
+		}
+
+		<AdSpace space="in-feed" />
+
+		<section class="home-section about" aria-labelledby="home-about">
+			<div class="about__head">
+				<p class="about__label">{t(locale, "home.aboutLabel")}</p>
+				<h2 id="home-about" class="section-title about__title" {...page.edit.title}>
+					{page.data.title}
+				</h2>
+			</div>
+			<div class="about__body">
+				<PortableText value={page.data.content} />
+			</div>
+		</section>
+	</div>
+</Base>
+
+<style>
+	.home {
+		max-width: var(--wide-width);
+		margin: 0 auto;
+		padding: 0 var(--spacing-6);
+	}
+
+	@media (max-width: 760px) {
+		.home {
+			padding: 0 var(--spacing-4);
+		}
+	}
+
+	/* ---------- Hero ---------- */
+
+	.hero {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		gap: var(--spacing-10);
+		padding: var(--spacing-12) 0 var(--spacing-16);
+	}
+
+	.hero__title {
+		font-family: var(--font-display);
+		font-weight: var(--font-weight-display);
+		font-size: clamp(var(--font-size-3xl), 1.6rem + 3.2vw, 4.25rem);
+		line-height: 1.02;
+		letter-spacing: var(--tracking-tight);
+		text-wrap: balance;
+		max-width: 14ch;
+	}
+
+	.hero__intro {
+		margin-top: var(--spacing-6);
+		max-width: 40ch;
+		font-size: var(--font-size-lg);
+		line-height: var(--leading-normal);
+		color: var(--color-text-secondary);
+		text-wrap: pretty;
+	}
+
+	.hero__search {
+		margin-top: var(--spacing-10);
+		max-width: 34rem;
+	}
+
+	.hero__search-label {
+		display: block;
+		margin-bottom: var(--spacing-2);
+		font-size: var(--font-size-sm);
+		font-weight: 600;
+		color: var(--color-text);
+	}
+
+	.hero__search-row {
+		display: flex;
+		gap: var(--spacing-2);
+	}
+
+	.hero__search-input {
+		flex: 1;
+		min-width: 0;
+		height: 3.5rem;
+		padding: 0 var(--spacing-4);
+		font: inherit;
+		font-size: var(--font-size-base);
+		color: var(--color-text);
+		background: var(--color-bg);
+		border: 1px solid var(--color-text-secondary);
+		border-radius: var(--radius);
+	}
+
+	.hero__search-input::placeholder {
+		color: var(--color-muted);
+	}
+
+	.hero__search-input:focus-visible {
+		outline: 2px solid var(--color-brand);
+		outline-offset: 2px;
+		border-color: var(--color-brand);
+	}
+
+	.hero__search-button {
+		flex: none;
+		height: 3.5rem;
+		padding: 0 var(--spacing-6);
+		font: inherit;
+		font-size: var(--font-size-base);
+		font-weight: 600;
+		color: var(--color-on-brand);
+		background: var(--color-brand);
+		border: 0;
+		border-radius: var(--radius);
+		cursor: pointer;
+		transition: background var(--transition-fast);
+	}
+
+	.hero__search-button:hover {
+		background: var(--color-brand-hover);
+	}
+
+	.hero__search-button:focus-visible {
+		outline: 2px solid var(--color-brand);
+		outline-offset: 2px;
+	}
+
+	@media (min-width: 960px) {
+		.hero {
+			grid-template-columns: minmax(0, 11fr) minmax(0, 13fr);
+			align-items: center;
+			gap: var(--spacing-8);
+			padding: var(--spacing-16) 0 var(--spacing-20);
+		}
+	}
+
+	/* On wide screens the island reaches into the page margin. */
+	@media (min-width: 1300px) {
+		.hero :global(.hero__map) {
+			margin-right: -4rem;
+		}
+	}
+
+	/* ---------- Sections ---------- */
+
+	.home-section {
+		padding-top: var(--spacing-12);
+		margin-top: var(--spacing-12);
+		border-top: 1px solid var(--color-border);
+	}
+
+	.hero + .home-section,
+	.hero + :global([data-ad-space]) + .home-section {
+		margin-top: 0;
+	}
+
+	.section-head {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		flex-wrap: wrap;
+		gap: var(--spacing-2) var(--spacing-6);
+		margin-bottom: var(--spacing-8);
+	}
+
+	.section-title {
+		font-family: var(--font-display);
+		font-weight: var(--font-weight-display);
+		font-size: clamp(var(--font-size-xl), 1.2rem + 1.4vw, var(--font-size-3xl));
+		line-height: var(--leading-tight);
+		letter-spacing: var(--tracking-tight);
+	}
+
+	.kinds .section-title {
+		margin-bottom: var(--spacing-6);
+	}
+
+	.section-more {
+		font-weight: 600;
+		color: var(--color-brand);
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
+		text-decoration-thickness: 1px;
+	}
+
+	.section-more:hover {
+		color: var(--color-brand-hover);
+	}
+
+	/* ---------- Browse by kind: a typographic index ---------- */
+
+	.kinds__list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		column-gap: var(--spacing-12);
+	}
+
+	@media (min-width: 720px) {
+		.kinds__list {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+
+	.kinds__list li {
+		border-bottom: 1px solid var(--color-border);
+	}
+
+	.kinds__link {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: var(--spacing-4);
+		padding: var(--spacing-4) 0;
+		color: var(--color-text);
+		text-decoration: none;
+	}
+
+	.kinds__name {
+		font-size: clamp(var(--font-size-lg), 1rem + 1vw, var(--font-size-2xl));
+		font-weight: 600;
+		line-height: var(--leading-tight);
+		letter-spacing: var(--tracking-snug);
+	}
+
+	.kinds__count {
+		font-size: var(--font-size-base);
+		font-variant-numeric: tabular-nums;
+		color: var(--color-muted);
+	}
+
+	.kinds__link:hover .kinds__name {
+		color: var(--color-brand);
+		text-decoration: underline;
+		text-decoration-thickness: 1.5px;
+		text-underline-offset: 0.18em;
+	}
+
+	.kinds__link:focus-visible {
+		outline: 2px solid var(--color-brand);
+		outline-offset: 2px;
+		border-radius: var(--radius);
+	}
+
+	/* ---------- Recently added ---------- */
+
+	.recent__grid {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: var(--spacing-8) var(--spacing-4);
+	}
+
+	.place--lead {
+		grid-column: 1 / -1;
+	}
+
+	/* Two columns under a full-width lead: drop a last card that would sit alone. */
+	@media (max-width: 899px) {
+		.place:last-child:nth-child(even) {
+			display: none;
+		}
+	}
+
+	@media (min-width: 900px) {
+		.recent__grid {
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: var(--spacing-10) var(--spacing-8);
+		}
+
+		.place--lead {
+			grid-column: 1 / span 2;
+			grid-row: 1 / span 2;
+		}
+	}
+
+	.place__link {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		color: var(--color-text);
+		text-decoration: none;
+	}
+
+	.place__link:focus-visible {
+		outline: 2px solid var(--color-brand);
+		outline-offset: 4px;
+		border-radius: var(--radius);
+	}
+
+	.place__photo {
+		position: relative;
+		aspect-ratio: 3 / 2;
+		overflow: hidden;
+		border-radius: var(--radius);
+		background: var(--color-limestone);
+	}
+
+	.place__photo :global(img) {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	@media (min-width: 900px) {
+		/* The lead photo fills the height of the two rows beside it. */
+		.place--lead .place__photo {
+			flex: 1;
+			aspect-ratio: auto;
+			min-height: 22rem;
+		}
+	}
+
+	.place__text {
+		padding-top: var(--spacing-3);
+	}
+
+	.place__title {
+		font-family: var(--font-body);
+		font-size: var(--font-size-base);
+		font-weight: 600;
+		line-height: var(--leading-snug);
+		letter-spacing: 0;
+		text-wrap: pretty;
+	}
+
+	.place--lead .place__title {
+		font-family: var(--font-display);
+		font-weight: var(--font-weight-display);
+		font-size: clamp(var(--font-size-xl), 1.1rem + 1vw, var(--font-size-2xl));
+		line-height: var(--leading-tight);
+	}
+
+	.place__kind {
+		margin-top: var(--spacing-1);
+		font-size: var(--font-size-sm);
+		color: var(--color-muted);
+	}
+
+	.place__link:hover .place__title {
+		color: var(--color-brand);
+		text-decoration: underline;
+		text-decoration-thickness: 1.5px;
+		text-underline-offset: 0.18em;
+	}
+
+	/* ---------- About the island (the front page's CMS text) ---------- */
+
+	.about {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		gap: var(--spacing-6);
+	}
+
+	@media (min-width: 960px) {
+		.about {
+			grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+			gap: var(--spacing-12);
+		}
+	}
+
+	.about__label {
+		font-size: var(--font-size-sm);
+		font-weight: 600;
+		color: var(--color-muted);
+		margin-bottom: var(--spacing-2);
+	}
+
+	.about__body {
+		max-width: 68ch;
+		font-size: var(--font-size-base);
+		line-height: var(--leading-relaxed);
+	}
+
+	.about__body :global(p) {
+		margin-bottom: 1.25em;
+	}
+
+	.about__body :global(h2),
+	.about__body :global(h3) {
+		font-family: var(--font-display);
+		font-weight: var(--font-weight-display);
+		font-size: var(--font-size-xl);
+		line-height: var(--leading-tight);
+		margin: 0 0 0.75em;
+	}
+
+	.about__body :global(* + h2),
+	.about__body :global(* + h3) {
+		margin-top: 1.75em;
+	}
+
+	.about__body :global(a) {
+		color: var(--color-brand);
+		text-decoration: underline;
+		text-underline-offset: 0.18em;
+	}
+
+	.about__body :global(img) {
+		border-radius: var(--radius);
+		max-width: 100%;
+		height: auto;
+	}
+
+	.about__body :global(ul),
+	.about__body :global(ol) {
+		margin-bottom: 1.25em;
+		padding-left: var(--spacing-5);
+	}
+</style>
