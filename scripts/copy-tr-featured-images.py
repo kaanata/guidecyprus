@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Give Turkish places their English counterpart's featured image and link
-the two as translations.
+"""Give Turkish places their English counterpart's featured image.
 
 WPML never paired the tr posts with their en originals, and the tr posts on
 WordPress had no featured image at all, so after the import every tr place
@@ -9,17 +8,17 @@ scripts/tr-en-pairs.json were matched by slug and reviewed by hand (two tr
 posts with no en original are left out; the duplicate tr `cinemiles-2` gets
 the image but no link).
 
-Step 1 (images) goes through `emdash content update`, so each tr post gets a
-normal revision. Step 2 (links) has no API: translation_group is a column,
-so this writes an SQL file that moves each tr post into its en post's group,
-and moves any menu item pointing at the old group along with it.
+Images go through `emdash content update`, so each tr post gets a normal
+revision. Only entries without an image are updated; re-running is a no-op.
 
-Only entries that change are updated; re-running is a no-op.
+Linking the pairs as translations is NOT done here. EmDash keys category and
+tag assignments by the content's translation_group, so moving a tr post into
+its en post's group swaps its Turkish categories for the English ones (tried
+2026-09-29 and reverted). Linking needs the tr and en terms paired first and
+the assignments merged.
 
 Usage:
-    python3 scripts/link-tr-translations.py images <site-url> [--dry-run]
-    python3 scripts/link-tr-translations.py sql > link-tr-translations.sql
-    pnpm wrangler d1 execute guidecyprus --remote --file link-tr-translations.sql
+    python3 scripts/copy-tr-featured-images.py images <site-url> [--dry-run]
 """
 
 import json
@@ -63,33 +62,9 @@ def images(url: str, dry_run: bool) -> None:
     print(f"{changed} {'to update' if dry_run else 'updated'}")
 
 
-def quote(value: str) -> str:
-    return "'" + value.replace("'", "''") + "'"
-
-
-def sql() -> None:
-    for pair in json.load(open(PAIRS, encoding="utf-8")):
-        if not pair["link"]:
-            continue
-        old, new = quote(pair["tr_group"]), quote(pair["en_group"])
-        print(f"-- {pair['tr_slug']} -> {pair['en_slug']}")
-        # Guarded so a re-run, or an en group that already has a tr entry, changes nothing.
-        print(
-            f"UPDATE ec_posts SET translation_group = {new} "
-            f"WHERE id = {quote(pair['tr_id'])} AND locale = 'tr' AND translation_group = {old} "
-            f"AND NOT EXISTS (SELECT 1 FROM ec_posts WHERE translation_group = {new} AND locale = 'tr');"
-        )
-        print(
-            f"UPDATE _emdash_menu_items SET reference_id = {new} WHERE reference_id = {old} "
-            f"AND EXISTS (SELECT 1 FROM ec_posts WHERE id = {quote(pair['tr_id'])} AND translation_group = {new});"
-        )
-
-
 if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if a != "--dry-run"]
     if args[:1] == ["images"] and len(args) == 2:
         images(args[1], dry_run="--dry-run" in sys.argv)
-    elif args == ["sql"]:
-        sql()
     else:
         sys.exit(__doc__)
