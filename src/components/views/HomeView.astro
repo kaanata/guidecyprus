@@ -47,7 +47,7 @@ const homeAlternates = [
 	{ hreflang: "x-default", href: `${origin}/` },
 ];
 
-/** Places shown under "Recently added": one lead and five more. */
+/** Places shown under "Recently added": a lead (when one has a big enough image) and the rest. */
 const RECENT_COUNT = 6;
 
 const [recent, categoryTerms] = await Promise.all([
@@ -86,7 +86,15 @@ function kindOf(id: string): string | undefined {
 	return primaryKind(kindByPlace.get(id))?.label;
 }
 
-const [lead, ...rest] = places;
+// The large lead card goes to the newest place with an image big enough to
+// fill it. Logos and small imported photos would be blown up, so when none of
+// the recent places has one, all cards are the same size.
+const LEAD_MIN_WIDTH = 900;
+const leadIndex = places.findIndex((p) => (p.data.featured_image?.width ?? 0) >= LEAD_MIN_WIDTH);
+const hasLead = leadIndex >= 0;
+const orderedPlaces = hasLead
+	? [places[leadIndex], ...places.filter((_, i) => i !== leadIndex)]
+	: places;
 const searchAction = localePath(locale, "/search");
 ---
 
@@ -156,7 +164,7 @@ const searchAction = localePath(locale, "/search");
 		}
 
 		{
-			lead && (
+			orderedPlaces.length > 0 && (
 				<section class="home-section recent" aria-labelledby="home-recent">
 					<div class="section-head">
 						<h2 id="home-recent" class="section-title">
@@ -166,18 +174,18 @@ const searchAction = localePath(locale, "/search");
 							{t(locale, "home.recentAll")}
 						</a>
 					</div>
-					<ul class="recent__grid">
-						{[lead, ...rest].map((place, index) => {
+					<ul class:list={["recent__grid", { "recent__grid--lead": hasLead }]}>
+						{orderedPlaces.map((place, index) => {
 							const kind = kindOf(place.data.id);
 							return (
-								<li class:list={["place", { "place--lead": index === 0 }]}>
+								<li class:list={["place", { "place--lead": hasLead && index === 0 }]}>
 									<a class="place__link" href={localePath(locale, `/${place.id}`)}>
 										<div class="place__photo" data-photo-frame>
 											{place.data.featured_image ? (
 												<Image
 													image={place.data.featured_image}
 													sizes={
-														index === 0
+														hasLead && index === 0
 															? "(min-width: 900px) 760px, 100vw"
 															: "(min-width: 900px) 380px, 50vw"
 													}
@@ -451,9 +459,11 @@ const searchAction = localePath(locale, "/search");
 		grid-column: 1 / -1;
 	}
 
-	/* Two columns under a full-width lead: drop a last card that would sit alone. */
+	/* Two columns: drop a last card that would sit alone in its row
+	 * (the lead takes a full row, so the count shifts by one). */
 	@media (max-width: 899px) {
-		.place:last-child:nth-child(even) {
+		.recent__grid--lead .place:last-child:nth-child(even),
+		.recent__grid:not(.recent__grid--lead) .place:last-child:nth-child(odd) {
 			display: none;
 		}
 	}

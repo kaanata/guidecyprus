@@ -128,6 +128,14 @@ const inArticleSplit = splitForInArticle(post.data.content);
 
 const addedDate = post.data.publishedAt ?? null;
 
+// Small images (every logo, and the low-resolution imported photos) turn
+// soft and oversized when stretched across the full-width photo row, so
+// below this width the image is shown as a compact tile beside the title.
+// Decided from the stored width, before render, so nothing shifts on load.
+const COMPACT_IMAGE_BELOW = 900;
+const imageWidth = post.data.featured_image?.width ?? 0;
+const compactImage = imageWidth > 0 && imageWidth < COMPACT_IMAGE_BELOW;
+
 // Freely licensed photos (e.g. Wikimedia Commons, CC BY-SA) carry their
 // attribution in the image value's meta; the licence requires showing it.
 type PhotoCredit = { author: string; license: string; licenseUrl?: string; sourceUrl?: string };
@@ -152,7 +160,7 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 >
 	<AdSpace space="top-banner" page="article" />
 	<article class="article">
-		<div class="article-grid">
+		<div class:list={["article-grid", { "article-grid--badge": compactImage }]}>
 			<header class="article-header">
 				<nav class="breadcrumb" aria-label={t(locale, "place.breadcrumb")}>
 					<ol>
@@ -178,8 +186,13 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 
 			{
 				post.data.featured_image && (
-					<figure class="article-hero-figure">
-						<div class="article-hero" data-photo-frame data-fit="contain" {...post.edit.featured_image}>
+					<figure class:list={["article-hero-figure", { "article-badge": compactImage }]}>
+						<div
+							class="article-hero"
+							data-photo-frame
+							data-fit={compactImage ? undefined : "contain"}
+							{...post.edit.featured_image}
+						>
 							<Image image={post.data.featured_image} priority />
 						</div>
 						{photoCredit && (
@@ -544,6 +557,38 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 		color: inherit;
 		text-decoration: underline;
 		text-underline-offset: 1px;
+	}
+
+	/* Compact tile for small images: in the gutter column beside the title
+	 * instead of the full-width photo row. Logos (data-logo, set by the
+	 * photo-fit script) stay whole on their own colour; small photos fill. */
+	.article-grid--badge {
+		grid-template-areas:
+			". header badge"
+			"meta main side";
+	}
+
+	.article-badge {
+		grid-area: badge;
+		align-self: start;
+		margin: 0 0 var(--spacing-8);
+	}
+
+	/* 4:3, like the place cards, so the tile is about as tall as the title block. */
+	.article-badge .article-hero {
+		aspect-ratio: 4 / 3;
+	}
+
+	.article-badge .article-hero :global(img) {
+		height: 100%;
+		aspect-ratio: 4 / 3;
+		object-fit: cover;
+	}
+
+	.article-badge .article-hero[data-logo] :global(img) {
+		object-fit: contain;
+		padding: 12%;
+		box-sizing: border-box;
 	}
 
 	/* Left column: kind, date added, tags */
@@ -1138,6 +1183,18 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 			margin-bottom: var(--spacing-6);
 		}
 
+		.article-grid--badge {
+			grid-template-areas:
+				"header"
+				"badge"
+				"meta"
+				"main";
+		}
+
+		.article-badge {
+			width: 180px;
+		}
+
 		.meta-list {
 			position: static;
 			display: flex;
@@ -1202,6 +1259,16 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 		}
 
 		.article-hero :global(img) {
+			aspect-ratio: 4 / 3;
+		}
+
+		/* The compact tile keeps its shape and doesn't run to the edges. */
+		.article-badge .article-hero {
+			margin-inline: 0;
+			border-radius: var(--radius);
+		}
+
+		.article-badge .article-hero :global(img) {
 			aspect-ratio: 4 / 3;
 		}
 
