@@ -96,8 +96,10 @@ const locale = Astro.currentLocale;
 		opacity: 1;
 	}
 
+	/* The global :focus-visible ring (English Red) marks focus; the
+	 * border firms up to ink. */
 	.not-found-row input:focus-visible {
-		border-color: var(--color-brand);
+		border-color: var(--color-text);
 	}
 
 	.not-found-row button {
@@ -107,8 +109,8 @@ const locale = Astro.currentLocale;
 		font: inherit;
 		font-size: var(--font-size-base);
 		font-weight: 600;
-		color: var(--color-on-brand);
-		background: var(--color-brand);
+		color: var(--color-on-button);
+		background: var(--color-button);
 		border: none;
 		border-radius: var(--radius);
 		cursor: pointer;
@@ -116,7 +118,8 @@ const locale = Astro.currentLocale;
 	}
 
 	.not-found-row button:hover {
-		background: var(--color-brand-hover);
+		color: var(--color-on-button-hover);
+		background: var(--color-button-hover);
 	}
 
 	.not-found-home {

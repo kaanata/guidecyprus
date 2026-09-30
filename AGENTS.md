@@ -44,7 +44,7 @@ This template ships with `.mcp.json`, `.cursor/mcp.json`, and `.vscode/mcp.json`
 
 ## This Site
 
-Guide Cyprus: a bilingual (en, tr under `/tr`) directory of places in North Cyprus, mostly around Kyrenia/Girne -- historical sites, hotels, restaurants, bars, casinos, beaches, banks. Posts are places; categories are kinds of place. Readers are visitors, often on a phone, who want to find a place by kind and get its essentials (photo, address, phone). Built from the EmDash blog template, now themed as "Kyrenia harbour".
+Guide Cyprus: a bilingual (en, tr under `/tr`) directory of places in North Cyprus, mostly around Kyrenia/Girne -- historical sites, hotels, restaurants, bars, casinos, beaches, banks. Posts are places; categories are kinds of place. Readers are visitors, often on a phone, who want to find a place by kind and get its essentials (photo, address, phone). Built from the EmDash blog template, now themed as "Kyrenia harbour" in a Sanzo Wada palette.
 
 ## Pages
 
@@ -70,7 +70,7 @@ Site settings have `title` and `tagline` -- both render in the header / footer.
 
 ## Visual character
 
-- **Colour.** Harbour ink `#102a3a` text on white; sea mist `#eff5f5` for quiet surfaces; **verdigris `#17766a`** (`--color-brand`) is the only accent -- links, focus rings, active states, the map marker. Limestone (`--color-limestone`) is only for image placeholders and the island map. The footer is an ink band (`--color-ink-band`). Dark mode is "night sea", via `light-dark()` in the tokens. Photos carry the colour.
+- **Colour.** Sanzo Wada, *A Dictionary of Color Combinations* (#1, #125, #227, #339, #190). Cerulian Blue `#0093a5` (`--color-sea`) is the field: full strength only as the home hero's sea. English Red `#d96629` (`--color-mark`) is the small mark: map marker, current nav item, focus rings, card-title hover underline, title and blockquote rules. Violet Blue `#40456a` is the ink: text, primary buttons (`--color-button`), the footer band. Links are Cerulian darkened to `#007684` (`--color-brand`, 5.4:1), hover to ink. Light Glaucous Blue only as the pale surface tint, Ivory Buff (`--color-sand`) for the island and photo placeholders. Flat colour only. Dark mode via `light-dark()` in the tokens. Photos carry the colour.
 - **Type.** **Young Serif** on `--font-display` (= `--font-heading`) for h1/h2, page titles and place names. It has one weight (400); never bold it (`font-synthesis: none`). **Schibsted Grotesk** on `--font-body` for everything else, card titles at 600. Both load with latin-ext for Turkish. Major-third scale on a 17px base.
 - **The island.** One outline of the whole island (`src/utils/island.ts`, Natural Earth land data, no internal lines) is the brand: large in the home hero (`IslandMap.astro`), tiny in the wordmark (`Wordmark.astro`). Use it nowhere else.
 - **Places, not posts.** No author bylines, reading time or "continue reading". Show the place's kind instead; `src/utils/kind.ts` picks it (the town category `girne` only as a fallback, `uncategorized` never).
@@ -90,7 +90,7 @@ CSS variables worth knowing (see `tokens.css` for the full list):
 - `--color-brand`, `--color-brand-hover`, `--color-on-brand`, `--color-brand-ring`
 - `--color-bg`, `--color-bg-subtle`, `--color-surface`, `--color-text`, `--color-text-secondary`, `--color-muted`, `--color-border`, `--color-border-subtle`
 - `--font-body`, `--font-display`, `--font-heading`, `--font-mono`
-- `--color-limestone`, `--color-ink-band`, `--color-on-ink-band`, `--color-on-ink-band-muted`
+- `--color-sea`, `--color-mark`, `--color-sand` (`--color-limestone` is an alias), `--color-button` / `--color-on-button`, `--color-ink-band`, `--color-on-ink-band`, `--color-on-ink-band-muted`
 - `--font-weight-heading` (600) / `--font-weight-display` (400, Young Serif's only weight)
 - `--tracking-tight` / `--tracking-snug` / `--tracking-wide` / `--tracking-wider` -- letter-spacing tokens used across headings and meta labels
 - `--content-width` (680px) -- article body column
@@ -100,7 +100,7 @@ CSS variables worth knowing (see `tokens.css` for the full list):
 
 ## What not to do
 
-- Don't add a second accent colour. Verdigris is the only one; limestone is a neutral for placeholders and the map.
+- Don't add colours outside the Wada set, or tints/gradients of red or Cerulian. English Red and full-strength Cerulian are ~3.6:1 on white: never text under 24px or a background under small text.
 - No template tells: no `text-transform: uppercase` labels, no "A · B" meta strings, no "→" on links, no monospace labels, no hover lift or shadows on cards (the search dropdown is the only shadow), no scroll-triggered animation. The only automatic motion is the home map marker, off under reduced motion.
 - Every user-visible string goes through `t()` in `src/utils/strings.ts` with en and tr values.
 - Don't collapse the place-page gutter on desktop.

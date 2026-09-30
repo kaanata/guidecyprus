@@ -33,21 +33,21 @@ const { tags, class: className } = Astro.props;
     line-height: var(--leading-snug);
   }
 
+  /* Links in the darkened Cerulian (the only text colour for links);
+   * hover goes to ink, focus is the English Red ring. */
   .tag {
-    color: var(--color-text-secondary);
+    color: var(--color-brand);
     text-decoration: underline;
-    text-decoration-color: var(--color-border);
     text-decoration-thickness: 1px;
     text-underline-offset: 3px;
   }
 
   .tag:hover {
-    color: var(--color-brand);
-    text-decoration-color: currentColor;
+    color: var(--color-brand-hover);
   }
 
   .tag:focus-visible {
-    outline: 2px solid var(--color-brand);
+    outline: 2px solid var(--color-mark);
     outline-offset: 2px;
     border-radius: var(--radius);
   }

@@ -165,9 +165,9 @@ const kindsByEntry =
 	}
 
 	.search-input:focus-visible {
-		outline: 2px solid var(--color-brand);
+		outline: 2px solid var(--color-mark);
 		outline-offset: 2px;
-		border-color: var(--color-brand);
+		border-color: var(--color-text);
 	}
 
 	.search-button {
@@ -176,19 +176,22 @@ const kindsByEntry =
 		font: inherit;
 		font-size: var(--font-size-base);
 		font-weight: 600;
-		background: var(--color-brand);
-		color: var(--color-on-brand);
+		/* Shared button look (tokens in theme.css): Violet Blue fill, white
+		 * text; hover to the link Cerulian. */
+		background: var(--color-button, var(--color-text));
+		color: var(--color-on-button, var(--color-bg));
 		border: none;
 		border-radius: var(--radius);
 		cursor: pointer;
 	}
 
 	.search-button:hover {
-		background: var(--color-brand-hover);
+		background: var(--color-button-hover, var(--color-brand));
+		color: var(--color-on-button-hover, var(--color-on-brand));
 	}
 
 	.search-button:focus-visible {
-		outline: 2px solid var(--color-brand);
+		outline: 2px solid var(--color-mark);
 		outline-offset: 2px;
 	}
 
@@ -214,7 +217,12 @@ const kindsByEntry =
 	.search-next a {
 		font-weight: 600;
 		color: var(--color-brand);
+		text-decoration: underline;
 		text-underline-offset: 0.2em;
+	}
+
+	.search-next a:hover {
+		color: var(--color-brand-hover);
 	}
 
 	.search-results {
@@ -248,9 +256,11 @@ const kindsByEntry =
 		text-decoration: none;
 	}
 
+	/* Like the place cards: ink title, English Red underline on hover. */
 	.result-title a:hover {
-		color: var(--color-brand);
 		text-decoration: underline;
+		text-decoration-color: var(--color-mark);
+		text-decoration-thickness: 2px;
 		text-underline-offset: 0.2em;
 	}
 
@@ -268,10 +278,11 @@ const kindsByEntry =
 		color: var(--color-text-secondary);
 	}
 
-	/* FTS returns <mark> wrapping the matched terms */
+	/* FTS returns <mark> wrapping the matched terms: the flat selection
+	 * colour (Light Glaucous Blue, Violet Blue ink), never a tint. */
 	.result-snippet :global(mark) {
-		background: var(--color-brand-ring);
-		color: var(--color-text);
+		background: var(--color-selection, var(--color-surface));
+		color: var(--color-on-selection, var(--color-text));
 		padding: 0 0.1em;
 		border-radius: 2px;
 	}

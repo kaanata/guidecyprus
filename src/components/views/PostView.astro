@@ -459,6 +459,7 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 	}
 
 	.breadcrumb [aria-current] {
+		color: var(--color-text);
 		overflow-wrap: anywhere;
 	}
 
@@ -631,7 +632,7 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 	.article-content :global(blockquote) {
 		margin: 2em 0;
 		padding: 0 0 0 var(--spacing-5);
-		border-left: 2px solid var(--color-brand);
+		border-left: 2px solid var(--color-mark);
 		color: var(--color-text-secondary);
 	}
 
@@ -689,7 +690,7 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 		max-width: 100%;
 		height: auto;
 		border-radius: var(--radius);
-		background: var(--color-limestone);
+		background: var(--color-sand);
 	}
 
 	.article-content :global(p > img),
@@ -833,9 +834,10 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 		color: var(--color-text);
 	}
 
+	/* The current section: ink text, English Red bar (a mark, not text). */
 	.toc-content :global(.toc-link.active) {
-		color: var(--color-brand);
-		border-left-color: var(--color-brand);
+		color: var(--color-text);
+		border-left-color: var(--color-mark);
 	}
 
 	/* Sidebar widgets: quiet lists, no pills, no boxes. */
@@ -895,9 +897,9 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 	}
 
 	.sidebar-widgets :global(.widget-search__input):focus-visible {
-		outline: 2px solid var(--color-brand);
+		outline: 2px solid var(--color-mark);
 		outline-offset: 2px;
-		border-color: var(--color-brand);
+		border-color: var(--color-text);
 	}
 
 	.sidebar-widgets :global(.widget-search__button) {
@@ -993,9 +995,16 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 		border-color: var(--color-border) !important;
 	}
 
+	/* Shared button look (tokens in theme.css): Violet Blue fill, white
+	 * text; hover to the link Cerulian. */
 	.article-comments :global(.ec-comment-form-submit) {
-		background: var(--color-brand) !important;
-		color: var(--color-on-brand) !important;
+		background: var(--color-button, var(--color-text)) !important;
+		color: var(--color-on-button, var(--color-bg)) !important;
+	}
+
+	.article-comments :global(.ec-comment-form-submit:hover) {
+		background: var(--color-button-hover, var(--color-brand)) !important;
+		color: var(--color-on-button-hover, var(--color-on-brand)) !important;
 	}
 
 	/* More places */
@@ -1031,6 +1040,7 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 		font-weight: var(--font-weight-display);
 		line-height: var(--leading-tight);
 		letter-spacing: 0;
+		color: var(--color-text);
 		margin: 0;
 	}
 
@@ -1059,7 +1069,7 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 	.toc-content :global(.toc-link:focus-visible),
 	.sidebar-widgets :global(.widget a:focus-visible),
 	.article-content :global(a:focus-visible) {
-		outline: 2px solid var(--color-brand);
+		outline: 2px solid var(--color-mark);
 		outline-offset: 2px;
 		border-radius: var(--radius);
 	}

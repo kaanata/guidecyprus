@@ -53,7 +53,10 @@ const { title, href, logo, tone = "default", class: className } = Astro.props;
 		flex: none;
 		width: 28px;
 		height: auto;
-		fill: var(--color-brand);
+		/* Ink, like the title: sand, the island's own colour, vanishes on
+		   white; full-strength Cerulian is kept for the sea field of the home
+		   plate and English Red for "you are here" (marker, current page). */
+		fill: currentColor;
 		/* The glyph's centre of mass sits low; nudge it onto the x-height. */
 		transform: translateY(-1px);
 	}
@@ -89,9 +92,9 @@ const { title, href, logo, tone = "default", class: className } = Astro.props;
 		color: var(--color-on-ink-band);
 	}
 
-	/* On the ink band the glyph takes the band's text colour: verdigris on
-	   harbour ink is too low-contrast to read as a shape. */
+	/* On the Violet Blue band the island is sand, as in the hero plate
+	   (6.3:1 there); Cerulian on Violet Blue would be too close to read. */
 	.wordmark--light .wordmark-glyph {
-		fill: var(--color-on-ink-band);
+		fill: var(--color-sand);
 	}
 </style>

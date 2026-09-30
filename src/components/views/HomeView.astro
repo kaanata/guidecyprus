@@ -290,9 +290,9 @@ const searchAction = localePath(locale, "/search");
 	}
 
 	.hero__search-input:focus-visible {
-		outline: 2px solid var(--color-brand);
+		outline: 2px solid var(--color-mark);
 		outline-offset: 2px;
-		border-color: var(--color-brand);
+		border-color: var(--color-text);
 	}
 
 	.hero__search-button {
@@ -302,20 +302,23 @@ const searchAction = localePath(locale, "/search");
 		font: inherit;
 		font-size: var(--font-size-base);
 		font-weight: 600;
-		color: var(--color-on-brand);
-		background: var(--color-brand);
+		/* Primary button: Violet Blue ink with white text (9.2:1). */
+		color: var(--color-on-button);
+		background: var(--color-button);
 		border: 0;
 		border-radius: var(--radius);
 		cursor: pointer;
 		transition: background var(--transition-fast);
 	}
 
+	/* Hover: the darkened Cerulian, whose white text still passes (5.4:1). */
 	.hero__search-button:hover {
-		background: var(--color-brand-hover);
+		color: var(--color-on-button-hover);
+		background: var(--color-button-hover);
 	}
 
 	.hero__search-button:focus-visible {
-		outline: 2px solid var(--color-brand);
+		outline: 2px solid var(--color-mark);
 		outline-offset: 2px;
 	}
 
@@ -328,12 +331,6 @@ const searchAction = localePath(locale, "/search");
 		}
 	}
 
-	/* On wide screens the island reaches into the page margin. */
-	@media (min-width: 1300px) {
-		.hero :global(.hero__map) {
-			margin-right: -4rem;
-		}
-	}
 
 	/* ---------- Sections ---------- */
 
@@ -425,15 +422,16 @@ const searchAction = localePath(locale, "/search");
 		color: var(--color-muted);
 	}
 
+	/* Hover: the name stays ink; an English Red underline marks it. */
 	.kinds__link:hover .kinds__name {
-		color: var(--color-brand);
 		text-decoration: underline;
-		text-decoration-thickness: 1.5px;
+		text-decoration-color: var(--color-mark);
+		text-decoration-thickness: 2px;
 		text-underline-offset: 0.18em;
 	}
 
 	.kinds__link:focus-visible {
-		outline: 2px solid var(--color-brand);
+		outline: 2px solid var(--color-mark);
 		outline-offset: 2px;
 		border-radius: var(--radius);
 	}
@@ -481,7 +479,7 @@ const searchAction = localePath(locale, "/search");
 	}
 
 	.place__link:focus-visible {
-		outline: 2px solid var(--color-brand);
+		outline: 2px solid var(--color-mark);
 		outline-offset: 4px;
 		border-radius: var(--radius);
 	}
@@ -491,7 +489,7 @@ const searchAction = localePath(locale, "/search");
 		aspect-ratio: 3 / 2;
 		overflow: hidden;
 		border-radius: var(--radius);
-		background: var(--color-limestone);
+		background: var(--color-sand);
 	}
 
 	.place__photo :global(img) {
@@ -538,9 +536,9 @@ const searchAction = localePath(locale, "/search");
 	}
 
 	.place__link:hover .place__title {
-		color: var(--color-brand);
 		text-decoration: underline;
-		text-decoration-thickness: 1.5px;
+		text-decoration-color: var(--color-mark);
+		text-decoration-thickness: 2px;
 		text-underline-offset: 0.18em;
 	}
 
