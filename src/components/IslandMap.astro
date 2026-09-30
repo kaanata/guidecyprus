@@ -1,7 +1,10 @@
 ---
 /**
- * The island, large: the one outline of Cyprus (src/utils/island.ts) in
- * limestone with a thin ink edge, and a single verdigris marker at Kyrenia.
+ * The island, large, as a Wada plate: the one outline of Cyprus
+ * (src/utils/island.ts) in Ivory Buff (--color-sand) on a flat field of
+ * Cerulian Blue (--color-sea), with a single English Red marker
+ * (--color-mark) at Kyrenia. Flat colour only: no edge on the land, no
+ * gradient, no texture.
  *
  * The marker and its label are HTML laid over the SVG (positioned in percent
  * of the viewBox), so they keep a fixed, legible size at any map width. The
@@ -45,8 +48,12 @@ const label = t(locale, "home.mapKyrenia");
 </figure>
 
 <style>
+	/* The sea: a crisp flat rectangle, the island set inside it with room
+	   all round, like a plate in the book. */
 	.island-map {
 		margin: 0;
+		padding: 11% 8%;
+		background: var(--color-sea);
 	}
 
 	.island-map__frame {
@@ -62,11 +69,8 @@ const label = t(locale, "home.mapKyrenia");
 	}
 
 	.island-map__land {
-		fill: var(--color-limestone);
-		stroke: var(--color-text);
-		stroke-width: 1.25px;
-		stroke-linejoin: round;
-		vector-effect: non-scaling-stroke;
+		fill: var(--color-sand);
+		stroke: none;
 	}
 
 	.island-map__marker {
@@ -83,10 +87,12 @@ const label = t(locale, "home.mapKyrenia");
 		width: 14px;
 		height: 14px;
 		border-radius: 50%;
-		background: var(--color-brand);
-		box-sizing: border-box;
-		border: 2.5px solid var(--color-bg);
-		outline: 1.5px solid var(--color-brand);
+		background: var(--color-mark);
+		/* A thin ink ring, with a hair of sand between, so the red reads on
+		   the sand in both modes. --color-ink-band is Violet Blue (light) or
+		   near-black navy (dark): dark on sand either way. */
+		outline: 1.5px solid var(--color-ink-band);
+		outline-offset: 1.5px;
 	}
 
 	/* One ring that opens out from the marker as the page arrives, then rests. */
@@ -95,7 +101,7 @@ const label = t(locale, "home.mapKyrenia");
 		position: absolute;
 		inset: -9px;
 		border-radius: 50%;
-		border: 1.5px solid var(--color-brand);
+		border: 1.5px solid var(--color-mark);
 		opacity: 0;
 	}
 
@@ -116,17 +122,19 @@ const label = t(locale, "home.mapKyrenia");
 		}
 	}
 
-	/* Kyrenia sits on the north coast; the label goes above it, over the sea. */
+	/* Kyrenia sits on the north coast. Ink on Cerulian fails contrast, so the
+	   label goes below the marker, on the land: ink on sand is 6.3:1 in light,
+	   and the dark band colour on the dark-mode sand is higher still. */
 	.island-map__label {
 		position: absolute;
 		left: 0;
-		bottom: 14px;
+		top: 15px;
 		transform: translateX(-50%);
 		font-family: var(--font-body);
 		font-size: var(--font-size-sm);
 		font-weight: 600;
 		line-height: 1;
-		color: var(--color-text);
+		color: var(--color-ink-band);
 		white-space: nowrap;
 	}
 </style>

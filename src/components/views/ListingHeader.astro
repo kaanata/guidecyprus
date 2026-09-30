@@ -63,20 +63,28 @@ const { title, lead, count, crumbs, crumbLabel } = Astro.props;
 		color: var(--color-border);
 	}
 
+	/* Same as the place page: links in the darkened Cerulian, the current
+	 * crumb in ink. */
 	.crumbs a {
-		color: var(--color-text-secondary);
+		color: var(--color-brand);
+		font-weight: 600;
 		text-decoration: underline;
-		text-decoration-color: var(--color-border);
+		text-decoration-color: transparent;
 		text-underline-offset: 0.2em;
 	}
 
 	.crumbs a:hover {
-		color: var(--color-brand);
 		text-decoration-color: currentColor;
 	}
 
+	.crumbs a:focus-visible {
+		outline: 2px solid var(--color-mark);
+		outline-offset: 2px;
+		border-radius: var(--radius);
+	}
+
 	.crumbs [aria-current] {
-		color: var(--color-muted);
+		color: var(--color-text);
 	}
 
 	.listing-lead {
@@ -92,6 +100,7 @@ const { title, lead, count, crumbs, crumbLabel } = Astro.props;
 		font-size: var(--font-size-5xl);
 		line-height: 1.08;
 		letter-spacing: var(--tracking-tight);
+		color: var(--color-text);
 		margin: 0;
 		max-width: 20ch;
 		text-wrap: balance;

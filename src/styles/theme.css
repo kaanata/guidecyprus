@@ -1,13 +1,19 @@
 /*
-  theme.css -- Guide Cyprus theme ("Kyrenia harbour").
+  theme.css -- Guide Cyprus theme.
 
   Overrides the defaults in src/styles/tokens.css. Declarations here are
   unlayered, so they always beat the @layer base defaults.
 
-  Palette: harbour ink for text, one accent (verdigris -- Cyprus is named
-  for copper, and this is its patina), sea mist for quiet surfaces, and
-  limestone only for image placeholders and the island map. Photos carry
-  the colour; the interface stays ink and verdigris.
+  Palette: Sanzo Wada, A Dictionary of Color Combinations. The core is
+  combination #1, English Red #d96629 + Cerulian Blue #0093a5. Its
+  neighbours in the book supply the rest: Violet Blue #40456a (with both in
+  #125 and #339) for text and the footer band, Light Glaucous Blue #a5c8d1
+  (#227, #339) as a pale surface tint, Ivory Buff #ebd3a2 (#190) for sand.
+
+  Both core colours measure ~3.6:1 on white, so they are used at full
+  strength only as fields and marks: --color-sea (the hero sea) and
+  --color-mark (map marker, current page, focus). Text links use Cerulian
+  darkened to 5.4:1 (--color-brand); nothing else is invented.
 
   Type: Young Serif (--font-display) for place names and page titles,
   Schibsted Grotesk (--font-body) for everything else. Both load in
@@ -15,24 +21,29 @@
 */
 
 :root {
-	/* Colour */
-	--color-bg: light-dark(#ffffff, #0b1b25);
-	--color-bg-subtle: light-dark(#eff5f5, #10232f);
-	--color-surface: light-dark(#eff5f5, #132a37);
-	--color-text: light-dark(#102a3a, #e3ecee);
-	--color-text-secondary: light-dark(#3f5666, #a8bac4);
-	/* WCAG AA (4.5:1) on both --color-bg and --color-bg-subtle. */
-	--color-muted: light-dark(#566a78, #8ea3af);
-	--color-border: light-dark(#d5e0e3, #24404f);
-	--color-border-subtle: light-dark(#e6eef0, #1a3240);
-	--color-brand: light-dark(#17766a, #5cc2b0);
-	--color-brand-hover: light-dark(#0f5a50, #84d6c7);
-	--color-on-brand: light-dark(#ffffff, #0b1b25);
-	--color-limestone: light-dark(#d6c8ac, #3b4a4f);
-	/* The footer is a night-harbour band in both modes. */
-	--color-ink-band: light-dark(#102a3a, #07131a);
-	--color-on-ink-band: #e3ecee;
-	--color-on-ink-band-muted: #a9bcc6;
+	/* Wada colours, as fields and marks */
+	--color-sea: #0093a5; /* Cerulian Blue */
+	--color-mark: light-dark(#d96629, #ec8a55); /* English Red */
+	--color-sand: light-dark(#ebd3a2, #cdb88b); /* Ivory Buff */
+	--color-limestone: var(--color-sand); /* placeholder alias */
+
+	/* Interface: Violet Blue ink on white; all text pairs pass WCAG AA. */
+	--color-bg: light-dark(#ffffff, #1b1e30);
+	--color-bg-subtle: light-dark(#edf4f6, #22263b); /* Light Glaucous Blue tint */
+	--color-surface: light-dark(#edf4f6, #262a41);
+	--color-text: light-dark(#40456a, #f1e7d0);
+	--color-text-secondary: light-dark(#565b7c, #cfc8d2);
+	--color-muted: light-dark(#61667f, #a9a6b8);
+	--color-border: light-dark(#cfdde2, #363b57);
+	--color-border-subtle: light-dark(#e2ecef, #2b2f47);
+	--color-brand: light-dark(#007684, #5cc6d3); /* Cerulian, darkened for text */
+	--color-brand-hover: light-dark(#40456a, #f1e7d0);
+	--color-on-brand: light-dark(#ffffff, #1b1e30);
+	/* The footer is a Violet Blue band in both modes (lifted in dark so it
+	   still reads as Violet Blue, not black, above the night page). */
+	--color-ink-band: light-dark(#40456a, #2e3252);
+	--color-on-ink-band: light-dark(#f7efdf, #f1e7d0);
+	--color-on-ink-band-muted: light-dark(#d7d2dd, #b9b4c6);
 
 	/* Type */
 	--font-heading: var(--font-display);
@@ -60,29 +71,49 @@
 	--radius: 3px;
 	--radius-lg: 6px;
 	--shadow-sm: none;
-	--shadow-lg: 0 12px 32px color-mix(in srgb, #102a3a 18%, transparent);
+	--shadow-lg: 0 12px 32px color-mix(in srgb, #40456a 20%, transparent);
 
-	--emdash-search-highlight: var(--color-brand);
+	/* No tint of the core pair: rings are the red mark, matches are ink. */
+	--color-brand-ring: var(--color-mark);
+	--emdash-search-highlight: var(--color-text);
 }
 
 @supports not (color: light-dark(#000, #fff)) {
 	:root {
+		--color-mark: #d96629;
+		--color-sand: #ebd3a2;
 		--color-bg: #ffffff;
-		--color-bg-subtle: #eff5f5;
-		--color-surface: #eff5f5;
-		--color-text: #102a3a;
-		--color-text-secondary: #3f5666;
-		--color-muted: #566a78;
-		--color-border: #d5e0e3;
-		--color-border-subtle: #e6eef0;
-		--color-brand: #17766a;
-		--color-brand-hover: #0f5a50;
+		--color-bg-subtle: #edf4f6;
+		--color-surface: #edf4f6;
+		--color-text: #40456a;
+		--color-text-secondary: #565b7c;
+		--color-muted: #61667f;
+		--color-border: #cfdde2;
+		--color-border-subtle: #e2ecef;
+		--color-brand: #007684;
+		--color-brand-hover: #40456a;
 		--color-on-brand: #ffffff;
-		--color-limestone: #d6c8ac;
-		--color-ink-band: #102a3a;
+		--color-ink-band: #40456a;
+		--color-on-ink-band: #f7efdf;
+		--color-on-ink-band-muted: #d7d2dd;
 	}
 }
 
+/*
+  Shared role tokens built only from the palette above (no new colours).
+  Primary buttons are Violet Blue ink with white text (9.2:1); on hover they
+  switch to the link Cerulian (#007684, 5.4:1 with white). In dark mode the
+  same roles invert: light ink fill, night text. Selection is a flat Light
+  Glaucous Blue with Violet Blue ink (5.2:1) in both modes.
+*/
+:root {
+	--color-button: var(--color-text);
+	--color-on-button: var(--color-bg);
+	--color-button-hover: var(--color-brand);
+	--color-on-button-hover: var(--color-on-brand);
+	--color-selection: #a5c8d1; /* Light Glaucous Blue */
+	--color-on-selection: #40456a; /* Violet Blue */
+}
 
 /* Shared visually-hidden utility: text for screen readers only. */
 .sr-only {

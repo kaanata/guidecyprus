@@ -476,6 +476,7 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 					transition: color var(--transition-fast);
 				}
 
+				/* Links: Cerulian darkened for text (5.4:1); hover goes to ink. */
 				a:where(:not([class*="emdash"]):not([class*="ec-"])):hover {
 					color: var(--color-brand-hover);
 				}
@@ -525,8 +526,10 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 					font-weight: 650;
 				}
 
+				/* Focus is an English Red mark: small, solid, never a field.
+				   The footer band swaps it for its own light ink. */
 				:focus-visible {
-					outline: 2px solid var(--color-brand);
+					outline: 2px solid var(--color-mark);
 					outline-offset: 2px;
 				}
 
@@ -534,9 +537,11 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 					outline: none;
 				}
 
+				/* Flat Light Glaucous Blue with Violet Blue ink (5.2:1) in both
+				   modes; no tint of the core pair. */
 				::selection {
-					background: color-mix(in srgb, var(--color-brand) 24%, transparent);
-					color: inherit;
+					background: var(--color-selection);
+					color: var(--color-on-selection);
 				}
 
 				@media (prefers-reduced-motion: reduce) {
@@ -556,7 +561,8 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 		</style>
 
 		<style>
-			/* Header: paper, one hairline, no shadow. */
+			/* Header: white, one hairline, no shadow. Links are ink; the
+			   current page carries the English Red mark as its underline. */
 			.site-header {
 				position: sticky;
 				top: 0;
@@ -601,13 +607,15 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 				text-decoration-thickness: 2px;
 			}
 
-			.nav-links a:hover {
-				color: var(--color-brand);
+			.nav-links a:hover,
+			.nav-links a[aria-current="page"] {
+				color: var(--color-text);
+				text-decoration: underline;
+				text-decoration-color: var(--color-mark);
 			}
 
 			.nav-links a[aria-current="page"] {
-				color: var(--color-brand);
-				text-decoration: underline;
+				text-decoration-thickness: 3px;
 			}
 
 			.nav-admin {
@@ -627,7 +635,7 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 				position: relative;
 				flex: none;
 				width: 15rem;
-				--emdash-search-border-focus: var(--color-brand);
+				--emdash-search-border-focus: var(--color-text);
 			}
 
 			.site-header :global(.site-search input.site-search-input) {
@@ -674,14 +682,15 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 
 			.site-header :global(.site-search input.site-search-input:focus),
 			.site-header :global(.site-search input.site-search-input:focus-visible) {
-				outline: 2px solid var(--color-brand);
+				outline: 2px solid var(--color-mark);
 				outline-offset: 2px;
-				border-color: var(--color-brand);
+				border-color: var(--color-text);
 				background-color: var(--color-bg);
 				box-shadow: none;
 			}
 
-			/* The results dropdown is the one element on the site that floats. */
+			/* The results dropdown is the one element on the site that floats
+			   (the only shadow). The highlighted result gets a red left edge. */
 			.site-header :global(.site-search .site-search-results) {
 				position: absolute;
 				top: 100%;
@@ -712,7 +721,7 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 				text-decoration: none;
 				color: var(--color-text);
 				border-bottom: 1px solid var(--color-border-subtle);
-				border-inline-start: 2px solid transparent;
+				border-inline-start: 3px solid transparent;
 			}
 
 			.site-header :global(.site-search-results a.site-search-result:last-child) {
@@ -723,7 +732,7 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 			.site-header :global(.site-search-results a.site-search-result:focus),
 			.site-header :global(.site-search-results a.site-search-result.focused) {
 				background: var(--color-bg-subtle);
-				border-inline-start-color: var(--color-brand);
+				border-inline-start-color: var(--color-mark);
 				outline: none;
 			}
 
@@ -752,7 +761,8 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 				color: var(--color-text);
 			}
 
-			/* Footer: the night-harbour band. */
+			/* Footer: the Violet Blue band (--color-ink-band), light ink on it.
+			   Focus rings switch to that light ink: red on Violet Blue is 2.6:1. */
 			.site-footer {
 				margin-top: var(--spacing-16);
 				background: var(--color-ink-band);
@@ -765,7 +775,8 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 				padding: var(--spacing-16) var(--spacing-6) var(--spacing-8);
 			}
 
-			.site-footer :focus-visible {
+			/* :global so child components (Wordmark, widgets) get it too. */
+			.site-footer :global(:focus-visible) {
 				outline-color: var(--color-on-ink-band);
 			}
 
@@ -908,9 +919,11 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 				color: var(--color-on-ink-band);
 			}
 
-			.theme-btn.active {
-				background: color-mix(in srgb, var(--color-on-ink-band) 16%, transparent);
-				color: var(--color-on-ink-band);
+			/* Active choice: a flat light tile with band-coloured ink. */
+			.theme-btn.active,
+			.theme-btn.active:hover {
+				background: var(--color-on-ink-band);
+				color: var(--color-ink-band);
 			}
 
 			.theme-btn svg {

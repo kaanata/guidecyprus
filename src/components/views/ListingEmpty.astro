@@ -62,4 +62,10 @@ const locale = Astro.currentLocale;
 	.empty-actions a:hover {
 		color: var(--color-brand-hover);
 	}
+
+	.empty-actions a:focus-visible {
+		outline: 2px solid var(--color-mark);
+		outline-offset: 2px;
+		border-radius: var(--radius);
+	}
 </style>

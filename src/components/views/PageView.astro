@@ -104,7 +104,18 @@ const homeAlternates = isHome
 	.page-header {
 		margin-bottom: var(--spacing-10);
 		padding-bottom: var(--spacing-8);
-		border-bottom: 1px solid var(--color-border);
+		position: relative;
+	}
+
+	/* The rule under the title: a short English Red mark, solid and flat. */
+	.page-header::after {
+		content: "";
+		position: absolute;
+		left: 0;
+		bottom: 0;
+		width: 3rem;
+		height: 3px;
+		background: var(--color-mark);
 	}
 
 	.page-title {
@@ -113,6 +124,7 @@ const homeAlternates = isHome
 		font-size: clamp(var(--font-size-3xl), 2rem + 2.4vw, var(--font-size-5xl));
 		line-height: 1.05;
 		letter-spacing: var(--tracking-tight);
+		color: var(--color-text);
 		text-wrap: balance;
 	}
 
@@ -164,6 +176,7 @@ const homeAlternates = isHome
 		max-width: 100%;
 		height: auto;
 		border-radius: var(--radius);
+		background: var(--color-sand);
 	}
 
 	.page-content :global(figure) {
@@ -179,7 +192,7 @@ const homeAlternates = isHome
 	.page-content :global(blockquote) {
 		margin: 1.5em 0;
 		padding-left: var(--spacing-6);
-		border-left: 2px solid var(--color-brand);
+		border-left: 2px solid var(--color-mark);
 		color: var(--color-text-secondary);
 	}
 
