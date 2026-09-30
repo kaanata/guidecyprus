@@ -93,9 +93,10 @@ def icon_size(icon: dict) -> int:
 def pick(found: dict) -> tuple[str, str] | None:
     """Return (kind, url-or-svg) for the best logo candidate."""
     for url in found["ld"]:
-        if url and not url.startswith("data:"):
+        if url and url.startswith("http"):
             return ("schema-logo", url)
-    imgs = [i for i in found["imgs"] if i["src"] and i["w"] >= 60]
+    # Lazy-loading placeholders (data: URIs) are not the real image.
+    imgs = [i for i in found["imgs"] if i["src"] and i["src"].startswith("http") and i["w"] >= 60]
     for test, kind in (
         (lambda i: i["custom"], "custom-logo"),
         (lambda i: i["logo"] and i["header"], "header-logo"),
@@ -169,7 +170,11 @@ def main(details_path: str, out_dir: str) -> None:
                     path = os.path.join(out_dir, place["place_id"] + ".png")
                     rasterise(page, value, path)
                 else:
-                    response = page.request.get(value, timeout=30000)
+                    # Through a proxy downloads are slower: allow 90 s, retry once.
+                    try:
+                        response = page.request.get(value, timeout=90000)
+                    except Exception:
+                        response = page.request.get(value, timeout=90000)
                     if not response.ok:
                         result["status"] = f"logo download HTTP {response.status}"
                         print(f"{place['name']}: {result['status']}", flush=True)
