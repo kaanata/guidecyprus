@@ -41,6 +41,7 @@ TERMS = {
     "coffee-shop": ["entertainment", "coffee-shop"],
     "entertainment": ["entertainment"],
     "hotels": ["hotels"],
+    "hotel-casino": ["hotels", "entertainment", "casino"],
     "historical": ["historical"],
 }
 
