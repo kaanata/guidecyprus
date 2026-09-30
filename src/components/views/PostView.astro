@@ -127,6 +127,14 @@ const morePlaces = otherPosts.map((p) => ({
 const inArticleSplit = splitForInArticle(post.data.content);
 
 const addedDate = post.data.publishedAt ?? null;
+
+// Freely licensed photos (e.g. Wikimedia Commons, CC BY-SA) carry their
+// attribution in the image value's meta; the licence requires showing it.
+type PhotoCredit = { author: string; license: string; licenseUrl?: string; sourceUrl?: string };
+const photoCredit = (post.data.featured_image as { meta?: { credit?: PhotoCredit } } | undefined)?.meta?.credit;
+const creditParts = photoCredit
+	? t(locale, "place.photoCredit").split(/(\{author\}|\{license\}|\{source\})/)
+	: [];
 const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 ---
 
@@ -170,9 +178,25 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 
 			{
 				post.data.featured_image && (
-					<div class="article-hero" data-photo-frame data-fit="contain" {...post.edit.featured_image}>
-						<Image image={post.data.featured_image} priority />
-					</div>
+					<figure class="article-hero-figure">
+						<div class="article-hero" data-photo-frame data-fit="contain" {...post.edit.featured_image}>
+							<Image image={post.data.featured_image} priority />
+						</div>
+						{photoCredit && (
+							<figcaption class="photo-credit">
+								{creditParts.map((part) =>
+									part === "{author}" ? photoCredit.author
+									: part === "{license}" ? (photoCredit.licenseUrl
+										? <a href={photoCredit.licenseUrl} rel="license noopener" target="_blank">{photoCredit.license}</a>
+										: photoCredit.license)
+									: part === "{source}" ? (photoCredit.sourceUrl
+										? <a href={photoCredit.sourceUrl} rel="noopener" target="_blank">Wikimedia Commons</a>
+										: "Wikimedia Commons")
+									: part,
+								)}
+							</figcaption>
+						)}
+					</figure>
 				)
 			}
 
@@ -485,9 +509,12 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 
 	/* Photo: across the body and both gutters. width/height stay on the
 	 * img, and the box ratio is fixed, so nothing shifts as it loads. */
-	.article-hero {
+	.article-hero-figure {
 		grid-area: hero;
 		margin: 0 0 var(--spacing-12);
+	}
+
+	.article-hero {
 		border-radius: var(--radius);
 		overflow: hidden;
 		background: var(--color-surface);
@@ -502,6 +529,21 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 		height: auto;
 		aspect-ratio: 3 / 2;
 		object-fit: contain;
+	}
+
+	/* Licence attribution for a freely licensed photo. Size is fixed at 9px
+	 * by the site owner's rule for credits. */
+	.photo-credit {
+		margin-top: var(--spacing-2);
+		font-size: 9px;
+		line-height: 1.4;
+		color: var(--color-muted);
+	}
+
+	.photo-credit a {
+		color: inherit;
+		text-decoration: underline;
+		text-underline-offset: 1px;
 	}
 
 	/* Left column: kind, date added, tags */
@@ -1092,7 +1134,7 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 			display: none;
 		}
 
-		.article-hero {
+		.article-hero-figure {
 			margin-bottom: var(--spacing-6);
 		}
 
