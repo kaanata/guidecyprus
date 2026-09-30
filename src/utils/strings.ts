@@ -104,6 +104,8 @@ const en = {
 	"place.moreKind": "More {label}",
 	"place.more": "More places",
 	"place.moreAll": "See all {label}",
+	/** Photo credit under a place photo. `{author}`, `{license}` and `{source}` are filled in by the template. */
+	"place.photoCredit": "Photo: {author}, {license}, via {source}",
 	// --- end PLACE ---
 } as const;
 
@@ -199,6 +201,7 @@ const tr: Record<StringKey, string> = {
 	"place.moreKind": "Diğer {label}",
 	"place.more": "Başka yerler",
 	"place.moreAll": "{label}: tümünü görün",
+	"place.photoCredit": "Fotoğraf: {author}, {license}, {source} aracılığıyla",
 	// --- end PLACE ---
 };
 
