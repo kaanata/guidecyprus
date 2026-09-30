@@ -18,11 +18,14 @@ import { Image, PortableText } from "emdash/ui";
 import Base from "../../layouts/Base.astro";
 import AdSpace from "../AdSpace.astro";
 import IslandMap from "../IslandMap.astro";
+import RegionSwitch from "../RegionSwitch.astro";
+import ListingEmpty from "./ListingEmpty.astro";
 import type { ResolvedEntry } from "../../utils/resolve-entry";
 import { localePath } from "../../utils/i18n";
 import { TITLE_SEPARATOR } from "../../utils/site-identity";
 import { t, tn } from "../../utils/strings";
-import { primaryKind } from "../../utils/kind";
+import { countTerms, primaryKind } from "../../utils/kind";
+import { REGION_IN, regionFromUrl, regionTermSlug, withRegion } from "../../utils/region";
 
 interface Props {
 	page: Extract<ResolvedEntry, { collection: "pages" }>["entry"];
@@ -50,11 +53,18 @@ const homeAlternates = [
 /** Places shown under "Recently added": a lead (when one has a big enough image) and the rest. */
 const RECENT_COUNT = 6;
 
+// The "Visiting" choice (?region=trnc|south); null is the whole island.
+// With a region, every published place in it is fetched (a few hundred at
+// most): the newest fill "Recently added" and all of them give the kind counts.
+const region = regionFromUrl(Astro.url);
+
 const [recent, categoryTerms] = await Promise.all([
 	getEmDashCollection("posts", {
 		locale,
 		orderBy: { published_at: "desc" },
-		limit: RECENT_COUNT,
+		...(region
+			? { where: { region: regionTermSlug(locale, region) } }
+			: { limit: RECENT_COUNT }),
 	}),
 	getTaxonomyTermsWithCacheHint("category", { locale }),
 ]);
@@ -69,17 +79,21 @@ if (Astro.cache?.enabled) {
 function flatten(terms: TaxonomyTerm[]): TaxonomyTerm[] {
 	return terms.flatMap((term) => [term, ...flatten(term.children ?? [])]);
 }
-const kinds = flatten(categoryTerms.data)
-	.filter((term) => (term.count ?? 0) > 0 && term.slug !== "uncategorized")
-	.sort((a, b) => (b.count ?? 0) - (a.count ?? 0) || a.label.localeCompare(b.label, locale));
-
-const places = recent.entries;
+// The taxonomy's counts are whole-site; within a region they are counted from
+// the region's places (one batched query, reused for the cards' kinds).
 const kindByPlace = await getTermsForEntries(
 	"posts",
-	places.map((p) => p.data.id),
+	(region ? recent.entries : recent.entries.slice(0, RECENT_COUNT)).map((p) => p.data.id),
 	"category",
 	{ locale },
 );
+const regionCounts = region ? countTerms(kindByPlace) : null;
+const kinds = [...new Map(flatten(categoryTerms.data).map((term) => [term.slug, term])).values()]
+	.map((term) => (regionCounts ? { ...term, count: regionCounts.get(term.slug) ?? 0 } : term))
+	.filter((term) => (term.count ?? 0) > 0 && term.slug !== "uncategorized")
+	.sort((a, b) => (b.count ?? 0) - (a.count ?? 0) || a.label.localeCompare(b.label, locale));
+
+const places = recent.entries.slice(0, RECENT_COUNT);
 // A place's kind is its first category that names a kind of place, not the
 // town ("girne") or the import leftover.
 function kindOf(id: string): string | undefined {
@@ -139,15 +153,27 @@ const searchAction = localePath(locale, "/search");
 		<AdSpace space="top-banner" page="home" />
 
 		{
-			kinds.length > 0 && (
+			(kinds.length > 0 || region) && (
 				<section class="home-section kinds" aria-labelledby="home-kinds">
-					<h2 id="home-kinds" class="section-title">
-						{t(locale, "home.browseTitle")}
-					</h2>
-					<ul class="kinds__list">
+					<div class="section-head kinds__head">
+						<h2 id="home-kinds" class="section-title">
+							{t(locale, "home.browseTitle")}
+						</h2>
+						<RegionSwitch id="home-region" />
+					</div>
+					{kinds.length === 0 && region && (
+						<ListingEmpty
+							message={t(locale, "region.empty", { in: t(locale, REGION_IN[region]) })}
+							actions={[{ label: t(locale, "region.emptyWhole"), href: withRegion(Astro.url, null) }]}
+						/>
+					)}
+					{kinds.length > 0 && <ul class="kinds__list">
 						{kinds.map((kind) => (
 							<li>
-								<a class="kinds__link" href={localePath(locale, `/category/${kind.slug}`)}>
+								<a
+									class="kinds__link"
+									href={withRegion(localePath(locale, `/category/${kind.slug}`), region)}
+								>
 									<span class="kinds__name">{kind.label}</span>
 									<span class="kinds__count" aria-hidden="true">
 										{kind.count}
@@ -158,7 +184,7 @@ const searchAction = localePath(locale, "/search");
 								</a>
 							</li>
 						))}
-					</ul>
+					</ul>}
 				</section>
 			)
 		}
@@ -170,7 +196,7 @@ const searchAction = localePath(locale, "/search");
 						<h2 id="home-recent" class="section-title">
 							{t(locale, "home.recentTitle")}
 						</h2>
-						<a class="section-more" href={localePath(locale, "/posts")}>
+						<a class="section-more" href={withRegion(localePath(locale, "/posts"), region)}>
 							{t(locale, "home.recentAll")}
 						</a>
 					</div>
@@ -370,8 +396,15 @@ const searchAction = localePath(locale, "/search");
 		letter-spacing: var(--tracking-tight);
 	}
 
-	.kinds .section-title {
-		margin-bottom: var(--spacing-6);
+	/* The heading with the "Visiting" switch beside it (under it on phones). */
+	.kinds__head {
+		margin-bottom: var(--spacing-4);
+	}
+
+	/* The region's empty state sits right under the heading; no second rule. */
+	.kinds :global(.listing-empty) {
+		border-top: 0;
+		padding-top: var(--spacing-2);
 	}
 
 	.section-more {

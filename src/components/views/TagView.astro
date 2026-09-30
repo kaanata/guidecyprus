@@ -6,10 +6,12 @@ import AdSpace from "../AdSpace.astro";
 import ListingHeader from "./ListingHeader.astro";
 import ListingEmpty from "./ListingEmpty.astro";
 import PlaceGrid from "./PlaceGrid.astro";
+import RegionSwitch from "../RegionSwitch.astro";
 import { inFeedAfter } from "../../utils/ads";
 import type { TaxonomyTerm } from "emdash";
 import { localePath } from "../../utils/i18n";
 import { t, tn } from "../../utils/strings";
+import { REGION_IN, regionFromUrl, regionTermSlug, withRegion } from "../../utils/region";
 import { primaryKind } from "../../utils/kind";
 
 const locale = Astro.currentLocale;
@@ -19,10 +21,16 @@ interface Props {
 }
 
 const { term } = Astro.props;
+// The "Visiting" choice (?region=trnc|south); null is the whole island.
+const region = regionFromUrl(Astro.url);
+const regionIn = region ? t(locale, REGION_IN[region]) : "";
 
 const { entries: posts, cacheHint } = await getEmDashCollection("posts", {
 	locale,
-	where: { tag: term.slug },
+	// Taxonomy filters AND together: this tag, and the region when one is chosen.
+	where: region
+		? { tag: term.slug, region: regionTermSlug(locale, region) }
+		: { tag: term.slug },
 	orderBy: { published_at: "desc" },
 });
 
@@ -39,7 +47,7 @@ const kindsByEntry = await getTermsForEntries(
 
 const crumbs = [
 	{ label: t(locale, "listing.home"), href: localePath(locale, "/") },
-	{ label: t(locale, "listing.allPlaces"), href: localePath(locale, "/posts") },
+	{ label: t(locale, "listing.allPlaces"), href: withRegion(localePath(locale, "/posts"), region) },
 ];
 ---
 
@@ -52,16 +60,30 @@ const crumbs = [
 		<ListingHeader
 			title={term.label}
 			lead={t(locale, "listing.tagLead")}
-			count={posts.length > 0 ? tn(locale, "listing.place", posts.length) : undefined}
+			count={
+				posts.length === 0
+					? undefined
+					: region
+						? tn(locale, "region.count", posts.length, { in: regionIn })
+						: tn(locale, "listing.place", posts.length)
+			}
 			crumbs={crumbs}
 			crumbLabel={t(locale, "listing.breadcrumb")}
 		>
 			{term.description && <p class="listing-intro">{term.description}</p>}
+			<RegionSwitch class="listing-region" />
 		</ListingHeader>
 
 		{
 			posts.length === 0 ? (
-				<ListingEmpty message={t(locale, "listing.tagEmpty")} />
+				region ? (
+					<ListingEmpty
+						message={t(locale, "region.emptyTag", { in: regionIn })}
+						actions={[{ label: t(locale, "region.emptyWhole"), href: withRegion(Astro.url, null) }]}
+					/>
+				) : (
+					<ListingEmpty message={t(locale, "listing.tagEmpty")} />
+				)
 			) : (
 				<PlaceGrid>
 					{posts.map((post, index) => (
@@ -88,6 +110,10 @@ const crumbs = [
 		max-width: var(--wide-width);
 		margin: 0 auto;
 		padding: var(--spacing-12) var(--spacing-6) 0;
+	}
+
+	.listing :global(.listing-region) {
+		margin-top: var(--spacing-4);
 	}
 
 	.listing-intro {

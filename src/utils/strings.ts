@@ -54,16 +54,16 @@ const en = {
 	// --- end SHELL ---
 	// --- LISTINGS (archive views, search) -- redesign block ---
 	"listing.allPlaces": "All places",
-	"listing.allDescription": "Every place in the guide to North Cyprus: historical sites, hotels, restaurants, bars and everyday services.",
+	"listing.allDescription": "Every place in the guide to Cyprus: historical sites, hotels, restaurants, bars and everyday services.",
 	"listing.place_one": "{n} place",
 	"listing.place_other": "{n} places",
 	"listing.byKind": "Browse by kind",
 	"listing.breadcrumb": "You are here",
 	"listing.home": "Home",
-	"listing.categoryTitle": "{label} in North Cyprus",
-	"listing.categoryDescription": "Places in North Cyprus listed under {label}, with photos, addresses and phone numbers.",
+	"listing.categoryTitle": "{label} in Cyprus",
+	"listing.categoryDescription": "Places in Cyprus listed under {label}, with photos, addresses and phone numbers.",
 	"listing.tagTitle": "Places tagged {label}",
-	"listing.tagDescription": "Places in North Cyprus tagged {label}.",
+	"listing.tagDescription": "Places in Cyprus tagged {label}.",
 	"listing.tagLead": "Places tagged",
 	"listing.categoryEmpty": "Nothing is listed under {label} yet.",
 	"listing.tagEmpty": "No places carry this tag yet.",
@@ -77,12 +77,12 @@ const en = {
 	"listing.searchNone": "No places match “{query}”. Try a place name or a kind, like hotels.",
 	"listing.searchCount_one": "{n} place matches “{query}”",
 	"listing.searchCount_other": "{n} places match “{query}”",
-	"listing.searchDescription": "Search places in North Cyprus by name, town or kind.",
+	"listing.searchDescription": "Search places in Cyprus by name, town or kind.",
 	// --- end LISTINGS ---
 	// --- HOME (home page, island map, CMS pages) -- redesign block ---
-	"home.title": "North Cyprus, place by place",
+	"home.title": "Cyprus, place by place",
 	"home.intro":
-		"Historical sites, hotels, restaurants, beaches and nightlife in and around Kyrenia, each with a photo and what you need to find it.",
+		"Historical sites, hotels, restaurants, beaches and nightlife across the island, each with a photo and what you need to find it.",
 	"home.searchLabel": "Find a place",
 	"home.searchPlaceholder": "e.g. Bellapais, casino",
 	"home.searchButton": "Search",
@@ -107,6 +107,28 @@ const en = {
 	/** Photo credit under a place photo. `{author}`, `{license}` and `{source}` are filled in by the template. */
 	"place.photoCredit": "Photo: {author}, {license}, via {source}",
 	// --- end PLACE ---
+	// --- REGION (the "Visiting" switch, region filter, place-page note) ---
+	/** Label for the group of region links. */
+	"region.switchLabel": "Visiting",
+	"region.all": "Whole island",
+	"region.trnc": "TRNC (KKTC)",
+	"region.south": "South Cyprus",
+	/** "in <region>", slotted into `{in}` below. */
+	"region.inTrnc": "in the TRNC (KKTC)",
+	"region.inSouth": "in South Cyprus",
+	"region.count_one": "{n} place {in}",
+	"region.count_other": "{n} places {in}",
+	"region.empty": "No places {in} yet.",
+	"region.emptyCategory": "Nothing is listed under {label} {in} yet.",
+	"region.emptyTag": "No places {in} carry this tag yet.",
+	"region.emptyWhole": "See the whole island",
+	/** Place page facts column. */
+	"region.label": "Region",
+	"region.noteTrnc":
+		"Prices are in Turkish lira; euros and pounds are widely taken in tourist areas. Cross to South Cyprus at an official crossing point with a passport or ID card.",
+	"region.noteSouth":
+		"Prices are in euros. Cross to the TRNC (KKTC) at an official crossing point with a passport or ID card.",
+	// --- end REGION ---
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -151,16 +173,16 @@ const tr: Record<StringKey, string> = {
 	// --- end SHELL ---
 	// --- LISTINGS (archive views, search) -- redesign block ---
 	"listing.allPlaces": "Tüm yerler",
-	"listing.allDescription": "Kuzey Kıbrıs rehberindeki tüm yerler: tarihi mekânlar, oteller, restoranlar, barlar ve günlük hizmetler.",
+	"listing.allDescription": "Kıbrıs rehberindeki tüm yerler: tarihi mekânlar, oteller, restoranlar, barlar ve günlük hizmetler.",
 	"listing.place_one": "{n} yer",
 	"listing.place_other": "{n} yer",
 	"listing.byKind": "Türüne göre göz atın",
 	"listing.breadcrumb": "Buradasınız",
 	"listing.home": "Ana sayfa",
-	"listing.categoryTitle": "Kuzey Kıbrıs'ta {label}",
-	"listing.categoryDescription": "Kuzey Kıbrıs'ta {label} başlığındaki yerler; fotoğraf, adres ve telefon bilgileriyle.",
+	"listing.categoryTitle": "Kıbrıs'ta {label}",
+	"listing.categoryDescription": "Kıbrıs'ta {label} başlığındaki yerler; fotoğraf, adres ve telefon bilgileriyle.",
 	"listing.tagTitle": "{label} etiketli yerler",
-	"listing.tagDescription": "Kuzey Kıbrıs'ta {label} etiketli yerler.",
+	"listing.tagDescription": "Kıbrıs'ta {label} etiketli yerler.",
 	"listing.tagLead": "Etiketli yerler",
 	"listing.categoryEmpty": "{label} başlığında henüz bir yer yok.",
 	"listing.tagEmpty": "Bu etiketi taşıyan bir yer henüz yok.",
@@ -174,12 +196,12 @@ const tr: Record<StringKey, string> = {
 	"listing.searchNone": "“{query}” ile eşleşen bir yer yok. Bir yer adı ya da tür deneyin, örneğin oteller.",
 	"listing.searchCount_one": "“{query}” ile eşleşen {n} yer",
 	"listing.searchCount_other": "“{query}” ile eşleşen {n} yer",
-	"listing.searchDescription": "Kuzey Kıbrıs'taki yerleri ada, kasabaya ya da türe göre arayın.",
+	"listing.searchDescription": "Kıbrıs'taki yerleri ada, kasabaya ya da türe göre arayın.",
 	// --- end LISTINGS ---
 	// --- HOME (home page, island map, CMS pages) -- redesign block ---
-	"home.title": "Kuzey Kıbrıs, adım adım",
+	"home.title": "Kıbrıs, adım adım",
 	"home.intro":
-		"Girne ve çevresindeki tarihi yerler, oteller, restoranlar, plajlar ve gece hayatı; her biri fotoğrafı ve nasıl bulacağınızla birlikte.",
+		"Adanın dört bir yanındaki tarihi yerler, oteller, restoranlar, plajlar ve gece hayatı; her biri fotoğrafı ve nasıl bulacağınızla birlikte.",
 	"home.searchLabel": "Bir yer bulun",
 	"home.searchPlaceholder": "Örn. Bellapais, kumarhane",
 	"home.searchButton": "Ara",
@@ -203,6 +225,25 @@ const tr: Record<StringKey, string> = {
 	"place.moreAll": "{label}: tümünü görün",
 	"place.photoCredit": "Fotoğraf: {author}, {license}, {source} aracılığıyla",
 	// --- end PLACE ---
+	// --- REGION (the "Visiting" switch, region filter, place-page note) ---
+	"region.switchLabel": "Gezi bölgesi",
+	"region.all": "Tüm ada",
+	"region.trnc": "KKTC",
+	"region.south": "Güney Kıbrıs",
+	"region.inTrnc": "KKTC'de",
+	"region.inSouth": "Güney Kıbrıs'ta",
+	"region.count_one": "{in} {n} yer",
+	"region.count_other": "{in} {n} yer",
+	"region.empty": "{in} henüz bir yer yok.",
+	"region.emptyCategory": "{in} {label} başlığında henüz bir yer yok.",
+	"region.emptyTag": "{in} bu etiketi taşıyan bir yer henüz yok.",
+	"region.emptyWhole": "Tüm adaya bakın",
+	"region.label": "Bölge",
+	"region.noteTrnc":
+		"Fiyatlar Türk lirasıdır; turistik bölgelerde euro ve sterlin de geçer. Güney Kıbrıs'a resmi geçiş noktalarından pasaport ya da kimlik kartıyla geçebilirsiniz.",
+	"region.noteSouth":
+		"Fiyatlar eurodur. KKTC'ye resmi geçiş noktalarından pasaport ya da kimlik kartıyla geçebilirsiniz.",
+	// --- end REGION ---
 };
 
 const STRINGS: Record<Locale, Record<StringKey, string>> = { en, tr };

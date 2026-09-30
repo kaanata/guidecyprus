@@ -1,0 +1,118 @@
+---
+/**
+ * The "Visiting" switch: whole island, TRNC (KKTC) or South Cyprus.
+ * Three plain links that set or clear `?region=` on the current page; no
+ * JavaScript. The current choice is ink with the English Red underline, as
+ * the current nav item is; the others are ordinary links.
+ */
+import { t } from "../utils/strings";
+import { REGION_KEYS, REGION_LABEL, regionFromUrl, withRegion, type RegionKey } from "../utils/region";
+
+interface Props {
+	/** Unique id for the group label, when a page has more than one switch. */
+	id?: string;
+	class?: string;
+}
+
+const { id = "region-switch", class: className } = Astro.props;
+const locale = Astro.currentLocale;
+const current = regionFromUrl(Astro.url);
+const labelId = `${id}-label`;
+
+const options: Array<{ key: RegionKey | null; label: string }> = [
+	{ key: null, label: t(locale, "region.all") },
+	...REGION_KEYS.map((key) => ({ key, label: t(locale, REGION_LABEL[key]) })),
+];
+---
+
+<div class:list={["region-switch", className]} role="group" aria-labelledby={labelId}>
+	<span id={labelId} class="region-switch__label">{t(locale, "region.switchLabel")}</span>
+	<ul class="region-switch__list">
+		{
+			options.map((option) => (
+				<li>
+					<a
+						class="region-switch__link"
+						href={withRegion(Astro.url, option.key)}
+						aria-current={option.key === current ? "true" : undefined}
+					>
+						{option.label}
+					</a>
+				</li>
+			))
+		}
+	</ul>
+</div>
+
+<style>
+	.region-switch {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 0 var(--spacing-6);
+	}
+
+	.region-switch__label {
+		font-size: var(--font-size-sm);
+		font-weight: 600;
+		color: var(--color-text-secondary);
+	}
+
+	.region-switch__list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0 var(--spacing-5);
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	/* Plain links; tap height from the padding, not a box. */
+	.region-switch__link {
+		display: inline-block;
+		padding: var(--spacing-3) 0;
+		font-size: var(--font-size-base);
+		font-weight: 500;
+		color: var(--color-brand);
+		text-decoration: underline;
+		text-decoration-color: transparent;
+		text-decoration-thickness: 1px;
+		text-underline-offset: 0.3em;
+	}
+
+	.region-switch__link:hover {
+		color: var(--color-brand-hover);
+		text-decoration-color: currentColor;
+	}
+
+	/* The current choice, as the current nav item: ink with an English Red rule. */
+	.region-switch__link[aria-current] {
+		color: var(--color-text);
+		font-weight: 600;
+		text-decoration-color: var(--color-mark);
+		text-decoration-thickness: 3px;
+	}
+
+	/* Phones: the label above, the three choices on one line. */
+	@media (max-width: 480px) {
+		.region-switch {
+			flex-direction: column;
+			align-items: flex-start;
+		}
+
+		.region-switch__list {
+			gap: 0 var(--spacing-4);
+		}
+
+		.region-switch__link {
+			padding: var(--spacing-2) 0 var(--spacing-3);
+			font-size: var(--font-size-sm);
+		}
+	}
+
+	.region-switch__link:focus-visible {
+		outline: 2px solid var(--color-mark);
+		outline-offset: 2px;
+		border-radius: var(--radius);
+	}
+</style>

@@ -7,9 +7,11 @@ interface Props {
 	message: string;
 	/** Hide the "all places" link (on the all-places page itself). */
 	showAll?: boolean;
+	/** Replace the default links, e.g. with "See the whole island" when a region filter leaves nothing. */
+	actions?: Array<{ label: string; href: string }>;
 }
 
-const { message, showAll = true } = Astro.props;
+const { message, showAll = true, actions } = Astro.props;
 const locale = Astro.currentLocale;
 ---
 
@@ -17,15 +19,25 @@ const locale = Astro.currentLocale;
 	<p class="empty-message">{message}</p>
 	<ul class="empty-actions">
 		{
-			showAll && (
-				<li>
-					<a href={localePath(locale, "/posts")}>{t(locale, "listing.emptyAll")}</a>
-				</li>
+			actions ? (
+				actions.map((action) => (
+					<li>
+						<a href={action.href}>{action.label}</a>
+					</li>
+				))
+			) : (
+				<>
+					{showAll && (
+						<li>
+							<a href={localePath(locale, "/posts")}>{t(locale, "listing.emptyAll")}</a>
+						</li>
+					)}
+					<li>
+						<a href={localePath(locale, "/search")}>{t(locale, "listing.emptySearch")}</a>
+					</li>
+				</>
 			)
 		}
-		<li>
-			<a href={localePath(locale, "/search")}>{t(locale, "listing.emptySearch")}</a>
-		</li>
 	</ul>
 </div>
 
