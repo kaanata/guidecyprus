@@ -1,6 +1,6 @@
 import cloudflare from "@astrojs/cloudflare";
 import react from "@astrojs/react";
-import { d1, r2, sandbox } from "@emdash-cms/cloudflare";
+import { d1, r2 } from "@emdash-cms/cloudflare";
 import { formsPlugin } from "@emdash-cms/plugin-forms";
 import webhookNotifier from "@emdash-cms/plugin-webhook-notifier";
 import { adManager } from "@main-aff/plugin-ad-manager";
@@ -37,10 +37,11 @@ export default defineConfig({
 				}),
 				// Hosts the admin "Password" page for the email-password provider.
 				emailPasswordAccount(),
+				// Runs in-process like the others: sandboxed plugins would need
+				// a Worker Loader binding, and the site doesn't use the sandbox.
+				webhookNotifier,
 			],
 			authProviders: [emailPassword()],
-			sandboxed: [webhookNotifier],
-			sandboxRunner: sandbox(),
 		}),
 	],
 	fonts: [
