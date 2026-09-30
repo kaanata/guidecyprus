@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Find candidate places for each site category with the Places API (New).
 
-One Text Search request per query (up to 20 results), biased to a circle
-around Kyrenia. The field mask asks only for what's needed to choose
+Text Search per query, biased to a circle around Kyrenia: one request per
+page of up to 20 results, following nextPageToken for up to --pages pages
+(Google stops at 3, i.e. 60 results). The field mask asks only for what's needed to choose
 candidates; phone and website come later from Place Details, only for the
 places picked. Places already on the site are marked by name so they can
 be skipped.
@@ -11,7 +12,7 @@ Google's terms allow keeping the place ID; the rest of the output is for
 reviewing candidates, not for pasting into posts.
 
 Usage:
-    python3 scripts/discover-places.py <existing-posts.json> <out.json>
+    python3 scripts/discover-places.py <existing-posts.json> <out.json> [--pages N]
 
 The key is read from GOOGLE_MAPS_PLACE_API_KEY in .env (never printed).
 <existing-posts.json> is a `wrangler d1 execute --json` export of ec_posts
@@ -65,24 +66,32 @@ def api_key() -> str:
     return key
 
 
-def search(key: str, query: str, radius: int) -> list[dict]:
+def search(key: str, query: str, radius: int, pages: int = 1) -> list[dict]:
     body = {
         "textQuery": query,
         "pageSize": 20,
         "languageCode": "en",
         "locationBias": {"circle": {"center": KYRENIA, "radius": radius}},
     }
-    request = urllib.request.Request(
-        "https://places.googleapis.com/v1/places:searchText",
-        data=json.dumps(body).encode(),
-        headers={"Content-Type": "application/json", "X-Goog-Api-Key": key, "X-Goog-FieldMask": FIELDS},
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=30) as response:
-            return json.load(response).get("places", [])
-    except urllib.error.HTTPError as error:
-        detail = json.load(error).get("error", {})
-        sys.exit(f"{query}: HTTP {error.code} {detail.get('status')} {detail.get('message', '')[:200]}")
+    places: list[dict] = []
+    for _ in range(pages):
+        request = urllib.request.Request(
+            "https://places.googleapis.com/v1/places:searchText",
+            data=json.dumps(body).encode(),
+            headers={"Content-Type": "application/json", "X-Goog-Api-Key": key,
+                     "X-Goog-FieldMask": FIELDS + ",nextPageToken"},
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                page = json.load(response)
+        except urllib.error.HTTPError as error:
+            detail = json.load(error).get("error", {})
+            sys.exit(f"{query}: HTTP {error.code} {detail.get('status')} {detail.get('message', '')[:200]}")
+        places.extend(page.get("places", []))
+        if not page.get("nextPageToken"):
+            break
+        body["pageToken"] = page["nextPageToken"]
+    return places
 
 
 STOP = {"the", "hotel", "hotels", "otel", "restaurant", "restaurants", "restoran", "bar", "cafe",
@@ -94,7 +103,7 @@ def words(name: str) -> set[str]:
     return {w for w in re.split(r"[^a-z0-9]+", name) if w and w not in STOP}
 
 
-def main(existing_path: str, out_path: str) -> None:
+def main(existing_path: str, out_path: str, pages: int = 1) -> None:
     rows = json.load(open(existing_path, encoding="utf-8"))
     rows = rows[0]["results"] if isinstance(rows, list) and rows and "results" in rows[0] else rows
     existing = [(r["slug"], words(r["title"])) for r in rows if r.get("locale") == "en"]
@@ -102,7 +111,7 @@ def main(existing_path: str, out_path: str) -> None:
     key = api_key()
     found: dict[str, dict] = {}
     for category, query, radius in QUERIES:
-        places = search(key, query, radius)
+        places = search(key, query, radius, pages)
         print(f"{query}: {len(places)}")
         for p in places:
             entry = found.setdefault(p["id"], {**p, "categories": [], "queries": []})
@@ -121,6 +130,12 @@ def main(existing_path: str, out_path: str) -> None:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
+    args = sys.argv[1:]
+    pages = 1
+    if "--pages" in args:
+        i = args.index("--pages")
+        pages = int(args[i + 1])
+        del args[i:i + 2]
+    if len(args) != 2:
         sys.exit(__doc__)
-    main(sys.argv[1], sys.argv[2])
+    main(args[0], args[1], pages)

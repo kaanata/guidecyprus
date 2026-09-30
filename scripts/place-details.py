@@ -7,10 +7,12 @@ editorial summary is fetched as background for writing, never pasted.
 
 Usage:
     python3 scripts/place-details.py <approved.json> <out.json> \\
-        [--key-var GOOGLE_MAPS_PLACE_API_KEY] [--limit N]
+        [--key-var GOOGLE_MAPS_PLACE_API_KEY] [--limit N] [--reviews]
 
 <approved.json> is a list of {"place_id", "name", "category", ...}. The key
 is read from the named variable in the environment or .env (never printed).
+--reviews also fetches the (up to 5) reviews, only so the newest review's
+date can show whether a place is still active; review text is never used.
 Use --key-var GOOGLE_MAPS_API_DEMO_KEY --limit 3 to test for free; the demo
 key's terms forbid production use, so real content uses the Places key.
 """
@@ -42,10 +44,10 @@ def api_key(var: str) -> str:
     return key
 
 
-def details(key: str, place_id: str) -> dict:
+def details(key: str, place_id: str, reviews: bool = False) -> dict:
     request = urllib.request.Request(
         f"https://places.googleapis.com/v1/places/{place_id}?languageCode=en",
-        headers={"X-Goog-Api-Key": key, "X-Goog-FieldMask": FIELDS},
+        headers={"X-Goog-Api-Key": key, "X-Goog-FieldMask": FIELDS + (",reviews" if reviews else "")},
     )
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
@@ -61,13 +63,17 @@ def main() -> None:
     parser.add_argument("out")
     parser.add_argument("--key-var", default="GOOGLE_MAPS_PLACE_API_KEY")
     parser.add_argument("--limit", type=int)
+    parser.add_argument("--reviews", action="store_true")
     args = parser.parse_args()
 
     key = api_key(args.key_var)
     places = json.load(open(args.approved, encoding="utf-8"))[: args.limit]
     out = []
     for place in places:
-        info = details(key, place["place_id"])
+        info = details(key, place["place_id"], args.reviews)
+        if args.reviews:
+            dates = sorted(r.get("publishTime", "") for r in info.pop("reviews", []))
+            info["latestReview"] = dates[-1][:10] if dates else None
         out.append({**place, "details": info})
         print(f"{place['name']}: website={'yes' if info.get('websiteUri') else 'no'} "
               f"phone={'yes' if info.get('internationalPhoneNumber') else 'no'} "
