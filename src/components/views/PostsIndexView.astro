@@ -6,12 +6,17 @@ import AdSpace from "../AdSpace.astro";
 import ListingHeader from "./ListingHeader.astro";
 import ListingEmpty from "./ListingEmpty.astro";
 import PlaceGrid from "./PlaceGrid.astro";
+import RegionSwitch from "../RegionSwitch.astro";
 import { inFeedAfter } from "../../utils/ads";
 import { localePath } from "../../utils/i18n";
 import { t, tn } from "../../utils/strings";
-import { primaryKind } from "../../utils/kind";
+import { countTerms, primaryKind } from "../../utils/kind";
+import { REGION_IN, regionFromUrl, regionTermSlug, withRegion } from "../../utils/region";
 
 const locale = Astro.currentLocale;
+// The "Visiting" choice (?region=trnc|south); null is the whole island.
+const region = regionFromUrl(Astro.url);
+const regionIn = region ? t(locale, REGION_IN[region]) : "";
 
 // Sort in the database rather than in JS — lets the DB use its index on
 // published_at and avoids a full-table scan on the client.
@@ -19,6 +24,7 @@ const [{ entries: posts, cacheHint }, { data: categories, cacheHint: termsHint }
 	await Promise.all([
 		getEmDashCollection("posts", {
 			locale,
+			...(region ? { where: { region: regionTermSlug(locale, region) } } : {}),
 			orderBy: { published_at: "desc" },
 		}),
 		getTaxonomyTermsWithCacheHint("category", { locale }),
@@ -40,9 +46,12 @@ const kindsByEntry = await getTermsForEntries(
 
 // "Jump to kind": only kinds that have places, biggest first.
 // Terms come back as a tree (Entertainment > Casino, Bar & Pub...); list every level.
+// The taxonomy's counts are whole-site; within a region, count the listed places.
+const regionCounts = region ? countTerms(kindsByEntry) : null;
 const flatten = (terms: typeof categories): typeof categories =>
 	terms.flatMap((term) => [term, ...flatten(term.children ?? [])]);
 const kinds = [...new Map(flatten(categories).map((term) => [term.slug, term])).values()]
+	.map((term) => (regionCounts ? { ...term, count: regionCounts.get(term.slug) ?? 0 } : term))
 	.filter((term) => (term.count ?? 0) > 0 && term.slug !== "uncategorized")
 	.sort((a, b) => (b.count ?? 0) - (a.count ?? 0) || a.label.localeCompare(b.label));
 ---
@@ -52,8 +61,15 @@ const kinds = [...new Map(flatten(categories).map((term) => [term.slug, term])).
 	<section class="listing">
 		<ListingHeader
 			title={t(locale, "listing.allPlaces")}
-			count={posts.length > 0 ? tn(locale, "listing.place", posts.length) : undefined}
+			count={
+				posts.length === 0
+					? undefined
+					: region
+						? tn(locale, "region.count", posts.length, { in: regionIn })
+						: tn(locale, "listing.place", posts.length)
+			}
 		>
+			<RegionSwitch class="listing-region" />
 			{
 				kinds.length > 0 && (
 					<nav class="kinds" aria-labelledby="kinds-label">
@@ -61,7 +77,7 @@ const kinds = [...new Map(flatten(categories).map((term) => [term.slug, term])).
 						<ul class="kinds-list">
 							{kinds.map((term) => (
 								<li>
-									<a href={localePath(locale, `/category/${term.slug}`)} class="kind-link">
+									<a href={withRegion(localePath(locale, `/category/${term.slug}`), region)} class="kind-link">
 										<span class="kind-name">{term.label}</span>
 										<span class="kind-count">{term.count}</span>
 									</a>
@@ -75,7 +91,14 @@ const kinds = [...new Map(flatten(categories).map((term) => [term.slug, term])).
 
 		{
 			posts.length === 0 ? (
-				<ListingEmpty message={t(locale, "listing.empty")} showAll={false} />
+				region ? (
+					<ListingEmpty
+						message={t(locale, "region.empty", { in: regionIn })}
+						actions={[{ label: t(locale, "region.emptyWhole"), href: withRegion(Astro.url, null) }]}
+					/>
+				) : (
+					<ListingEmpty message={t(locale, "listing.empty")} showAll={false} />
+				)
 			) : (
 				<PlaceGrid>
 					{posts.map((post, index) => (
@@ -104,8 +127,12 @@ const kinds = [...new Map(flatten(categories).map((term) => [term.slug, term])).
 		padding: var(--spacing-12) var(--spacing-6) 0;
 	}
 
+	.listing :global(.listing-region) {
+		margin-top: var(--spacing-4);
+	}
+
 	.kinds {
-		margin-top: var(--spacing-8);
+		margin-top: var(--spacing-6);
 		padding-top: var(--spacing-6);
 		border-top: 1px solid var(--color-border-subtle);
 	}

@@ -44,7 +44,7 @@ This template ships with `.mcp.json`, `.cursor/mcp.json`, and `.vscode/mcp.json`
 
 ## This Site
 
-Guide Cyprus: a bilingual (en, tr under `/tr`) directory of places in North Cyprus, mostly around Kyrenia/Girne -- historical sites, hotels, restaurants, bars, casinos, beaches, banks. Posts are places; categories are kinds of place. Readers are visitors, often on a phone, who want to find a place by kind and get its essentials (photo, address, phone). Built from the EmDash blog template, now themed as "Kyrenia harbour" in a Sanzo Wada palette.
+Guide Cyprus: a bilingual (en, tr under `/tr`) directory of places across Cyprus -- historical sites, hotels, restaurants, bars, casinos, beaches, banks (so far mostly around Kyrenia/Girne). Posts are places; categories are kinds of place. Each place has a region (`region` taxonomy: TRNC (KKTC) / South Cyprus; tr terms KKTC / Güney Kıbrıs). The "Visiting" switch (`RegionSwitch.astro`, `src/utils/region.ts`) filters the home page and listings with `?region=trnc|south`; the place page shows the region and a short crossing/currency note. Never describe the site as "North Cyprus". Readers are visitors, often on a phone, who want to find a place by kind and get its essentials (photo, address, phone). Built from the EmDash blog template, now themed as "Kyrenia harbour" in a Sanzo Wada palette.
 
 ## Pages
 
@@ -52,7 +52,7 @@ Guide Cyprus: a bilingual (en, tr under `/tr`) directory of places in North Cypr
 | ----------- | ------------------ | -------------------------------------------------------------------------------------------------------------------- |
 | Home        | `/`, `/tr`         | `HomeView`: hero with search and the island map, kinds with counts, recently added grid, the front page's CMS text   |
 | All places  | `/posts`           | Count, jump-to-kind row, grid of place cards                                                                         |
-| Place       | `/[slug]`          | Breadcrumb, name, wide photo, left facts column (kind, added, tags), body, right widget gutter, "More <kind>"        |
+| Place       | `/[slug]`          | Breadcrumb, name, wide photo, left facts column (kind, region, added, tags, visitor note), body, right widget gutter, "More <kind>"        |
 | Page        | `/[slug]`          | Static page content (Portable Text) in a reading column                                                              |
 | Search      | `/search`          | Search form and result list                                                                                          |
 | Category    | `/category/[slug]` | Places of one kind                                                                                                   |
@@ -63,7 +63,7 @@ Guide Cyprus: a bilingual (en, tr under `/tr`) directory of places in North Cypr
 
 - `posts` collection: `title`, `featured_image`, `content` (Portable Text), `excerpt` (text).
 - `pages` collection: `title`, `content` (Portable Text). Used for `/about` etc.
-- Taxonomies: `category`, `tag`.
+- Taxonomies: `category`, `tag`, `region` (en `trnc` / `south-cyprus`, tr `kktc` / `guney-kibris`).
 - Single `primary` menu (Home, About, Posts by default).
 
 Site settings have `title` and `tagline` -- both render in the header / footer.

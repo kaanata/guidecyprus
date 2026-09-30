@@ -22,6 +22,7 @@ import { localePath } from "../../utils/i18n";
 import { formatDate, t } from "../../utils/strings";
 import type { ResolvedEntry } from "../../utils/resolve-entry";
 import { orderKinds } from "../../utils/kind";
+import { regionFromTermSlug, withRegion, type RegionKey } from "../../utils/region";
 
 const locale = Astro.currentLocale;
 
@@ -80,6 +81,18 @@ const kinds = kindsOf(
 		),
 );
 const primaryKind = kinds[0];
+
+// The place's region (TRNC (KKTC) or South Cyprus), labelled by the taxonomy
+// in this locale, and the practical note for visitors that goes with it.
+const regionTerm = (
+	post.data.terms?.region ??
+	(await getTermsForEntries("posts", [post.data.id], "region", { locale })).get(post.data.id)
+)?.[0];
+const regionKey = regionFromTermSlug(regionTerm?.slug);
+const REGION_NOTE: Record<RegionKey, "region.noteTrnc" | "region.noteSouth"> = {
+	trnc: "region.noteTrnc",
+	south: "region.noteSouth",
+};
 
 // "More places": others of the same kind first, topped up with the latest
 // places when the kind has fewer than three others.
@@ -215,43 +228,66 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 
 			{/* Left column: what a traveller needs to place this */}
 			<aside class="article-meta-col">
-				<dl class="meta-list">
+				<div class="meta-facts">
+					<dl class="meta-list">
+						{
+							kinds.length > 0 && (
+								<div class="meta-block">
+									<dt class="meta-label">{t(locale, "place.kind")}</dt>
+									<dd class="meta-value">
+										{kinds.map((kind, i) => (
+											<>
+												{i > 0 && ", "}
+												<a href={categoryHref(kind.slug)}>{kind.label}</a>
+											</>
+										))}
+									</dd>
+								</div>
+							)
+						}
+						{
+							regionTerm && (
+								<div class="meta-block">
+									<dt class="meta-label">{t(locale, "region.label")}</dt>
+									<dd class="meta-value">
+										{regionKey ? (
+											<a href={withRegion(localePath(locale, "/posts"), regionKey)}>{regionTerm.label}</a>
+										) : (
+											regionTerm.label
+										)}
+									</dd>
+								</div>
+							)
+						}
+						{
+							addedDate && (
+								<div class="meta-block">
+									<dt class="meta-label">{t(locale, "place.added")}</dt>
+									<dd class="meta-value">
+										<time datetime={addedDate.toISOString()}>{formatDate(locale, addedDate)}</time>
+									</dd>
+								</div>
+							)
+						}
+						{
+							tags.length > 0 && (
+								<div class="meta-block meta-block--tags">
+									<dt class="meta-label">{t(locale, "place.tags")}</dt>
+									<dd class="meta-value">
+										<TagList tags={tags.map((tag) => ({ slug: tag.slug, label: tag.label }))} />
+									</dd>
+								</div>
+							)
+						}
+					</dl>
 					{
-						kinds.length > 0 && (
-							<div class="meta-block">
-								<dt class="meta-label">{t(locale, "place.kind")}</dt>
-								<dd class="meta-value">
-									{kinds.map((kind, i) => (
-										<>
-											{i > 0 && ", "}
-											<a href={categoryHref(kind.slug)}>{kind.label}</a>
-										</>
-									))}
-								</dd>
-							</div>
+						regionKey && (
+							<p class="region-note">
+								{t(locale, REGION_NOTE[regionKey])}
+							</p>
 						)
 					}
-					{
-						addedDate && (
-							<div class="meta-block">
-								<dt class="meta-label">{t(locale, "place.added")}</dt>
-								<dd class="meta-value">
-									<time datetime={addedDate.toISOString()}>{formatDate(locale, addedDate)}</time>
-								</dd>
-							</div>
-						)
-					}
-					{
-						tags.length > 0 && (
-							<div class="meta-block meta-block--tags">
-								<dt class="meta-label">{t(locale, "place.tags")}</dt>
-								<dd class="meta-value">
-									<TagList tags={tags.map((tag) => ({ slug: tag.slug, label: tag.label }))} />
-								</dd>
-							</div>
-						)
-					}
-				</dl>
+				</div>
 			</aside>
 
 			<div class="article-main">
@@ -597,9 +633,13 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 		min-width: 0;
 	}
 
-	.meta-list {
+	/* The facts and the region note stay in view together. */
+	.meta-facts {
 		position: sticky;
 		top: calc(var(--nav-height) + var(--spacing-8));
+	}
+
+	.meta-list {
 		margin: 0;
 		padding-top: var(--spacing-1);
 	}
@@ -637,6 +677,15 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 	.meta-block--tags .meta-value :global(.tag-list) {
 		flex-direction: column;
 		row-gap: var(--spacing-2);
+	}
+
+	/* The visitor note under the facts: same small text, secondary ink. */
+	.region-note {
+		margin: 0 0 var(--spacing-6);
+		font-size: var(--font-size-sm);
+		line-height: var(--leading-normal);
+		color: var(--color-text-secondary);
+		text-wrap: pretty;
 	}
 
 	/* Main column */
@@ -1195,14 +1244,23 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 			width: 180px;
 		}
 
-		.meta-list {
+		.meta-facts {
 			position: static;
-			display: flex;
-			flex-wrap: wrap;
-			gap: var(--spacing-4) var(--spacing-10);
 			padding: 0 0 var(--spacing-6);
 			margin-bottom: var(--spacing-8);
 			border-bottom: 1px solid var(--color-border-subtle);
+		}
+
+		.meta-list {
+			display: flex;
+			flex-wrap: wrap;
+			gap: var(--spacing-4) var(--spacing-10);
+			padding: 0;
+		}
+
+		.region-note {
+			max-width: 68ch;
+			margin: var(--spacing-4) 0 0;
 		}
 
 		.meta-block {
