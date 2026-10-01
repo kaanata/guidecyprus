@@ -86,8 +86,7 @@ const en = {
 	"home.searchLabel": "Find a place",
 	"home.searchPlaceholder": "e.g. Bellapais, casino",
 	"home.searchButton": "Search",
-	"home.mapAlt": "Map of Cyprus with Kyrenia marked on the north coast",
-	"home.mapKyrenia": "Kyrenia",
+	"home.mapAlt": "Map of Cyprus with the guide's towns marked",
 	"home.browseTitle": "Browse by kind",
 	"home.browseCount_one": "{n} place",
 	"home.browseCount_other": "{n} places",
@@ -129,6 +128,30 @@ const en = {
 	"region.noteSouth":
 		"Prices are in euros. Cross to the TRNC (KKTC) at an official crossing point with a passport or ID card.",
 	// --- end REGION ---
+	// --- TOWN (island map markers, ?town= filter, place-page town row) ---
+	/** Fallback town names; the `town` taxonomy's term labels are used when present. */
+	"town.kyrenia": "Kyrenia",
+	"town.nicosia": "Nicosia",
+	"town.famagusta": "Famagusta",
+	"town.iskele": "İskele",
+	"town.karpaz": "Karpaz",
+	"town.guzelyurt": "Güzelyurt",
+	"town.limassol": "Limassol",
+	"town.paphos": "Paphos",
+	"town.larnaca": "Larnaca",
+	"town.ayiaNapa": "Ayia Napa",
+	"town.troodos": "Troodos",
+	/** Accessible name of a map marker: "Kyrenia, 120 places". */
+	"town.marker_one": "{town}, {n} place",
+	"town.marker_other": "{town}, {n} places",
+	/** Listing title with a town chosen. `{town}` is the name (tr: with -deki/-daki). */
+	"town.title": "Places in {town}",
+	/** `{town}` is the name (tr: with -de/-da). */
+	"town.empty": "No places in {town} yet.",
+	"town.clear": "Show all towns",
+	/** Place page facts column. */
+	"town.label": "Town",
+	// --- end TOWN ---
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -205,8 +228,7 @@ const tr: Record<StringKey, string> = {
 	"home.searchLabel": "Bir yer bulun",
 	"home.searchPlaceholder": "Örn. Bellapais, kumarhane",
 	"home.searchButton": "Ara",
-	"home.mapAlt": "Kuzey kıyısında Girne'nin işaretli olduğu Kıbrıs haritası",
-	"home.mapKyrenia": "Girne",
+	"home.mapAlt": "Rehberdeki şehirlerin işaretli olduğu Kıbrıs haritası",
 	"home.browseTitle": "Türüne göre göz atın",
 	"home.browseCount_one": "{n} yer",
 	"home.browseCount_other": "{n} yer",
@@ -244,6 +266,25 @@ const tr: Record<StringKey, string> = {
 	"region.noteSouth":
 		"Fiyatlar eurodur. KKTC'ye resmi geçiş noktalarından pasaport ya da kimlik kartıyla geçebilirsiniz.",
 	// --- end REGION ---
+	// --- TOWN (island map markers, ?town= filter, place-page town row) ---
+	"town.kyrenia": "Girne",
+	"town.nicosia": "Lefkoşa",
+	"town.famagusta": "Gazimağusa",
+	"town.iskele": "İskele",
+	"town.karpaz": "Karpaz",
+	"town.guzelyurt": "Güzelyurt",
+	"town.limassol": "Limasol",
+	"town.paphos": "Baf",
+	"town.larnaca": "Larnaka",
+	"town.ayiaNapa": "Ayia Napa",
+	"town.troodos": "Trodos",
+	"town.marker_one": "{town}, {n} yer",
+	"town.marker_other": "{town}, {n} yer",
+	"town.title": "{town} yerler",
+	"town.empty": "{town} henüz bir yer yok.",
+	"town.clear": "Tüm şehirler",
+	"town.label": "Şehir",
+	// --- end TOWN ---
 };
 
 const STRINGS: Record<Locale, Record<StringKey, string>> = { en, tr };

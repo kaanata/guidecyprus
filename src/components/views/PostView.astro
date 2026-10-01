@@ -23,6 +23,7 @@ import { formatDate, t } from "../../utils/strings";
 import type { ResolvedEntry } from "../../utils/resolve-entry";
 import { orderKinds } from "../../utils/kind";
 import { regionFromTermSlug, withRegion, type RegionKey } from "../../utils/region";
+import { townFromTermSlug, withTown } from "../../utils/towns";
 
 const locale = Astro.currentLocale;
 
@@ -93,6 +94,14 @@ const REGION_NOTE: Record<RegionKey, "region.noteTrnc" | "region.noteSouth"> = {
 	trnc: "region.noteTrnc",
 	south: "region.noteSouth",
 };
+
+// The place's town, labelled by the `town` taxonomy in this locale. Absent on
+// places without one (and on an older database with no towns).
+const townTerm = (
+	post.data.terms?.town ??
+	(await getTermsForEntries("posts", [post.data.id], "town", { locale })).get(post.data.id)
+)?.[0];
+const town = townFromTermSlug(townTerm?.slug);
 
 // "More places": others of the same kind first, topped up with the latest
 // places when the kind has fewer than three others.
@@ -254,6 +263,20 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 											<a href={withRegion(localePath(locale, "/posts"), regionKey)}>{regionTerm.label}</a>
 										) : (
 											regionTerm.label
+										)}
+									</dd>
+								</div>
+							)
+						}
+						{
+							townTerm && (
+								<div class="meta-block">
+									<dt class="meta-label">{t(locale, "town.label")}</dt>
+									<dd class="meta-value">
+										{town ? (
+											<a href={withTown(localePath(locale, "/posts"), town.key)}>{townTerm.label}</a>
+										) : (
+											townTerm.label
 										)}
 									</dd>
 								</div>

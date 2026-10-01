@@ -136,6 +136,9 @@ def main(details_path: str, copy_path: str, images_path: str, url: str, dry_run:
     done = {entry["place_id"] for entry in ledger}
 
     terms = {t["slug"]: t["id"] for t in flatten(api(url, "/_emdash/api/taxonomies/category/terms?locale=en")["terms"])}
+    # Region and town terms, when the details carry them (keys as in setup-regions / the town table).
+    region_terms = {t["slug"]: t["id"] for t in api(url, "/_emdash/api/taxonomies/region/terms?locale=en").get("terms", [])}
+    town_terms = {t["slug"]: t["id"] for t in api(url, "/_emdash/api/taxonomies/town/terms?locale=en").get("terms", [])}
 
     for place_id, place in details.items():
         if place_id in done:
@@ -147,8 +150,8 @@ def main(details_path: str, copy_path: str, images_path: str, url: str, dry_run:
         content = [block([span(p)]) for p in text["paragraphs"]]
         content.append(facts(place["details"]))
 
-        print(f"{'would create' if dry_run else 'create'} {text['slug']}: "
-              f"{place['category']}, image={'yes' if image else 'no'}, {len(content)} blocks", flush=True)
+        print(f"{'would create' if dry_run else 'create'} {text['slug']}: {place['category']}, "
+              f"{place.get('region', '-')}, {place.get('town', '-')}, image={'yes' if image else 'no'}", flush=True)
         if dry_run:
             continue
 
@@ -172,6 +175,10 @@ def main(details_path: str, copy_path: str, images_path: str, url: str, dry_run:
             "--slug", text["slug"], "--locale", "en", "--draft", "--json", "--url", url,
         ))
         api(url, f"/_emdash/api/content/posts/{created['id']}/terms/category", {"termIds": term_ids})
+        if place.get("region") in region_terms:
+            api(url, f"/_emdash/api/content/posts/{created['id']}/terms/region", {"termIds": [region_terms[place["region"]]]})
+        if place.get("town") in town_terms:
+            api(url, f"/_emdash/api/content/posts/{created['id']}/terms/town", {"termIds": [town_terms[place["town"]]]})
 
         ledger.append({"place_id": place_id, "post_id": created["id"], "slug": text["slug"], "locale": "en"})
         os.makedirs(os.path.dirname(LEDGER), exist_ok=True)

@@ -12,11 +12,30 @@ import { localePath } from "../../utils/i18n";
 import { t, tn } from "../../utils/strings";
 import { countTerms, primaryKind } from "../../utils/kind";
 import { REGION_IN, regionFromUrl, regionTermSlug, withRegion } from "../../utils/region";
+import { townFromUrl, townLocative, townTermSlug, withTown } from "../../utils/towns";
 
 const locale = Astro.currentLocale;
 // The "Visiting" choice (?region=trnc|south); null is the whole island.
 const region = regionFromUrl(Astro.url);
 const regionIn = region ? t(locale, REGION_IN[region]) : "";
+
+// The town (?town=<key>), from the map's markers or a place page. It only
+// filters when the `town` taxonomy has the term (an older database has no
+// towns, and an unknown key would otherwise match nothing).
+const townChoice = townFromUrl(Astro.url);
+const { data: townTerms, cacheHint: townsHint } = await getTaxonomyTermsWithCacheHint("town", {
+	locale,
+	includeCounts: false,
+});
+const townSlug = townChoice ? townTermSlug(locale, townChoice.key) : undefined;
+const townTerm = townSlug ? townTerms.find((term) => term.slug === townSlug) : undefined;
+const town = townChoice && townTerm ? { key: townChoice.key, slug: townTerm.slug, name: townTerm.label } : null;
+
+// Taxonomy filters AND together: the region and the town, when chosen.
+const where = {
+	...(region ? { region: regionTermSlug(locale, region) } : {}),
+	...(town ? { town: town.slug } : {}),
+};
 
 // Sort in the database rather than in JS — lets the DB use its index on
 // published_at and avoids a full-table scan on the client.
@@ -24,7 +43,7 @@ const [{ entries: posts, cacheHint }, { data: categories, cacheHint: termsHint }
 	await Promise.all([
 		getEmDashCollection("posts", {
 			locale,
-			...(region ? { where: { region: regionTermSlug(locale, region) } } : {}),
+			...(Object.keys(where).length > 0 ? { where } : {}),
 			orderBy: { published_at: "desc" },
 		}),
 		getTaxonomyTermsWithCacheHint("category", { locale }),
@@ -33,6 +52,7 @@ const [{ entries: posts, cacheHint }, { data: categories, cacheHint: termsHint }
 if (Astro.cache?.enabled) {
 	Astro.cache.set(cacheHint);
 	Astro.cache.set(termsHint);
+	Astro.cache.set(townsHint);
 }
 
 // Each card's kind (its first category), in one batched query rather than
@@ -46,21 +66,26 @@ const kindsByEntry = await getTermsForEntries(
 
 // "Jump to kind": only kinds that have places, biggest first.
 // Terms come back as a tree (Entertainment > Casino, Bar & Pub...); list every level.
-// The taxonomy's counts are whole-site; within a region, count the listed places.
-const regionCounts = region ? countTerms(kindsByEntry) : null;
+// The taxonomy's counts are whole-site; within a region or town, count the listed places.
+const regionCounts = region || town ? countTerms(kindsByEntry) : null;
 const flatten = (terms: typeof categories): typeof categories =>
 	terms.flatMap((term) => [term, ...flatten(term.children ?? [])]);
 const kinds = [...new Map(flatten(categories).map((term) => [term.slug, term])).values()]
 	.map((term) => (regionCounts ? { ...term, count: regionCounts.get(term.slug) ?? 0 } : term))
 	.filter((term) => (term.count ?? 0) > 0 && term.slug !== "uncategorized")
 	.sort((a, b) => (b.count ?? 0) - (a.count ?? 0) || a.label.localeCompare(b.label));
+
+const title = town
+	? t(locale, "town.title", { town: townLocative(locale, town.name, "of") })
+	: t(locale, "listing.allPlaces");
+const clearTown = withTown(Astro.url, null);
 ---
 
-<Base title={t(locale, "listing.allPlaces")} description={t(locale, "listing.allDescription")}>
+<Base title={title} description={t(locale, "listing.allDescription")}>
 	<AdSpace space="top-banner" page="latest" />
 	<section class="listing">
 		<ListingHeader
-			title={t(locale, "listing.allPlaces")}
+			title={title}
 			count={
 				posts.length === 0
 					? undefined
@@ -69,6 +94,11 @@ const kinds = [...new Map(flatten(categories).map((term) => [term.slug, term])).
 						: tn(locale, "listing.place", posts.length)
 			}
 		>
+			{town && (
+				<p class="listing-town">
+					<a href={clearTown}>{t(locale, "town.clear")}</a>
+				</p>
+			)}
 			<RegionSwitch class="listing-region" />
 			{
 				kinds.length > 0 && (
@@ -91,7 +121,12 @@ const kinds = [...new Map(flatten(categories).map((term) => [term.slug, term])).
 
 		{
 			posts.length === 0 ? (
-				region ? (
+				town ? (
+					<ListingEmpty
+						message={t(locale, "town.empty", { town: townLocative(locale, town.name) })}
+						actions={[{ label: t(locale, "town.clear"), href: clearTown }]}
+					/>
+				) : region ? (
 					<ListingEmpty
 						message={t(locale, "region.empty", { in: regionIn })}
 						actions={[{ label: t(locale, "region.emptyWhole"), href: withRegion(Astro.url, null) }]}
@@ -125,6 +160,14 @@ const kinds = [...new Map(flatten(categories).map((term) => [term.slug, term])).
 		max-width: var(--wide-width);
 		margin: 0 auto;
 		padding: var(--spacing-12) var(--spacing-6) 0;
+	}
+
+	.listing-town {
+		margin: var(--spacing-2) 0 0;
+	}
+
+	.listing-town a {
+		font-weight: 500;
 	}
 
 	.listing :global(.listing-region) {
