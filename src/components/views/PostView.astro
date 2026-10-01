@@ -15,13 +15,14 @@ import Base from "../../layouts/Base.astro";
 import type { TaxonomyTerm } from "emdash";
 import PostCard from "../../components/PostCard.astro";
 import TagList from "../../components/TagList.astro";
+import KindPlaceholder from "../../components/KindPlaceholder.astro";
 import AdSpace from "../AdSpace.astro";
 import { splitForInArticle } from "../../utils/ads";
 import { resolveBlogSiteIdentity, TITLE_SEPARATOR } from "../../utils/site-identity";
 import { localePath } from "../../utils/i18n";
 import { formatDate, t } from "../../utils/strings";
 import type { ResolvedEntry } from "../../utils/resolve-entry";
-import { orderKinds } from "../../utils/kind";
+import { kindIcon, orderKinds } from "../../utils/kind";
 import { regionFromTermSlug, withRegion, type RegionKey } from "../../utils/region";
 import { townFromTermSlug, withTown } from "../../utils/towns";
 
@@ -142,7 +143,7 @@ const otherKindsByEntry = await getTermsForEntries(
 );
 const morePlaces = otherPosts.map((p) => ({
 	post: p,
-	kind: kindsOf(otherKindsByEntry.get(p.data.id))[0]?.label,
+	kind: kindsOf(otherKindsByEntry.get(p.data.id))[0],
 }));
 
 // In-article ad after the 2nd paragraph; short posts get none.
@@ -157,6 +158,13 @@ const addedDate = post.data.publishedAt ?? null;
 const COMPACT_IMAGE_BELOW = 900;
 const imageWidth = post.data.featured_image?.width ?? 0;
 const compactImage = imageWidth > 0 && imageWidth < COMPACT_IMAGE_BELOW;
+// No photo at all: the kind's drawn tile takes the same compact spot, so the
+// title doesn't sit beside an empty gutter. It stands in for the photo, so it
+// is named ("Hotel, no photo yet") rather than hidden. No credit line.
+const noImage = !post.data.featured_image;
+const placeholderLabel = t(locale, "placeholder.label", {
+	kind: t(locale, `placeholder.${kindIcon(primaryKind?.slug)}`),
+});
 
 // Freely licensed photos (e.g. Wikimedia Commons, CC BY-SA) carry their
 // attribution in the image value's meta; the licence requires showing it.
@@ -182,7 +190,7 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 >
 	<AdSpace space="top-banner" page="article" />
 	<article class="article">
-		<div class:list={["article-grid", { "article-grid--badge": compactImage }]}>
+		<div class:list={["article-grid", { "article-grid--badge": compactImage || noImage }]}>
 			<header class="article-header">
 				<nav class="breadcrumb" aria-label={t(locale, "place.breadcrumb")}>
 					<ol>
@@ -231,6 +239,15 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 								)}
 							</figcaption>
 						)}
+					</figure>
+				)
+			}
+			{
+				noImage && (
+					<figure class="article-hero-figure article-badge">
+						<div class="article-hero" {...post.edit.featured_image}>
+							<KindPlaceholder kind={primaryKind?.slug} label={placeholderLabel} />
+						</div>
 					</figure>
 				)
 			}
@@ -377,7 +394,8 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 								title={p.data.title}
 								featuredImage={p.data.featured_image}
 								href={localePath(locale, `/${p.id}`)}
-								kind={kind}
+								kind={kind?.label}
+								kindSlug={kind?.slug}
 								headingLevel={3}
 							/>
 						))}

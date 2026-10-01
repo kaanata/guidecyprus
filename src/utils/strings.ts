@@ -152,6 +152,21 @@ const en = {
 	/** Place page facts column. */
 	"town.label": "Town",
 	// --- end TOWN ---
+	// --- PLACEHOLDER (KindPlaceholder: the tile for a place with no photo) ---
+	/** Accessible name of the tile where it stands in for the photo. `{kind}` is one of the nouns below. */
+	"placeholder.label": "{kind}, no photo yet",
+	"placeholder.restaurant": "Restaurant",
+	"placeholder.hotel": "Hotel",
+	"placeholder.cafe": "Coffee shop",
+	"placeholder.bar": "Bar",
+	"placeholder.beach": "Beach",
+	"placeholder.historical": "Historical site",
+	"placeholder.casino": "Casino",
+	"placeholder.club": "Nightclub",
+	"placeholder.entertainment": "Entertainment",
+	"placeholder.services": "Service",
+	"placeholder.place": "Place",
+	// --- end PLACEHOLDER ---
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -285,6 +300,20 @@ const tr: Record<StringKey, string> = {
 	"town.clear": "Tüm şehirler",
 	"town.label": "Şehir",
 	// --- end TOWN ---
+	// --- PLACEHOLDER (KindPlaceholder: the tile for a place with no photo) ---
+	"placeholder.label": "{kind}, henüz fotoğraf yok",
+	"placeholder.restaurant": "Restoran",
+	"placeholder.hotel": "Otel",
+	"placeholder.cafe": "Kafe",
+	"placeholder.bar": "Bar",
+	"placeholder.beach": "Plaj",
+	"placeholder.historical": "Tarihi yer",
+	"placeholder.casino": "Kumarhane",
+	"placeholder.club": "Gece kulübü",
+	"placeholder.entertainment": "Eğlence",
+	"placeholder.services": "Hizmet",
+	"placeholder.place": "Yer",
+	// --- end PLACEHOLDER ---
 };
 
 const STRINGS: Record<Locale, Record<StringKey, string>> = { en, tr };

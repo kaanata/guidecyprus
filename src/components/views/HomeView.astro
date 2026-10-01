@@ -18,6 +18,7 @@ import { Image, PortableText } from "emdash/ui";
 import Base from "../../layouts/Base.astro";
 import AdSpace from "../AdSpace.astro";
 import IslandMap from "../IslandMap.astro";
+import KindPlaceholder from "../KindPlaceholder.astro";
 import RegionSwitch from "../RegionSwitch.astro";
 import ListingEmpty from "./ListingEmpty.astro";
 import type { ResolvedEntry } from "../../utils/resolve-entry";
@@ -103,8 +104,8 @@ const kinds = [...new Map(flatten(categoryTerms.data).map((term) => [term.slug, 
 const places = recent.entries.slice(0, RECENT_COUNT);
 // A place's kind is its first category that names a kind of place, not the
 // town ("girne") or the import leftover.
-function kindOf(id: string): string | undefined {
-	return primaryKind(kindByPlace.get(id))?.label;
+function kindOf(id: string) {
+	return primaryKind(kindByPlace.get(id));
 }
 
 // The large lead card goes to the newest place with an image big enough to
@@ -223,11 +224,13 @@ const searchAction = localePath(locale, "/search");
 															: "(min-width: 900px) 380px, 50vw"
 													}
 												/>
-											) : null}
+											) : (
+												<KindPlaceholder kind={kind?.slug} />
+											)}
 										</div>
 										<div class="place__text">
 											<h3 class="place__title">{place.data.title}</h3>
-											{kind && <p class="place__kind">{kind}</p>}
+											{kind && <p class="place__kind">{kind.label}</p>}
 										</div>
 									</a>
 								</li>
@@ -542,7 +545,8 @@ const searchAction = localePath(locale, "/search");
 		background: var(--color-sand);
 	}
 
-	.place__photo :global(img) {
+	.place__photo :global(img),
+	.place__photo :global(.kind-ph) {
 		position: absolute;
 		inset: 0;
 		width: 100%;

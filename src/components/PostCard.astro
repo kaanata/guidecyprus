@@ -6,6 +6,7 @@
  */
 import type { MediaValue, ContentBylineCredit } from "emdash";
 import { Image } from "emdash/ui";
+import KindPlaceholder from "./KindPlaceholder.astro";
 
 interface Props {
 	title: string;
@@ -14,6 +15,8 @@ interface Props {
 	href: string;
 	/** The place's kind, usually its category label. Shown under the title. */
 	kind?: string;
+	/** The kind's category slug: picks the drawing on the no-photo tile. */
+	kindSlug?: string;
 	/** Heading level for the title; defaults to h2 (cards under a page h1). */
 	headingLevel?: 2 | 3;
 	/** Load the photo eagerly (first row above the fold). */
@@ -28,7 +31,7 @@ interface Props {
 	bylines?: ContentBylineCredit[];
 }
 
-const { title, featuredImage, href, kind, headingLevel = 2, priority = false } = Astro.props;
+const { title, featuredImage, href, kind, kindSlug, headingLevel = 2, priority = false } = Astro.props;
 
 const Heading = headingLevel === 3 ? "h3" : "h2";
 ---
@@ -36,7 +39,7 @@ const Heading = headingLevel === 3 ? "h3" : "h2";
 <article class="place-card">
 	<a href={href} class="place-card__link">
 		<div class="place-card__photo" data-photo-frame>
-			{featuredImage ? <Image image={featuredImage} priority={priority} /> : <div class="place-card__blank" />}
+			{featuredImage ? <Image image={featuredImage} priority={priority} /> : <KindPlaceholder kind={kindSlug} />}
 		</div>
 		<Heading class="place-card__title">{title}</Heading>
 		{kind && <p class="place-card__kind">{kind}</p>}
@@ -74,11 +77,6 @@ const Heading = headingLevel === 3 ? "h3" : "h2";
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
-	}
-
-	.place-card__blank {
-		width: 100%;
-		height: 100%;
 	}
 
 	.place-card__title {
