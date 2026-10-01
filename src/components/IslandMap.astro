@@ -2,30 +2,70 @@
 /**
  * The island, large, as a Wada plate: the one outline of Cyprus
  * (src/utils/island.ts) in Ivory Buff (--color-sand) on a flat field of
- * Cerulian Blue (--color-sea), with a single English Red marker
- * (--color-mark) at Kyrenia. Flat colour only: no edge on the land, no
+ * Cerulian Blue (--color-sea), with small English Red markers (--color-mark)
+ * at the towns that have places. Flat colour only: no edge on the land, no
  * gradient, no texture.
  *
- * The marker and its label are HTML laid over the SVG (positioned in percent
- * of the viewBox), so they keep a fixed, legible size at any map width. The
- * marker's ring draws once on load; nothing else moves, and nothing at all
- * under prefers-reduced-motion.
+ * Each marker links to the listing for its town (?town=<key>, keeping any
+ * ?region=). Towns come from the `town` taxonomy; a town with no published
+ * places has no marker. Without the taxonomy (an older database) the map
+ * shows the one Kyrenia marker, unlinked, as it always has.
+ *
+ * Markers and labels are HTML laid over the SVG (positioned in percent of the
+ * viewBox), so they keep a fixed, legible size at any map width. Labels sit
+ * on the land where they can, each on a small sand backing so ink never
+ * touches the sea (ink on Cerulian fails contrast). Kyrenia's ring draws
+ * once on load; nothing else moves, and nothing at all under
+ * prefers-reduced-motion.
  */
-import { ISLAND_MARKERS, ISLAND_PATH, ISLAND_VIEWBOX } from "../utils/island";
-import { t } from "../utils/strings";
+import { getTaxonomyTermsWithCacheHint } from "emdash";
+import { ISLAND_PATH, ISLAND_VIEWBOX } from "../utils/island";
+import { localePath } from "../utils/i18n";
+import { withRegion, type RegionKey } from "../utils/region";
+import { t, tn, toLocale } from "../utils/strings";
+import { projectToIsland, TOWNS, withTown } from "../utils/towns";
 
 interface Props {
 	class?: string;
+	/** The "Visiting" choice: only towns with places in it are marked, and links keep it. */
+	region?: RegionKey | null;
+	/** Places per `town` term slug within the region, when one is chosen (the taxonomy's counts are whole-island). */
+	townCounts?: ReadonlyMap<string, number> | null;
 }
 
-const { class: className } = Astro.props;
+const { class: className, region = null, townCounts = null } = Astro.props;
 const locale = Astro.currentLocale;
+const lang = toLocale(locale);
 
 const [, , vbWidth, vbHeight] = ISLAND_VIEWBOX.split(" ").map(Number);
-const kyrenia = ISLAND_MARKERS.kyrenia;
-const left = `${((kyrenia.x / vbWidth) * 100).toFixed(2)}%`;
-const top = `${((kyrenia.y / vbHeight) * 100).toFixed(2)}%`;
-const label = t(locale, "home.mapKyrenia");
+const at = (lat: number, lng: number) => {
+	const { x, y } = projectToIsland(lat, lng);
+	return `left: ${((x / vbWidth) * 100).toFixed(2)}%; top: ${((y / vbHeight) * 100).toFixed(2)}%`;
+};
+
+const { data: terms, cacheHint } = await getTaxonomyTermsWithCacheHint("town", { locale });
+if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
+const termBySlug = new Map(terms.map((term) => [term.slug, term]));
+
+const listing = localePath(locale, "/posts");
+const markers = TOWNS.flatMap((town) => {
+	const slug = town.slug[lang];
+	const term = termBySlug.get(slug);
+	const count = townCounts ? (townCounts.get(slug) ?? 0) : (term?.count ?? 0);
+	if (!term || count === 0) return [];
+	const name = term.label || t(locale, town.label);
+	return [
+		{
+			town,
+			name,
+			count,
+			href: withRegion(withTown(listing, town.key), region),
+			ariaLabel: tn(locale, "town.marker", count, { town: name }),
+		},
+	];
+});
+// No town taxonomy yet: keep the single Kyrenia marker the map has always had.
+const fallback = terms.length === 0 ? TOWNS[0] : null;
 ---
 
 <figure class:list={["island-map", className]}>
@@ -40,10 +80,44 @@ const label = t(locale, "home.mapKyrenia");
 			<title id="island-map-title">{t(locale, "home.mapAlt")}</title>
 			<path class="island-map__land" d={ISLAND_PATH} />
 		</svg>
-		<span class="island-map__marker" style={`left: ${left}; top: ${top}`} aria-hidden="true">
-			<span class="island-map__dot"></span>
-			<span class="island-map__label">{label}</span>
-		</span>
+		{
+			markers.length > 0 && (
+				<ul class="island-map__markers">
+					{markers.map((marker) => (
+						<li>
+							<a
+								class:list={["island-map__marker", { "island-map__marker--ring": marker.town.key === "kyrenia" }]}
+								data-side={marker.town.labelSide}
+								data-narrow-side={marker.town.narrowSide}
+								style={`${at(marker.town.lat, marker.town.lng)}; --dx: ${marker.town.dx ?? 0}px; --dy: ${marker.town.dy ?? 0}px`}
+								href={marker.href}
+								aria-label={marker.ariaLabel}
+							>
+								<span class="island-map__dot" />
+								<span class="island-map__label">
+									<span class="island-map__name">{marker.name}</span>{" "}
+									<span class="island-map__count">{marker.count}</span>
+								</span>
+							</a>
+						</li>
+					))}
+				</ul>
+			)
+		}
+		{
+			fallback && (
+				<span
+					class="island-map__marker island-map__marker--ring"
+					data-side={fallback.labelSide}
+					data-narrow-side={fallback.narrowSide}
+					style={at(fallback.lat, fallback.lng)}
+					aria-hidden="true"
+				>
+					<span class="island-map__dot" />
+					<span class="island-map__label">{t(locale, fallback.label)}</span>
+				</span>
+			)
+		}
 	</div>
 </figure>
 
@@ -56,9 +130,17 @@ const label = t(locale, "home.mapKyrenia");
 		background: var(--color-sea);
 	}
 
+	/* Phones: give the island more of the width, so the towns have room. */
+	@media (max-width: 600px) {
+		.island-map {
+			padding: 9% 4%;
+		}
+	}
+
 	.island-map__frame {
 		position: relative;
 		width: 100%;
+		container: island-map / inline-size;
 	}
 
 	.island-map__svg {
@@ -73,19 +155,37 @@ const label = t(locale, "home.mapKyrenia");
 		stroke: none;
 	}
 
+	.island-map__markers {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
 	.island-map__marker {
 		position: absolute;
 		/* The dot's centre sits on the coordinate. */
 		width: 0;
 		height: 0;
+		color: var(--color-ink-band);
+		text-decoration: none;
+	}
+
+	/* A comfortable tap target around the dot; the label is part of the link too. */
+	a.island-map__marker::before {
+		content: "";
+		position: absolute;
+		left: -14px;
+		top: -14px;
+		width: 28px;
+		height: 28px;
 	}
 
 	.island-map__dot {
 		position: absolute;
-		left: -7px;
-		top: -7px;
-		width: 14px;
-		height: 14px;
+		left: -6px;
+		top: -6px;
+		width: 12px;
+		height: 12px;
 		border-radius: 50%;
 		background: var(--color-mark);
 		/* A thin ink ring, with a hair of sand between, so the red reads on
@@ -95,8 +195,8 @@ const label = t(locale, "home.mapKyrenia");
 		outline-offset: 1.5px;
 	}
 
-	/* One ring that opens out from the marker as the page arrives, then rests. */
-	.island-map__dot::after {
+	/* One ring that opens out from Kyrenia as the page arrives, then rests. */
+	.island-map__marker--ring .island-map__dot::after {
 		content: "";
 		position: absolute;
 		inset: -9px;
@@ -106,7 +206,7 @@ const label = t(locale, "home.mapKyrenia");
 	}
 
 	@media (prefers-reduced-motion: no-preference) {
-		.island-map__dot::after {
+		.island-map__marker--ring .island-map__dot::after {
 			animation: island-marker-ring 1.6s cubic-bezier(0.2, 0.7, 0.3, 1) 0.4s 1 both;
 		}
 	}
@@ -122,19 +222,119 @@ const label = t(locale, "home.mapKyrenia");
 		}
 	}
 
-	/* Kyrenia sits on the north coast. Ink on Cerulian fails contrast, so the
-	   label goes below the marker, on the land: ink on sand is 6.3:1 in light,
-	   and the dark band colour on the dark-mode sand is higher still. */
+	/* Ink on sand (6.3:1 in light, higher in dark). Every label has a sand
+	   backing: invisible where it sits on the land, and it keeps the text
+	   off the sea where a coast town's label has to reach over the water. */
 	.island-map__label {
 		position: absolute;
-		left: 0;
-		top: 15px;
-		transform: translateX(-50%);
+		padding: 2px 5px;
+		border-radius: 2px;
+		background: var(--color-sand);
 		font-family: var(--font-body);
 		font-size: var(--font-size-sm);
 		font-weight: 600;
-		line-height: 1;
-		color: var(--color-ink-band);
+		line-height: 1.1;
 		white-space: nowrap;
+		transform: translate(calc(var(--tx, 0%) + var(--dx, 0px)), calc(var(--ty, 0%) + var(--dy, 0px)));
+	}
+
+	.island-map__count {
+		font-weight: 400;
+		font-variant-numeric: tabular-nums;
+	}
+
+	/* Which side of the dot the label sits on (hand-tuned per town in
+	   src/utils/towns.ts), with a narrow-map variant for phones. */
+	[data-side="below"] .island-map__label {
+		left: 0;
+		top: 9px;
+		--tx: -50%;
+	}
+
+	[data-side="above"] .island-map__label {
+		left: 0;
+		bottom: 9px;
+		--tx: -50%;
+	}
+
+	[data-side="right"] .island-map__label {
+		left: 9px;
+		top: 0;
+		--ty: -50%;
+	}
+
+	[data-side="left"] .island-map__label {
+		right: 9px;
+		top: 0;
+		--ty: -50%;
+	}
+
+	@container island-map (max-width: 440px) {
+		.island-map__label {
+			padding: 1px 3px;
+			font-size: 0.75rem;
+			/* The hand-tuned nudges are for the wide map. */
+			--dx: 0px;
+			--dy: 0px;
+		}
+
+		.island-map__dot {
+			left: -5px;
+			top: -5px;
+			width: 10px;
+			height: 10px;
+			outline-offset: 1px;
+		}
+
+		[data-narrow-side] .island-map__label {
+			inset: auto;
+			--tx: 0%;
+			--ty: 0%;
+		}
+
+		[data-narrow-side="below"] .island-map__label {
+			left: 0;
+			top: 7px;
+			--tx: -50%;
+		}
+
+		[data-narrow-side="above"] .island-map__label {
+			left: 0;
+			bottom: 7px;
+			--tx: -50%;
+		}
+
+		[data-narrow-side="right"] .island-map__label {
+			left: 7px;
+			top: 0;
+			--ty: -50%;
+		}
+
+		[data-narrow-side="left"] .island-map__label {
+			right: 7px;
+			top: 0;
+			--ty: -50%;
+		}
+	}
+
+	a.island-map__marker:hover .island-map__name {
+		text-decoration: underline;
+		text-decoration-color: var(--color-mark);
+		text-decoration-thickness: 2px;
+		text-underline-offset: 0.2em;
+	}
+
+	a.island-map__marker:focus-visible {
+		outline: none;
+	}
+
+	a.island-map__marker:focus-visible .island-map__label {
+		outline: 2px solid var(--color-mark);
+		outline-offset: 1px;
+	}
+
+	a.island-map__marker:focus-visible .island-map__dot {
+		outline-color: var(--color-mark);
+		outline-width: 2px;
 	}
 </style>

@@ -88,6 +88,13 @@ const kindByPlace = await getTermsForEntries(
 	{ locale },
 );
 const regionCounts = region ? countTerms(kindByPlace) : null;
+// Within a region the map marks only the region's towns, with their counts
+// there (Nicosia has places on both sides).
+const townCounts = region
+	? countTerms(
+			await getTermsForEntries("posts", recent.entries.map((p) => p.data.id), "town", { locale }),
+		)
+	: null;
 const kinds = [...new Map(flatten(categoryTerms.data).map((term) => [term.slug, term])).values()]
 	.map((term) => (regionCounts ? { ...term, count: regionCounts.get(term.slug) ?? 0 } : term))
 	.filter((term) => (term.count ?? 0) > 0 && term.slug !== "uncategorized")
@@ -147,7 +154,7 @@ const searchAction = localePath(locale, "/search");
 					</div>
 				</form>
 			</div>
-			<IslandMap class="hero__map" />
+			<IslandMap class="hero__map" region={region} townCounts={townCounts} />
 		</section>
 
 		<AdSpace space="top-banner" page="home" />
