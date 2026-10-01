@@ -94,6 +94,7 @@ const crumbs = [
 								featuredImage={post.data.featured_image}
 								href={localePath(locale, `/${post.id}`)}
 								kind={primaryKind(kindsByEntry.get(post.data.id))?.label}
+								kindSlug={primaryKind(kindsByEntry.get(post.data.id))?.slug}
 								priority={index < 3}
 							/>
 							{inFeedAfter(index, posts.length) && <AdSpace space="in-feed" />}

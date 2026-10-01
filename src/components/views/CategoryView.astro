@@ -1,5 +1,5 @@
 ---
-import { getEmDashCollection } from "emdash";
+import { getEmDashCollection, getTermsForEntries } from "emdash";
 import Base from "../../layouts/Base.astro";
 import PostCard from "../../components/PostCard.astro";
 import AdSpace from "../AdSpace.astro";
@@ -11,6 +11,7 @@ import { inFeedAfter } from "../../utils/ads";
 import type { TaxonomyTerm } from "emdash";
 import { localePath } from "../../utils/i18n";
 import { t, tn } from "../../utils/strings";
+import { primaryKind } from "../../utils/kind";
 import { REGION_IN, regionFromUrl, regionTermSlug, withRegion } from "../../utils/region";
 
 const locale = Astro.currentLocale;
@@ -34,6 +35,16 @@ const { entries: posts, cacheHint } = await getEmDashCollection("posts", {
 });
 
 if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
+
+// Places without a photo show their own kind's drawing (a bar listed under
+// Entertainment still gets the glass; a place under the town category "girne"
+// gets its real kind). One batched query, only for those places.
+const noPhotoKinds = await getTermsForEntries(
+	"posts",
+	posts.filter((p) => !p.data.featured_image).map((p) => p.data.id),
+	"category",
+	{ locale },
+);
 
 const crumbs = [
 	{ label: t(locale, "listing.home"), href: localePath(locale, "/") },
@@ -83,6 +94,7 @@ const crumbs = [
 								excerpt={post.data.excerpt}
 								featuredImage={post.data.featured_image}
 								href={localePath(locale, `/${post.id}`)}
+								kindSlug={primaryKind(noPhotoKinds.get(post.data.id))?.slug ?? term.slug}
 								priority={index < 3}
 							/>
 							{inFeedAfter(index, posts.length) && <AdSpace space="in-feed" />}

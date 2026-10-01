@@ -40,3 +40,46 @@ export function countTerms(termsByEntry: ReadonlyMap<string, readonly KindTerm[]
 	}
 	return counts;
 }
+
+/** The drawings KindPlaceholder knows; "place" is the island, for any other kind. */
+export type KindIcon =
+	| "restaurant"
+	| "hotel"
+	| "cafe"
+	| "bar"
+	| "beach"
+	| "historical"
+	| "casino"
+	| "club"
+	| "entertainment"
+	| "services"
+	| "place";
+
+/** Category slugs (en and tr) to the drawing that stands for them. */
+const KIND_ICONS: Record<string, KindIcon> = {
+	restaurants: "restaurant",
+	restoranlar: "restaurant",
+	hotels: "hotel",
+	oteller: "hotel",
+	"coffee-shop": "cafe",
+	kahveler: "cafe",
+	"bar-pub": "bar",
+	"bar-pub-2": "bar",
+	beaches: "beach",
+	plajlar: "beach",
+	historical: "historical",
+	"tarihi-yerler": "historical",
+	casino: "casino",
+	kumarhaneler: "casino",
+	clubs: "club",
+	"gece-kulupleri": "club",
+	entertainment: "entertainment",
+	eglence: "entertainment",
+	services: "services",
+	hizmetler: "services",
+};
+
+/** The drawing for a place whose primary category is `slug`. */
+export function kindIcon(slug: string | undefined | null): KindIcon {
+	return (slug && KIND_ICONS[slug]) || "place";
+}
