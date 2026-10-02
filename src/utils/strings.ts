@@ -21,6 +21,7 @@ const en = {
 	"footer.home": "Home",
 	"footer.connect": "Connect",
 	"footer.rss": "RSS Feed",
+	"footer.emergency": "Emergencies",
 	/** `{link}` is replaced by the EmDash link. */
 	"footer.poweredBy": "Powered by {link}",
 	"theme.light": "Light mode",
@@ -127,6 +128,8 @@ const en = {
 		"Prices are in Turkish lira; euros and pounds are widely taken in tourist areas. Cross to South Cyprus at an official crossing point with a passport or ID card.",
 	"region.noteSouth":
 		"Prices are in euros. Cross to the TRNC (KKTC) at an official crossing point with a passport or ID card.",
+	/** Link after the note to the emergencies page, once it is published. */
+	"region.emergencyLink": "What to do in an emergency",
 	// --- end REGION ---
 	// --- TOWN (island map markers, ?town= filter, place-page town row) ---
 	/** Fallback town names; the `town` taxonomy's term labels are used when present. */
@@ -184,6 +187,7 @@ const tr: Record<StringKey, string> = {
 	"footer.home": "Ana Sayfa",
 	"footer.connect": "Bağlantılar",
 	"footer.rss": "RSS Beslemesi",
+	"footer.emergency": "Acil durumlar",
 	"footer.poweredBy": "{link} altyapısıyla çalışır",
 	"theme.light": "Açık tema",
 	"theme.dark": "Koyu tema",
@@ -283,6 +287,7 @@ const tr: Record<StringKey, string> = {
 		"Fiyatlar Türk lirasıdır; turistik bölgelerde euro ve sterlin de geçer. Güney Kıbrıs'a resmi geçiş noktalarından pasaport ya da kimlik kartıyla geçebilirsiniz.",
 	"region.noteSouth":
 		"Fiyatlar eurodur. KKTC'ye resmi geçiş noktalarından pasaport ya da kimlik kartıyla geçebilirsiniz.",
+	"region.emergencyLink": "Acil durumda ne yapmalı",
 	// --- end REGION ---
 	// --- TOWN (island map markers, ?town= filter, place-page town row) ---
 	"town.kyrenia": "Girne",
