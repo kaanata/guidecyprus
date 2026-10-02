@@ -29,8 +29,13 @@ const RULES: [RegExp, (m: RegExpMatchArray) => string][] = [
 	[/^(\/tr)?\/sample-page$/, (m) => m[1] ?? "/"],
 ];
 
+/** Pages replaced by newer ones on this site (the old one is unpublished). */
+const REPLACED: Record<string, string> = {
+	"/tr/kibris-acil-durum-telefon-numaralari": "/tr/acil-durumlar",
+};
+
 function legacyTarget(path: string): string | undefined {
-	const exact = EXACT[path];
+	const exact = REPLACED[path] ?? EXACT[path];
 	if (exact) return exact;
 	for (const [pattern, target] of RULES) {
 		const match = path.match(pattern);
@@ -40,7 +45,8 @@ function legacyTarget(path: string): string | undefined {
 }
 
 /**
- * - WordPress-only URLs 301 to their replacement (see RULES and EXACT).
+ * - WordPress-only URLs and replaced pages 301 to their replacement (see
+ *   REPLACED, RULES and EXACT).
  * - WordPress URLs ended in a slash; EmDash's canonical, sitemap and hreflang
  *   URLs don't. Public `/path/` requests 301 to `/path` so every old URL
  *   consolidates on the one form the site now links to.
