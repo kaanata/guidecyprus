@@ -158,13 +158,12 @@ const addedDate = post.data.publishedAt ?? null;
 const COMPACT_IMAGE_BELOW = 900;
 const imageWidth = post.data.featured_image?.width ?? 0;
 const compactImage = imageWidth > 0 && imageWidth < COMPACT_IMAGE_BELOW;
-// No photo at all: the kind's drawn tile takes the same compact spot, so the
-// title doesn't sit beside an empty gutter. It stands in for the photo, so it
-// is named ("Hotel, no photo yet") rather than hidden. No credit line.
+// No photo at all: the kind's illustration takes the same compact spot, so
+// the title doesn't sit beside an empty gutter. It stands in for the photo, so
+// its alt names it ("Illustration of a hotel"), and a caption says it is an
+// illustration, not a picture of this place.
 const noImage = !post.data.featured_image;
-const placeholderLabel = t(locale, "placeholder.label", {
-	kind: t(locale, `placeholder.${kindIcon(primaryKind?.slug)}`),
-});
+const illustrationLabel = t(locale, `illustration.${kindIcon(primaryKind?.slug)}`);
 
 // Freely licensed photos (e.g. Wikimedia Commons, CC BY-SA) carry their
 // attribution in the image value's meta; the licence requires showing it.
@@ -246,8 +245,10 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 				noImage && (
 					<figure class="article-hero-figure article-badge">
 						<div class="article-hero" {...post.edit.featured_image}>
-							<KindPlaceholder kind={primaryKind?.slug} label={placeholderLabel} />
+							<KindPlaceholder kind={primaryKind?.slug} label={illustrationLabel} priority />
 						</div>
+						{/* The alt already says "Illustration of ..."; don't read it twice. */}
+						<figcaption class="photo-credit" aria-hidden="true">{t(locale, "illustration.caption")}</figcaption>
 					</figure>
 				)
 			}

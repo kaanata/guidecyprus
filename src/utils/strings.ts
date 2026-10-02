@@ -152,21 +152,24 @@ const en = {
 	/** Place page facts column. */
 	"town.label": "Town",
 	// --- end TOWN ---
-	// --- PLACEHOLDER (KindPlaceholder: the tile for a place with no photo) ---
-	/** Accessible name of the tile where it stands in for the photo. `{kind}` is one of the nouns below. */
-	"placeholder.label": "{kind}, no photo yet",
-	"placeholder.restaurant": "Restaurant",
-	"placeholder.hotel": "Hotel",
-	"placeholder.cafe": "Coffee shop",
-	"placeholder.bar": "Bar",
-	"placeholder.beach": "Beach",
-	"placeholder.historical": "Historical site",
-	"placeholder.casino": "Casino",
-	"placeholder.club": "Nightclub",
-	"placeholder.entertainment": "Entertainment",
-	"placeholder.services": "Service",
-	"placeholder.place": "Place",
-	// --- end PLACEHOLDER ---
+	// --- ILLUSTRATION (AI-generated drawings: kind tiles for places without a photo, town banners) ---
+	/** Caption under an illustration shown as content (place page tile), in the 9px credit style. */
+	"illustration.caption": "Illustration",
+	/** Alt text of the kind illustration where it stands in for the place's photo. */
+	"illustration.restaurant": "Illustration of a restaurant",
+	"illustration.hotel": "Illustration of a hotel",
+	"illustration.cafe": "Illustration of a coffee shop",
+	"illustration.bar": "Illustration of a bar",
+	"illustration.beach": "Illustration of a beach",
+	"illustration.historical": "Illustration of a historical site",
+	"illustration.casino": "Illustration of a casino",
+	"illustration.club": "Illustration of a nightclub",
+	"illustration.entertainment": "Illustration of an entertainment venue",
+	"illustration.services": "Illustration of a local service",
+	"illustration.place": "Illustration of a place",
+	/** Alt text and caption of the town banner on the listing. `{town}` is the name. */
+	"illustration.town": "Illustration of {town}",
+	// --- end ILLUSTRATION ---
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -300,20 +303,21 @@ const tr: Record<StringKey, string> = {
 	"town.clear": "Tüm şehirler",
 	"town.label": "Şehir",
 	// --- end TOWN ---
-	// --- PLACEHOLDER (KindPlaceholder: the tile for a place with no photo) ---
-	"placeholder.label": "{kind}, henüz fotoğraf yok",
-	"placeholder.restaurant": "Restoran",
-	"placeholder.hotel": "Otel",
-	"placeholder.cafe": "Kafe",
-	"placeholder.bar": "Bar",
-	"placeholder.beach": "Plaj",
-	"placeholder.historical": "Tarihi yer",
-	"placeholder.casino": "Kumarhane",
-	"placeholder.club": "Gece kulübü",
-	"placeholder.entertainment": "Eğlence",
-	"placeholder.services": "Hizmet",
-	"placeholder.place": "Yer",
-	// --- end PLACEHOLDER ---
+	// --- ILLUSTRATION (AI-generated drawings: kind tiles for places without a photo, town banners) ---
+	"illustration.caption": "İllüstrasyon",
+	"illustration.restaurant": "Bir restoran illüstrasyonu",
+	"illustration.hotel": "Bir otel illüstrasyonu",
+	"illustration.cafe": "Bir kafe illüstrasyonu",
+	"illustration.bar": "Bir bar illüstrasyonu",
+	"illustration.beach": "Bir plaj illüstrasyonu",
+	"illustration.historical": "Bir tarihi yer illüstrasyonu",
+	"illustration.casino": "Bir kumarhane illüstrasyonu",
+	"illustration.club": "Bir gece kulübü illüstrasyonu",
+	"illustration.entertainment": "Bir eğlence mekânı illüstrasyonu",
+	"illustration.services": "Bir hizmet noktası illüstrasyonu",
+	"illustration.place": "Bir yer illüstrasyonu",
+	"illustration.town": "{town} illüstrasyonu",
+	// --- end ILLUSTRATION ---
 };
 
 const STRINGS: Record<Locale, Record<StringKey, string>> = { en, tr };
