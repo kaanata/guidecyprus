@@ -25,6 +25,7 @@ import type { ResolvedEntry } from "../../utils/resolve-entry";
 import { kindIcon, orderKinds } from "../../utils/kind";
 import { regionFromTermSlug, withRegion, type RegionKey } from "../../utils/region";
 import { townFromTermSlug, withTown } from "../../utils/towns";
+import { emergencyHref } from "../../utils/emergency";
 
 const locale = Astro.currentLocale;
 
@@ -95,6 +96,7 @@ const REGION_NOTE: Record<RegionKey, "region.noteTrnc" | "region.noteSouth"> = {
 	trnc: "region.noteTrnc",
 	south: "region.noteSouth",
 };
+const emergency = regionKey ? await emergencyHref(locale) : null;
 
 // The place's town, labelled by the `town` taxonomy in this locale. Absent on
 // places without one (and on an older database with no towns).
@@ -325,6 +327,12 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 						regionKey && (
 							<p class="region-note">
 								{t(locale, REGION_NOTE[regionKey])}
+								{emergency && (
+									<>
+										{" "}
+										<a href={emergency}>{t(locale, "region.emergencyLink")}</a>
+									</>
+								)}
 							</p>
 						)
 					}

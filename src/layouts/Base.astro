@@ -12,6 +12,7 @@ import { Font } from "astro:assets";
 import { resolveBlogSiteIdentity, TITLE_SEPARATOR } from "../utils/site-identity";
 import { localePath } from "../utils/i18n";
 import { t } from "../utils/strings";
+import { EMERGENCY_SLUG, emergencyHref } from "../utils/emergency";
 import Wordmark from "../components/Wordmark.astro";
 import "../styles/tokens.css";
 import "../styles/theme.css";
@@ -67,9 +68,14 @@ const menu = await getMenu("primary", { locale: Astro.currentLocale });
 const socialMenu = await getMenu("social", { locale: Astro.currentLocale });
 
 // Fetch pages for footer
-const { entries: pages } = await getEmDashCollection("pages", {
+const { entries: allPages } = await getEmDashCollection("pages", {
 	locale: Astro.currentLocale,
 });
+// The emergencies page has its own fixed footer link, once published.
+const emergency = await emergencyHref(Astro.currentLocale);
+const pages = allPages.filter(
+	(page) => (page.data.slug || page.id) !== EMERGENCY_SLUG[Astro.currentLocale ?? "en"],
+);
 
 // Archive and listing views pass no canonical; point them at themselves
 // (slash-less, like every other URL) unless this is an error page.
@@ -211,6 +217,7 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 						<ul class="footer-links">
 							<li><a href={home}>{t(locale, "footer.home")}</a></li>
 							<li><a href={localePath(locale, "/posts")}>{t(locale, "listing.allPlaces")}</a></li>
+							{emergency && <li><a href={emergency}>{t(locale, "footer.emergency")}</a></li>}
 							{
 								pages.slice(0, 3).map((page) => (
 									<li>
