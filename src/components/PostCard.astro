@@ -15,7 +15,7 @@ interface Props {
 	href: string;
 	/** The place's kind, usually its category label. Shown under the title. */
 	kind?: string;
-	/** The kind's category slug: picks the drawing on the no-photo tile. */
+	/** The kind's category slug: picks the illustration on the no-photo tile. */
 	kindSlug?: string;
 	/** Heading level for the title; defaults to h2 (cards under a page h1). */
 	headingLevel?: 2 | 3;
@@ -39,7 +39,7 @@ const Heading = headingLevel === 3 ? "h3" : "h2";
 <article class="place-card">
 	<a href={href} class="place-card__link">
 		<div class="place-card__photo" data-photo-frame>
-			{featuredImage ? <Image image={featuredImage} priority={priority} /> : <KindPlaceholder kind={kindSlug} />}
+			{featuredImage ? <Image image={featuredImage} priority={priority} /> : <KindPlaceholder kind={kindSlug} priority={priority} />}
 		</div>
 		<Heading class="place-card__title">{title}</Heading>
 		{kind && <p class="place-card__kind">{kind}</p>}

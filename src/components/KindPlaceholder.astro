@@ -1,171 +1,53 @@
 ---
 /**
- * The tile a place shows until it has a photo: a flat palette field with one
- * line-drawn icon for its kind, centred. It fills whatever box it sits in
- * (the containers fix the aspect ratio, so nothing shifts).
+ * The tile a place shows until it has a photo: the illustration for its kind
+ * (src/utils/illustrations.ts), cropped to fill whatever box it sits in (the
+ * containers fix the aspect ratio, so nothing shifts).
  *
- * It renders an inline SVG, never an <img>, so the logo-detection script in
- * Base.astro (which looks at `[data-photo-frame] img`) leaves it alone.
+ * The <img> carries `data-illustration`, so the logo-detection script in
+ * Base.astro leaves it alone: these flat drawings would otherwise read as a
+ * logo on a plain ground and be shrunk onto a tile.
  *
- * Decorative by default (aria-hidden): on cards the title and kind follow
- * right after. Pass `label` where the tile stands in for the photo itself
- * (the place page); it then becomes role="img" with that name.
+ * Decorative by default (alt=""): on cards the title and kind follow right
+ * after. Pass `label` where the tile stands in for the photo itself (the
+ * place page); it becomes the alt text and must say it is an illustration.
  */
 import { kindIcon } from "../utils/kind";
+import { KIND_ILLUSTRATION, kindIllustrationSrc } from "../utils/illustrations";
 
 interface Props {
-	/** The place's primary category slug (en or tr); unknown slugs get a map pin. */
+	/** The place's primary category slug (en or tr); unknown slugs get the generic place. */
 	kind?: string;
-	/** Accessible name; omit when the tile is decorative. */
+	/** Alt text; omit when the tile is decorative. */
 	label?: string;
+	/** Load eagerly (above the fold). */
+	priority?: boolean;
 	class?: string;
 }
 
-const { kind, label, class: className } = Astro.props;
-const icon = kindIcon(kind);
+const { kind, label, priority = false, class: className } = Astro.props;
 ---
 
-<div
+<img
 	class:list={["kind-ph", className]}
-	data-kind-icon={icon}
-	role={label ? "img" : undefined}
-	aria-label={label}
-	aria-hidden={label ? undefined : "true"}
->
-	{
-		icon === "place" ? (
-			/* A map pin. The island outline is kept for the hero map and wordmark. */
-			<svg class="kind-ph__icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-				<path d="M24 41c-6.5-7.6-12-14.6-12-21a12 12 0 0 1 24 0c0 6.4-5.5 13.4-12 21z" />
-				<circle cx="24" cy="20" r="4.5" />
-			</svg>
-		) : (
-			<svg class="kind-ph__icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-				{icon === "restaurant" && (
-					<>
-						<circle cx="24" cy="24" r="10" />
-						<circle cx="24" cy="24" r="6" />
-						<path d="M6.5 12v5.5a2 2 0 0 0 4 0V12M8.5 19.5V36" />
-						<path d="M41.5 36V12c-2.2 1.8-3.5 5-3.5 9v4.5h3.5" />
-					</>
-				)}
-				{icon === "hotel" && (
-					<>
-						<path d="M8 14v22M8 30h32v6" />
-						<path d="M8 23h29a3 3 0 0 1 3 3v4" />
-						<rect x="11.5" y="17.5" width="9" height="5.5" rx="2.5" />
-					</>
-				)}
-				{icon === "cafe" && (
-					<>
-						<path d="M11 20h20v7a8 8 0 0 1-8 8h-4a8 8 0 0 1-8-8z" />
-						<path d="M31 22.5h2.5a4 4 0 0 1 0 8H30" />
-						<path d="M8 39.5h26" />
-						<path d="M17.5 9.5c-1.6 1.8 1.6 3.4 0 5.5M24.5 9.5c-1.6 1.8 1.6 3.4 0 5.5" />
-					</>
-				)}
-				{icon === "bar" && (
-					<>
-						<path d="M15.5 9h17c0 8.5-2.5 14.5-8.5 14.5S15.5 17.5 15.5 9z" />
-						<path d="M16.3 15h15.4" />
-						<path d="M24 23.5V38M18 38.5h12" />
-					</>
-				)}
-				{icon === "beach" && (
-					<>
-						<path d="M15 26a9 9 0 0 1 18 0" />
-						<path d="M24 14v-3M15.5 17.5l-2.1-2.1M32.5 17.5l2.1-2.1" />
-						<path d="M6 31.5c3 0 3-2.5 6-2.5s3 2.5 6 2.5 3-2.5 6-2.5 3 2.5 6 2.5 3-2.5 6-2.5 3 2.5 6 2.5" />
-						<path d="M12 38c2.5 0 2.5-2.5 5-2.5s2.5 2.5 5 2.5 2.5-2.5 5-2.5 2.5 2.5 5 2.5 2.5-2.5 5-2.5" />
-					</>
-				)}
-				{icon === "historical" && (
-					<>
-						<path d="M11 10h26" />
-						<path d="M13 10c0 3.5 2 5 5 5h12c3 0 5-1.5 5-5" />
-						<path d="M18 15v20M30 15v20M24 18v14" />
-						<path d="M15 35h18M12 39h24" />
-					</>
-				)}
-				{icon === "casino" && (
-					<>
-						<rect x="11" y="11" width="26" height="26" rx="5" />
-						<g class="kind-ph__dots">
-							<circle cx="18" cy="18" r="1.9" />
-							<circle cx="30" cy="18" r="1.9" />
-							<circle cx="24" cy="24" r="1.9" />
-							<circle cx="18" cy="30" r="1.9" />
-							<circle cx="30" cy="30" r="1.9" />
-						</g>
-					</>
-				)}
-				{icon === "club" && (
-					<>
-						<path d="M18.5 34V14.5l16-4V30" />
-						<path d="M18.5 19.5l16-4" />
-						<circle cx="15" cy="34" r="3.5" />
-						<circle cx="31" cy="30" r="3.5" />
-					</>
-				)}
-				{icon === "entertainment" && (
-					<>
-						<path d="M7 15h34v6a3 3 0 0 0 0 6v6H7v-6a3 3 0 0 0 0-6z" />
-						<path d="M30 18.5v2M30 23v2M30 27.5v2" />
-						<path d="M18 19l1.2 3.3 3.6.2-2.8 2.1.9 3.4-2.9-1.9-2.9 1.9.9-3.4-2.8-2.1 3.6-.2z" />
-					</>
-				)}
-				{icon === "services" && (
-					<>
-						<path d="M8 17.5L24 9l16 8.5z" />
-						<path d="M12.5 21.5v11M20.5 21.5v11M27.5 21.5v11M35.5 21.5v11" />
-						<path d="M9 36h30M7 39.5h34" />
-					</>
-				)}
-			</svg>
-		)
-	}
-</div>
+	src={kindIllustrationSrc(kindIcon(kind))}
+	alt={label ?? ""}
+	width={KIND_ILLUSTRATION.width}
+	height={KIND_ILLUSTRATION.height}
+	loading={priority ? "eager" : "lazy"}
+	decoding={priority ? undefined : "async"}
+	fetchpriority={priority ? "high" : undefined}
+	data-illustration
+/>
 
 <style>
-	/*
-	 * Light: Ivory Buff sand (the site's photo-placeholder colour) with a
-	 * Violet Blue ink drawing. Dark: the night surface with the drawing in
-	 * sand, so a grid of empty places doesn't glare. Flat, no gradient.
-	 */
+	/* Fills the caller's fixed-ratio box edge to edge; the box's sand
+	 * background shows until the image arrives. */
 	.kind-ph {
-		display: grid;
-		place-items: center;
+		display: block;
 		width: 100%;
 		height: 100%;
-		background: light-dark(var(--color-sand), var(--color-surface));
-		color: light-dark(var(--color-text), var(--color-sand));
-	}
-
-	.kind-ph__icon {
-		width: clamp(2.75rem, 24%, 5rem);
-		height: auto;
-		overflow: visible;
-		fill: none;
-		stroke: currentColor;
-		stroke-width: 1.75px;
-		stroke-linecap: round;
-		stroke-linejoin: round;
-	}
-
-	/* Stroke widths stay 1.75px whatever size the icon is drawn at. */
-	.kind-ph__icon :global(*) {
-		vector-effect: non-scaling-stroke;
-	}
-
-	.kind-ph__dots {
-		fill: currentColor;
-		stroke: none;
-	}
-
-	@supports not (color: light-dark(#000, #fff)) {
-		.kind-ph {
-			background: var(--color-sand);
-			color: var(--color-text);
-		}
+		object-fit: cover;
+		object-position: center;
 	}
 </style>

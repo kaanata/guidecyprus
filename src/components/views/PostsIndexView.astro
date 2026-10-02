@@ -13,6 +13,7 @@ import { t, tn } from "../../utils/strings";
 import { countTerms, primaryKind } from "../../utils/kind";
 import { REGION_IN, regionFromUrl, regionTermSlug, withRegion } from "../../utils/region";
 import { townFromUrl, townLocative, townTermSlug, withTown } from "../../utils/towns";
+import { TOWN_ILLUSTRATION, townIllustrationSrc } from "../../utils/illustrations";
 
 const locale = Astro.currentLocale;
 // The "Visiting" choice (?region=trnc|south); null is the whole island.
@@ -79,6 +80,10 @@ const title = town
 	? t(locale, "town.title", { town: townLocative(locale, town.name, "of") })
 	: t(locale, "listing.allPlaces");
 const clearTown = withTown(Astro.url, null);
+// The chosen town's illustration, as a banner above the list (none if the town has no file).
+// The alt already says it; the visible caption is hidden from screen readers so it isn't read twice.
+const townBanner = town ? townIllustrationSrc(town.key) : undefined;
+const townBannerLabel = town ? t(locale, "illustration.town", { town: town.name }) : "";
 ---
 
 <Base title={title} description={t(locale, "listing.allDescription")}>
@@ -98,6 +103,20 @@ const clearTown = withTown(Astro.url, null);
 				<p class="listing-town">
 					<a href={clearTown}>{t(locale, "town.clear")}</a>
 				</p>
+			)}
+			{townBanner && (
+				<figure class="town-banner">
+					<img
+						src={townBanner}
+						alt={townBannerLabel}
+						width={TOWN_ILLUSTRATION.width}
+						height={TOWN_ILLUSTRATION.height}
+						loading="eager"
+						fetchpriority="high"
+						data-illustration
+					/>
+					<figcaption class="town-banner__caption" aria-hidden="true">{townBannerLabel}</figcaption>
+				</figure>
 			)}
 			<RegionSwitch class="listing-region" />
 			{
@@ -169,6 +188,38 @@ const clearTown = withTown(Astro.url, null);
 
 	.listing-town a {
 		font-weight: 500;
+	}
+
+	/* The town's illustration: full width, 16:9 on phones, a shorter crop on
+	 * wider screens so the list stays near the top. The box ratio is fixed,
+	 * so nothing shifts as it loads. */
+	.town-banner {
+		margin: var(--spacing-6) 0 0;
+	}
+
+	.town-banner img {
+		display: block;
+		width: 100%;
+		height: auto;
+		aspect-ratio: 16 / 9;
+		object-fit: cover;
+		object-position: center;
+		border-radius: var(--radius);
+		background: var(--color-sand);
+	}
+
+	@media (min-width: 761px) {
+		.town-banner img {
+			aspect-ratio: 21 / 9;
+		}
+	}
+
+	/* Same 9px credit style as photo credits on the place page. */
+	.town-banner__caption {
+		margin-top: var(--spacing-2);
+		font-size: 9px;
+		line-height: 1.4;
+		color: var(--color-muted);
 	}
 
 	.listing :global(.listing-region) {

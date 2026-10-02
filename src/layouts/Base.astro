@@ -1045,7 +1045,8 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 			// Many places use a logo as their photo. Cropping a logo to fill a
 			// card cuts it apart, so when an image's border is one flat colour
 			// (a logo on a plain ground), show it whole on a tile of that colour.
-			// Photos keep their crop.
+			// Photos keep their crop. Illustrations (img[data-illustration], flat
+			// drawings that would read as logos) always fill their box.
 			const SAMPLE = 40;
 			const TOLERANCE = 28;
 			const FLAT_SHARE = 0.85;
@@ -1101,7 +1102,9 @@ const [poweredByBefore, poweredByAfter = ""] = t(locale, "footer.poweredBy").spl
 				frame.style.backgroundColor = colour;
 			}
 
-			for (const img of document.querySelectorAll<HTMLImageElement>("[data-photo-frame] img")) {
+			for (const img of document.querySelectorAll<HTMLImageElement>(
+				"[data-photo-frame] img:not([data-illustration])",
+			)) {
 				if (img.complete && img.naturalWidth) fitPhoto(img);
 				else img.addEventListener("load", () => fitPhoto(img), { once: true });
 			}
