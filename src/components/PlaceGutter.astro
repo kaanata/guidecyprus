@@ -1,0 +1,195 @@
+---
+/**
+ * The place page's right gutter, under the TOC: the kinds of place in this
+ * locale with their counts, then the newest places. Replaces the CMS
+ * "sidebar" widget area, whose widgets aren't per-locale (English headings
+ * and unprefixed links on /tr) and listed template leftovers.
+ *
+ * Two content queries, run together: the category terms (with the same
+ * whole-site counts the home page's "Browse by kind" uses) and one page of
+ * the newest places. The recent places' kinds come from one batched lookup.
+ */
+import {
+	getEmDashCollection,
+	getTaxonomyTermsWithCacheHint,
+	getTermsForEntries,
+	type TaxonomyTerm,
+} from "emdash";
+import { localePath } from "../utils/i18n";
+import { t } from "../utils/strings";
+import { orderKinds, primaryKind } from "../utils/kind";
+
+interface Props {
+	/** The current place's slug (entry.id), left out of "Recently added". */
+	currentId: string;
+	/** The current place's kind, marked in the list. */
+	currentKind?: string;
+}
+
+const { currentId, currentKind } = Astro.props;
+const locale = Astro.currentLocale;
+
+const RECENT_COUNT = 5;
+/**
+ * Not kinds of place: template and import leftovers, the broad parent
+ * "entertainment" and the town "girne" (the parent of the tr kinds).
+ */
+const NOT_KINDS = new Set(["blog", "haberler", "uncategorized", "entertainment", "girne"]);
+
+const [recent, categoryTerms] = await Promise.all([
+	getEmDashCollection("posts", {
+		locale,
+		orderBy: { published_at: "desc" },
+		// One spare, in case the current place is among the newest.
+		limit: RECENT_COUNT + 1,
+	}),
+	getTaxonomyTermsWithCacheHint("category", { locale }),
+]);
+
+if (Astro.cache?.enabled) {
+	Astro.cache.set(recent.cacheHint);
+	Astro.cache.set(categoryTerms.cacheHint);
+}
+
+// As on the home page: every category (children too) once, biggest first,
+// then orderKinds puts broad parents and the town category behind the rest.
+function flatten(terms: TaxonomyTerm[]): TaxonomyTerm[] {
+	return terms.flatMap((term) => [term, ...flatten(term.children ?? [])]);
+}
+const kinds = orderKinds(
+	[...new Map(flatten(categoryTerms.data).map((term) => [term.slug, term])).values()]
+		.filter((term) => (term.count ?? 0) > 0 && !NOT_KINDS.has(term.slug))
+		.sort((a, b) => (b.count ?? 0) - (a.count ?? 0) || a.label.localeCompare(b.label, locale)),
+);
+
+const places = recent.entries.filter((p) => p.id !== currentId).slice(0, RECENT_COUNT);
+const kindByPlace = places.length
+	? await getTermsForEntries("posts", places.map((p) => p.data.id), "category", { locale })
+	: new Map<string, TaxonomyTerm[]>();
+---
+
+<div class="place-gutter">
+	{
+		kinds.length > 0 && (
+			<nav class="gutter-section" aria-labelledby="gutter-kinds-title">
+				<h2 class="gutter-title" id="gutter-kinds-title">{t(locale, "gutter.kinds")}</h2>
+				<ul class="gutter-kinds">
+					{kinds.map((kind) => (
+						<li>
+							<a
+								href={localePath(locale, `/category/${kind.slug}`)}
+								aria-current={kind.slug === currentKind ? "true" : undefined}
+							>
+								{kind.label}
+							</a>
+							<span class="gutter-count">{kind.count}</span>
+						</li>
+					))}
+				</ul>
+			</nav>
+		)
+	}
+	{
+		places.length > 0 && (
+			<section class="gutter-section" aria-labelledby="gutter-recent-title">
+				<h2 class="gutter-title" id="gutter-recent-title">{t(locale, "gutter.recent")}</h2>
+				<ul class="gutter-recent">
+					{places.map((p) => {
+						const kind = primaryKind(kindByPlace.get(p.data.id));
+						return (
+							<li>
+								<a href={localePath(locale, `/${p.id}`)}>{p.data.title}</a>
+								{kind && <span class="gutter-kind">{kind.label}</span>}
+							</li>
+						);
+					})}
+				</ul>
+			</section>
+		)
+	}
+</div>
+
+<style>
+	.place-gutter {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-8);
+	}
+
+	/* Same heading as the TOC's "On this page" above it. */
+	.gutter-title {
+		font-family: var(--font-body);
+		font-size: var(--font-size-sm);
+		font-weight: 600;
+		line-height: var(--leading-snug);
+		letter-spacing: 0;
+		color: var(--color-text);
+		margin: 0 0 var(--spacing-3);
+	}
+
+	.gutter-section ul {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		font-size: var(--font-size-sm);
+		line-height: var(--leading-snug);
+	}
+
+	.gutter-section a {
+		color: var(--color-text-secondary);
+		text-decoration: underline;
+		text-decoration-color: transparent;
+		text-decoration-thickness: 1px;
+		text-underline-offset: 3px;
+		overflow-wrap: break-word;
+	}
+
+	.gutter-section a:hover {
+		color: var(--color-brand);
+		text-decoration-color: currentColor;
+	}
+
+	.gutter-section a:focus-visible {
+		outline: 2px solid var(--color-mark);
+		outline-offset: 2px;
+		border-radius: var(--radius);
+	}
+
+	/* Kinds: name on the left, count on the right. */
+	.gutter-kinds li {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		gap: var(--spacing-3);
+		padding: var(--spacing-1) 0;
+	}
+
+	/* The current place's kind: ink, with the English Red mark underneath,
+	 * like the current item in the header nav. */
+	.gutter-kinds a[aria-current] {
+		color: var(--color-text);
+		text-decoration-color: var(--color-mark);
+		text-decoration-thickness: 2px;
+	}
+
+	.gutter-count {
+		font-size: var(--font-size-xs);
+		font-variant-numeric: tabular-nums;
+		color: var(--color-muted);
+	}
+
+	.gutter-recent li {
+		padding: var(--spacing-1) 0;
+	}
+
+	.gutter-recent li + li {
+		margin-top: var(--spacing-1);
+	}
+
+	.gutter-kind {
+		display: block;
+		margin-top: 2px;
+		font-size: var(--font-size-xs);
+		color: var(--color-muted);
+	}
+</style>

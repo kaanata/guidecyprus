@@ -106,6 +106,10 @@ const en = {
 	"place.moreAll": "See all {label}",
 	/** Photo credit under a place photo. `{author}`, `{license}` and `{source}` are filled in by the template. */
 	"place.photoCredit": "Photo: {author}, {license}, via {source}",
+	/** Place-page gutter: heading over the kinds of place with their counts. */
+	"gutter.kinds": "Kinds of place",
+	/** Place-page gutter: heading over the newest places. */
+	"gutter.recent": "Recently added",
 	// --- end PLACE ---
 	// --- REGION (the "Visiting" switch, region filter, place-page note) ---
 	/** Label for the group of region links. */
@@ -268,6 +272,8 @@ const tr: Record<StringKey, string> = {
 	"place.more": "Başka yerler",
 	"place.moreAll": "{label}: tümünü görün",
 	"place.photoCredit": "Fotoğraf: {author}, {license}, {source} aracılığıyla",
+	"gutter.kinds": "Yer türleri",
+	"gutter.recent": "Yeni eklenenler",
 	// --- end PLACE ---
 	// --- REGION (the "Visiting" switch, region filter, place-page note) ---
 	"region.switchLabel": "Gezi bölgesi",

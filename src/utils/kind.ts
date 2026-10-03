@@ -1,7 +1,9 @@
 /**
- * A place's "kind" is its category. Two categories are not kinds a traveller
- * looks for: "uncategorized" (an import leftover, never shown) and "girne"
- * (a town, shown only when the place has no better category).
+ * A place's "kind" is its category. Some categories are not the kind a
+ * traveller looks for: "uncategorized" (an import leftover, never shown),
+ * "entertainment" (the parent of restaurants, bars, cafés, beaches and the
+ * rest, shown only when the place has nothing more specific) and "girne" (a
+ * town, shown only when the place has no better category).
  */
 
 interface KindTerm {
@@ -10,14 +12,17 @@ interface KindTerm {
 }
 
 const HIDDEN = "uncategorized";
-const NOT_A_KIND = new Set([HIDDEN, "girne"]);
+/** Broad parent categories: behind any specific kind. (The tr kinds sit under "girne".) */
+const BROAD = new Set(["entertainment"]);
+const TOWN = "girne";
 
-/** The categories worth showing, real kinds first, "girne" last, "uncategorized" dropped. */
+/** The categories worth showing: specific kinds, then broad ones, "girne" last, "uncategorized" dropped. */
 export function orderKinds<T extends KindTerm>(terms: readonly T[] | undefined | null): T[] {
 	const shown = (terms ?? []).filter((term) => term.slug !== HIDDEN);
 	return [
-		...shown.filter((term) => !NOT_A_KIND.has(term.slug)),
-		...shown.filter((term) => NOT_A_KIND.has(term.slug)),
+		...shown.filter((term) => !BROAD.has(term.slug) && term.slug !== TOWN),
+		...shown.filter((term) => BROAD.has(term.slug)),
+		...shown.filter((term) => term.slug === TOWN),
 	];
 }
 

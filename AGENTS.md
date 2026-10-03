@@ -52,7 +52,7 @@ Guide Cyprus: a bilingual (en, tr under `/tr`) directory of places across Cyprus
 | ----------- | ------------------ | -------------------------------------------------------------------------------------------------------------------- |
 | Home        | `/`, `/tr`         | `HomeView`: hero with search and the island map, kinds with counts, recently added grid, the front page's CMS text   |
 | All places  | `/posts`           | Count, jump-to-kind row, grid of place cards                                                                         |
-| Place       | `/[slug]`          | Breadcrumb, name, wide photo, left facts column (kind, region, added, tags, visitor note), body, right widget gutter, "More <kind>"        |
+| Place       | `/[slug]`          | Breadcrumb, name, wide photo, left facts column (kind, region, added, tags, visitor note), body, right gutter (TOC, kinds of place with counts, recently added; `PlaceGutter.astro`), "More <kind>" |
 | Page        | `/[slug]`          | Static page content (Portable Text) in a reading column                                                              |
 | Search      | `/search`          | Search form and result list                                                                                          |
 | Category    | `/category/[slug]` | Places of one kind                                                                                                   |
@@ -76,7 +76,7 @@ Site settings have `title` and `tagline` -- both render in the header / footer.
 - **Places, not posts.** No author bylines, reading time or "continue reading". Show the place's kind instead; `src/utils/kind.ts` picks it (the town category `girne` only as a fallback, `uncategorized` never).
 - **Logos as photos.** Many places have a logo as their featured image. A script in `Base.astro` checks images inside `[data-photo-frame]`: if the border (or the four corners) is one flat colour, it sets `data-logo` and a tile of that colour, and `theme.css` shows the image whole instead of cropped.
 - **Illustrations.** Flat travel-poster drawings in the site palette, AI-generated with MiniMax (`public/illustrations/`, listed in `src/utils/illustrations.ts`): one per kind, the tile for a place without its own image (`KindPlaceholder.astro`), and one per town, the banner on `/posts?town=<key>`. Wherever one is shown as content it is labelled as an illustration (alt text, plus the 9px "Illustration" caption on the place page and the town banner); on cards it is decorative. They carry `data-illustration`, so the logo script skips them. Never use one to depict a specific venue.
-- The place page keeps the three-column reading layout (facts column, ~68ch body, widget gutter). Don't flatten it on desktop.
+- The place page keeps the three-column reading layout (facts column, ~68ch body, right gutter). Don't flatten it on desktop.
 
 ## Customisation
 
