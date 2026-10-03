@@ -3,6 +3,7 @@ import { getSeoMeta, getSiteSettings } from "emdash";
 import { PortableText } from "emdash/ui";
 import Base from "../../layouts/Base.astro";
 import AdSpace from "../AdSpace.astro";
+import { EMERGENCY_SLUG } from "../../utils/emergency";
 import type { ResolvedEntry } from "../../utils/resolve-entry";
 import { resolveBlogSiteIdentity, TITLE_SEPARATOR } from "../../utils/site-identity";
 
@@ -17,6 +18,8 @@ const slug = page.data.slug;
 const { siteTitle } = resolveBlogSiteIdentity(await getSiteSettings());
 
 const isHome = adPage === "home";
+// No ads on the emergencies page: visitors reading it may be in trouble.
+const showAds = !Object.values(EMERGENCY_SLUG).includes(slug ?? "");
 const seo = getSeoMeta(page, {
 	// The locale front page uses its SEO title alone, as WordPress did.
 	siteTitle: isHome ? undefined : siteTitle,
@@ -50,7 +53,7 @@ const homeAlternates = isHome
 	content={isHome ? undefined : { collection: "pages", id: page.data.id, slug }}
 	alternates={homeAlternates}
 >
-	<AdSpace space="top-banner" page={adPage} />
+	{showAds && <AdSpace space="top-banner" page={adPage} />}
 	<article class="page-article">
 		<header class="page-header">
 			<h1 class="page-title" {...page.edit.title}>{page.data.title}</h1>
