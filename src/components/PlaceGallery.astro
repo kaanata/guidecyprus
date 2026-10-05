@@ -31,6 +31,15 @@ function fullSize(image: GalleryPhoto["image"]): string {
 }
 
 const headingId = "place-photos-title";
+
+/**
+ * Tiles are small (about 216px in the 680px body column, half the screen on a
+ * phone), so ask for 4:3 thumbnails at that size instead of the full photo.
+ * The link still opens the full-size file.
+ */
+const THUMB_W = 480;
+const THUMB_H = 360;
+const THUMB_SIZES = "(min-width: 1024px) 216px, (min-width: 560px) 31vw, 50vw";
 ---
 
 {
@@ -51,7 +60,13 @@ const headingId = "place-photos-title";
 									href={fullSize(photo.image)}
 									aria-label={`${alt}. ${t(locale, "place.photoOpen", { n: i + 1, total: photos.length })}`}
 								>
-									<Image image={photo.image as never} alt={alt} />
+									<Image
+										image={photo.image as never}
+										alt={alt}
+										width={THUMB_W}
+										height={THUMB_H}
+										sizes={THUMB_SIZES}
+									/>
 								</a>
 								{photo.credit && <PhotoCredit credit={photo.credit} />}
 							</figure>
