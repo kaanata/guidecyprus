@@ -106,6 +106,20 @@ const en = {
 	"place.moreAll": "See all {label}",
 	/** Photo credit under a place photo. `{author}`, `{license}` and `{source}` are filled in by the template. */
 	"place.photoCredit": "Photo: {author}, {license}, via {source}",
+	/** Credit under a photo the place published itself. `{owner}` is the venue (or "author, licence"), `{source}` one of the `photo.source.*` labels. */
+	"place.photoCreditOwner": "Photo: {owner} ({source})",
+	/** Heading over the place's photo gallery. */
+	"place.photos": "Photos",
+	/** Accessible name of a gallery photo's link to the full-size image. `{n}` / `{total}` count the photos. */
+	"place.photoOpen": "Photo {n} of {total}, full size",
+	/** Alt text fallback for a gallery photo with none. `{title}` is the place's name. */
+	"place.photoAlt": "Photo of {title}",
+	"photo.source.website": "website",
+	"photo.source.instagram": "Instagram",
+	"photo.source.facebook": "Facebook",
+	"photo.source.google": "Google",
+	"photo.source.tripadvisor": "Tripadvisor",
+	"photo.source.wikimedia": "Wikimedia Commons",
 	/** Place-page gutter: heading over the kinds of place with their counts. */
 	"gutter.kinds": "Kinds of place",
 	/** Place-page gutter: heading over the newest places. */
@@ -272,6 +286,16 @@ const tr: Record<StringKey, string> = {
 	"place.more": "Başka yerler",
 	"place.moreAll": "{label}: tümünü görün",
 	"place.photoCredit": "Fotoğraf: {author}, {license}, {source} aracılığıyla",
+	"place.photoCreditOwner": "Fotoğraf: {owner} ({source})",
+	"place.photos": "Fotoğraflar",
+	"place.photoOpen": "Fotoğraf {n} / {total}, tam boyut",
+	"place.photoAlt": "{title} fotoğrafı",
+	"photo.source.website": "web sitesi",
+	"photo.source.instagram": "Instagram",
+	"photo.source.facebook": "Facebook",
+	"photo.source.google": "Google",
+	"photo.source.tripadvisor": "Tripadvisor",
+	"photo.source.wikimedia": "Wikimedia Commons",
 	"gutter.kinds": "Yer türleri",
 	"gutter.recent": "Yeni eklenenler",
 	// --- end PLACE ---

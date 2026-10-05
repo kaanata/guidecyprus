@@ -1,0 +1,85 @@
+---
+/**
+ * The 9px credit under a place photo (featured image, gallery, body images).
+ * A venue's own photo reads "Photo: <Venue> (Instagram)", the whole line
+ * linked to where it was taken from; a licensed photo names author, licence
+ * and source, each linked when the link is known.
+ */
+import { t } from "../utils/strings";
+import type { PhotoCredit } from "../utils/photo-credit";
+
+interface Props {
+	credit: PhotoCredit;
+	/** `figcaption` inside a <figure>, `p` elsewhere. */
+	as?: "figcaption" | "p";
+	class?: string;
+}
+
+const { credit, as: Tag = "figcaption", class: className } = Astro.props;
+const locale = Astro.currentLocale;
+
+const ownerText =
+	credit.kind === "owner"
+		? t(locale, "place.photoCreditOwner", {
+				owner: credit.owner,
+				source: t(locale, `photo.source.${credit.source}`),
+			})
+		: "";
+const licensedParts =
+	credit.kind === "licensed"
+		? t(locale, "place.photoCredit").split(/(\{author\}|\{license\}|\{source\})/)
+		: [];
+const commons = t(locale, "photo.source.wikimedia");
+---
+
+<Tag class:list={["photo-credit", className]}>
+	{
+		credit.kind === "owner" ? (
+			credit.url ? (
+				<a href={credit.url} rel="noopener nofollow" target="_blank">{ownerText}</a>
+			) : (
+				ownerText
+			)
+		) : (
+			licensedParts.map((part) =>
+				part === "{author}" ? credit.author
+				: part === "{license}" ? (credit.licenseUrl
+					? <a href={credit.licenseUrl} rel="license noopener" target="_blank">{credit.license}</a>
+					: credit.license)
+				: part === "{source}" ? (credit.sourceUrl
+					? <a href={credit.sourceUrl} rel="noopener" target="_blank">{commons}</a>
+					: commons)
+				: part,
+			)
+		)
+	}
+</Tag>
+
+<style>
+	/* Size is fixed at 9px by the site owner's rule for credits. */
+	.photo-credit {
+		margin: var(--spacing-2) 0 0;
+		font-size: 9px;
+		line-height: 1.4;
+		color: var(--color-muted);
+		text-align: start;
+		overflow-wrap: anywhere;
+	}
+
+	.photo-credit a {
+		color: inherit;
+		text-decoration: underline;
+		text-decoration-thickness: 1px;
+		text-underline-offset: 1px;
+	}
+
+	.photo-credit a:hover {
+		color: var(--color-text);
+	}
+
+	.photo-credit a:focus-visible {
+		outline: 2px solid var(--color-mark);
+		outline-offset: 2px;
+		border-radius: var(--radius);
+	}
+</style>

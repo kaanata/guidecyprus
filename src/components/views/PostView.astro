@@ -13,6 +13,10 @@ import PostCard from "../../components/PostCard.astro";
 import TagList from "../../components/TagList.astro";
 import KindPlaceholder from "../../components/KindPlaceholder.astro";
 import PlaceGutter from "../../components/PlaceGutter.astro";
+import PlaceGallery from "../../components/PlaceGallery.astro";
+import PlaceBodyImage from "../../components/PlaceBodyImage.astro";
+import PhotoCredit from "../../components/PhotoCredit.astro";
+import { imageCredit, readGallery } from "../../utils/photo-credit";
 import AdSpace from "../AdSpace.astro";
 import { splitForInArticle } from "../../utils/ads";
 import { resolveBlogSiteIdentity, TITLE_SEPARATOR } from "../../utils/site-identity";
@@ -164,13 +168,14 @@ const compactImage = imageWidth > 0 && imageWidth < COMPACT_IMAGE_BELOW;
 const noImage = !post.data.featured_image;
 const illustrationLabel = t(locale, `illustration.${kindIcon(primaryKind?.slug)}`);
 
-// Freely licensed photos (e.g. Wikimedia Commons, CC BY-SA) carry their
-// attribution in the image value's meta; the licence requires showing it.
-type PhotoCredit = { author: string; license: string; licenseUrl?: string; sourceUrl?: string };
-const photoCredit = (post.data.featured_image as { meta?: { credit?: PhotoCredit } } | undefined)?.meta?.credit;
-const creditParts = photoCredit
-	? t(locale, "place.photoCredit").split(/(\{author\}|\{license\}|\{source\})/)
-	: [];
+// Every photo says where it came from: a licensed photo (Wikimedia Commons,
+// CC BY-SA) carries author and licence, a venue's own photo its name and the
+// page it came from, in the image value's meta (src/utils/photo-credit.ts).
+const photoCredit = imageCredit(post.data.featured_image);
+// The place's own photos. Empty on a schema without the field.
+const gallery = readGallery((post.data as { gallery?: unknown }).gallery);
+// Body image blocks show their credit the same way.
+const bodyComponents = { type: { image: PlaceBodyImage } };
 const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 ---
 
@@ -223,20 +228,7 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 						>
 							<Image image={post.data.featured_image} priority />
 						</div>
-						{photoCredit && (
-							<figcaption class="photo-credit">
-								{creditParts.map((part) =>
-									part === "{author}" ? photoCredit.author
-									: part === "{license}" ? (photoCredit.licenseUrl
-										? <a href={photoCredit.licenseUrl} rel="license noopener" target="_blank">{photoCredit.license}</a>
-										: photoCredit.license)
-									: part === "{source}" ? (photoCredit.sourceUrl
-										? <a href={photoCredit.sourceUrl} rel="noopener" target="_blank">Wikimedia Commons</a>
-										: "Wikimedia Commons")
-									: part,
-								)}
-							</figcaption>
-						)}
+						{photoCredit && <PhotoCredit credit={photoCredit} />}
 					</figure>
 				)
 			}
@@ -341,15 +333,17 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 					{
 						inArticleSplit ? (
 							<>
-								<PortableText value={inArticleSplit[0]} />
+								<PortableText value={inArticleSplit[0]} components={bodyComponents} />
 								<AdSpace space="in-article" />
-								<PortableText value={inArticleSplit[1]} />
+								<PortableText value={inArticleSplit[1]} components={bodyComponents} />
 							</>
 						) : (
-							<PortableText value={post.data.content} />
+							<PortableText value={post.data.content} components={bodyComponents} />
 						)
 					}
 				</div>
+
+				<PlaceGallery photos={gallery} title={post.data.title} />
 
 				<div class="article-comments">
 					<Comments collection="posts" contentId={post.data.id} threaded />
@@ -625,8 +619,8 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 		object-fit: contain;
 	}
 
-	/* Licence attribution for a freely licensed photo. Size is fixed at 9px
-	 * by the site owner's rule for credits. */
+	/* The illustration caption, in the 9px style of the photo credits
+	 * (PhotoCredit.astro). Size is fixed at 9px by the site owner's rule. */
 	.photo-credit {
 		margin-top: var(--spacing-2);
 		font-size: 9px;
@@ -879,7 +873,8 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 		margin: 2em 0;
 	}
 
-	.article-content :global(figcaption) {
+	/* Photo credits (PhotoCredit.astro) keep their own 9px style. */
+	.article-content :global(figcaption:not(.photo-credit)) {
 		margin-top: var(--spacing-2);
 		font-size: var(--font-size-sm);
 		line-height: var(--leading-snug);
@@ -892,14 +887,14 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 		border-top: 1px solid var(--color-border);
 	}
 
-	.article-content :global(a) {
+	.article-content :global(a:not(.photo-credit a)) {
 		color: var(--color-brand);
 		text-decoration: underline;
 		text-underline-offset: 3px;
 		text-decoration-thickness: 1px;
 	}
 
-	.article-content :global(a:hover) {
+	.article-content :global(a:not(.photo-credit a):hover) {
 		color: var(--color-brand-hover);
 		text-decoration-thickness: 2px;
 	}

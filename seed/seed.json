@@ -41,6 +41,19 @@
 					"slug": "excerpt",
 					"label": "Excerpt",
 					"type": "text"
+				},
+				{
+					"slug": "gallery",
+					"label": "Photos",
+					"type": "repeater",
+					"validation": {
+						"maxItems": 12,
+						"subFields": [
+							{ "slug": "image", "label": "Image", "type": "image", "required": true },
+							{ "slug": "credit", "label": "Credit (venue name, or author and licence)", "type": "string" },
+							{ "slug": "source_url", "label": "Source URL", "type": "url" }
+						]
+					}
 				}
 			]
 		},
