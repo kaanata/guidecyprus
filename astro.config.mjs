@@ -19,6 +19,9 @@ export default defineConfig({
 		fallback: { tr: "en" },
 	},
 	image: {
+		// EmDash passes media as absolute URLs on the site's own host; Astro only
+		// resizes remote images from listed domains (via the IMAGES binding).
+		domains: ["guidecyprus.divine-queen-9624.workers.dev", "localhost"],
 		layout: "constrained",
 		responsiveStyles: true,
 	},
