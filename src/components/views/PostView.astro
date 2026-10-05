@@ -5,17 +5,14 @@ import {
 	getSeoMeta,
 	getSiteSettings,
 } from "emdash";
-import {
-	Image,
-	PortableText,
-	WidgetArea,
-} from "emdash/ui";
+import { Image, PortableText } from "emdash/ui";
 import { Comments, CommentForm } from "emdash/ui/comments";
 import Base from "../../layouts/Base.astro";
 import type { TaxonomyTerm } from "emdash";
 import PostCard from "../../components/PostCard.astro";
 import TagList from "../../components/TagList.astro";
 import KindPlaceholder from "../../components/KindPlaceholder.astro";
+import PlaceGutter from "../../components/PlaceGutter.astro";
 import AdSpace from "../AdSpace.astro";
 import { splitForInArticle } from "../../utils/ads";
 import { resolveBlogSiteIdentity, TITLE_SEPARATOR } from "../../utils/site-identity";
@@ -360,7 +357,7 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 				</div>
 			</div>
 
-			{/* Right gutter: TOC + sidebar widgets */}
+			{/* Right gutter: TOC, kinds of place, recently added */}
 			<aside class="article-sidebar">
 				{/* Not inside the sticky block: a 600px ad would push the TOC off short screens. */}
 				<div class="sidebar-ad">
@@ -373,9 +370,7 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 							<!-- Populated by JS -->
 						</div>
 					</nav>
-					<div class="sidebar-widgets">
-						<WidgetArea name="sidebar" />
-					</div>
+					<PlaceGutter currentId={post.id} currentKind={primaryKind?.slug} />
 				</div>
 			</aside>
 		</div>
@@ -517,7 +512,7 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 	/* ---------------------------------------------------------------
 	 * Place page. Desktop is a three-column reading view: the meta
 	 * column (kind, date added, tags), the body, and a gutter for the
-	 * TOC and widgets. The header sits over the body column; the photo
+	 * TOC, the kinds of place and the newest places. The header sits over the body column; the photo
 	 * spans all three.
 	 * ------------------------------------------------------------- */
 	.article {
@@ -983,8 +978,7 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 		margin-bottom: var(--spacing-8);
 	}
 
-	.toc-title,
-	.sidebar-widgets :global(.widget__title) {
+	.toc-title {
 		font-family: var(--font-body);
 		font-size: var(--font-size-sm);
 		font-weight: 600;
@@ -1024,114 +1018,6 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 	.toc-content :global(.toc-link.active) {
 		color: var(--color-text);
 		border-left-color: var(--color-mark);
-	}
-
-	/* Sidebar widgets: quiet lists, no pills, no boxes. */
-	.sidebar-widgets :global(.widget-area) {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-8);
-	}
-
-	.sidebar-widgets :global(.widget) {
-		font-size: var(--font-size-sm);
-		line-height: var(--leading-snug);
-	}
-
-	.sidebar-widgets :global(.widget__content) {
-		color: var(--color-text-secondary);
-	}
-
-	.sidebar-widgets :global(ul) {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-	}
-
-	.sidebar-widgets :global(.widget a) {
-		color: var(--color-text-secondary);
-		text-decoration: underline;
-		text-decoration-color: transparent;
-		text-underline-offset: 3px;
-	}
-
-	.sidebar-widgets :global(.widget a:hover) {
-		color: var(--color-brand);
-		text-decoration-color: currentColor;
-	}
-
-	/* Search */
-	.sidebar-widgets :global(.widget-search) {
-		display: flex;
-		flex-direction: column;
-		gap: var(--spacing-2);
-	}
-
-	.sidebar-widgets :global(.widget-search__input) {
-		width: 100%;
-		padding: var(--spacing-2) var(--spacing-3);
-		font-family: var(--font-body);
-		font-size: var(--font-size-sm);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius);
-		background: var(--color-bg);
-		color: var(--color-text);
-	}
-
-	.sidebar-widgets :global(.widget-search__input)::placeholder {
-		color: var(--color-muted);
-	}
-
-	.sidebar-widgets :global(.widget-search__input):focus-visible {
-		outline: 2px solid var(--color-mark);
-		outline-offset: 2px;
-		border-color: var(--color-text);
-	}
-
-	.sidebar-widgets :global(.widget-search__button) {
-		display: none;
-	}
-
-	/* Categories and archives: name on the left, count on the right. */
-	.sidebar-widgets :global(.widget-categories li),
-	.sidebar-widgets :global(.widget-archives li) {
-		display: flex;
-		justify-content: space-between;
-		align-items: baseline;
-		gap: var(--spacing-3);
-		padding: var(--spacing-1) 0;
-	}
-
-	.sidebar-widgets :global(.widget-categories__count),
-	.sidebar-widgets :global(.widget-archives__count) {
-		font-size: var(--font-size-xs);
-		font-variant-numeric: tabular-nums;
-		color: var(--color-muted);
-	}
-
-	/* Tag cloud: plain inline links in small text. */
-	.sidebar-widgets :global(.widget-tags__cloud) {
-		display: flex;
-		flex-wrap: wrap;
-		column-gap: var(--spacing-3);
-		row-gap: var(--spacing-1);
-		font-size: var(--font-size-xs);
-		line-height: var(--leading-normal);
-	}
-
-	.sidebar-widgets :global(.widget-tags__count) {
-		display: none;
-	}
-
-	/* Recent posts */
-	.sidebar-widgets :global(.widget-recent-posts li) {
-		padding: var(--spacing-1) 0;
-	}
-
-	.sidebar-widgets :global(.widget-recent-posts__date) {
-		display: block;
-		font-size: var(--font-size-xs);
-		color: var(--color-muted);
 	}
 
 	/* Comments section */
@@ -1253,7 +1139,6 @@ const categoryHref = (slug: string) => localePath(locale, `/category/${slug}`);
 	.meta-value a:focus-visible,
 	.more-all:focus-visible,
 	.toc-content :global(.toc-link:focus-visible),
-	.sidebar-widgets :global(.widget a:focus-visible),
 	.article-content :global(a:focus-visible) {
 		outline: 2px solid var(--color-mark);
 		outline-offset: 2px;
