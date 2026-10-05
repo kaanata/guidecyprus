@@ -1,5 +1,10 @@
 ---
 import PostsIndexView from "../../../components/views/PostsIndexView.astro";
+import { finderTarget } from "../../../utils/finder";
+
+// The home page finder submits here; send it on to the listing it means.
+const finder = finderTarget(Astro.url, Astro.currentLocale);
+if (finder) return Astro.redirect(finder, 302);
 ---
 
 <PostsIndexView />

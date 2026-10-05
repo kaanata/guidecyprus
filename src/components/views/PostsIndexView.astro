@@ -20,7 +20,7 @@ const locale = Astro.currentLocale;
 const region = regionFromUrl(Astro.url);
 const regionIn = region ? t(locale, REGION_IN[region]) : "";
 
-// The town (?town=<key>), from the map's markers or a place page. It only
+// The town (?town=<key>), from the home page finder or a place page. It only
 // filters when the `town` taxonomy has the term (an older database has no
 // towns, and an unknown key would otherwise match nothing).
 const townChoice = townFromUrl(Astro.url);
@@ -126,7 +126,7 @@ const townBannerLabel = town ? t(locale, "illustration.town", { town: town.name 
 						<ul class="kinds-list">
 							{kinds.map((term) => (
 								<li>
-									<a href={withRegion(localePath(locale, `/category/${term.slug}`), region)} class="kind-link">
+									<a href={withTown(withRegion(localePath(locale, `/category/${term.slug}`), region), town?.key ?? null)} class="kind-link">
 										<span class="kind-name">{term.label}</span>
 										<span class="kind-count">{term.count}</span>
 									</a>

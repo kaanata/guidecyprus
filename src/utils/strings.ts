@@ -62,6 +62,8 @@ const en = {
 	"listing.breadcrumb": "You are here",
 	"listing.home": "Home",
 	"listing.categoryTitle": "{label} in Cyprus",
+	/** `{town}` is the name (tr: with -deki/-daki). */
+	"listing.categoryTownTitle": "{label} in {town}",
 	"listing.categoryDescription": "Places in Cyprus listed under {label}, with photos, addresses and phone numbers.",
 	"listing.tagTitle": "Places tagged {label}",
 	"listing.tagDescription": "Places in Cyprus tagged {label}.",
@@ -80,14 +82,20 @@ const en = {
 	"listing.searchCount_other": "{n} places match “{query}”",
 	"listing.searchDescription": "Search places in Cyprus by name, town or kind.",
 	// --- end LISTINGS ---
-	// --- HOME (home page, island map, CMS pages) -- redesign block ---
+	// --- HOME (home page, finder, CMS pages) -- redesign block ---
 	"home.title": "Cyprus, place by place",
 	"home.intro":
 		"Historical sites, hotels, restaurants, beaches and nightlife across the island, each with a photo and what you need to find it.",
-	"home.searchLabel": "Find a place",
-	"home.searchPlaceholder": "e.g. Bellapais, casino",
-	"home.searchButton": "Search",
-	"home.mapAlt": "Map of Cyprus with the guide's towns marked",
+	/**
+	 * The finder: a sentence with two dropdowns. `{kind}` and `{town}` mark
+	 * where they sit (tr puts the town first). Each must appear once.
+	 */
+	"home.finder": "I'm looking for {kind} in {town}",
+	"home.finderKind": "Kind of place",
+	"home.finderAnyKind": "any kind of place",
+	"home.finderAnyTown": "all of Cyprus",
+	"home.finderButton": "Show places",
+	"home.townsLabel": "Or start from a town",
 	"home.browseTitle": "Browse by kind",
 	"home.browseCount_one": "{n} place",
 	"home.browseCount_other": "{n} places",
@@ -162,9 +170,8 @@ const en = {
 	"town.larnaca": "Larnaca",
 	"town.ayiaNapa": "Ayia Napa",
 	"town.troodos": "Troodos",
-	/** Accessible name of a map marker: "Kyrenia, 120 places". */
-	"town.marker_one": "{town}, {n} place",
-	"town.marker_other": "{town}, {n} places",
+	/** Where a count applies: "12 places in Kyrenia". `{town}` is the name (tr: with -de/-da). */
+	"town.in": "in {town}",
 	/** Listing title with a town chosen. `{town}` is the name (tr: with -deki/-daki). */
 	"town.title": "Places in {town}",
 	/** `{town}` is the name (tr: with -de/-da). */
@@ -243,6 +250,7 @@ const tr: Record<StringKey, string> = {
 	"listing.breadcrumb": "Buradasınız",
 	"listing.home": "Ana sayfa",
 	"listing.categoryTitle": "Kıbrıs'ta {label}",
+	"listing.categoryTownTitle": "{town} {label}",
 	"listing.categoryDescription": "Kıbrıs'ta {label} başlığındaki yerler; fotoğraf, adres ve telefon bilgileriyle.",
 	"listing.tagTitle": "{label} etiketli yerler",
 	"listing.tagDescription": "Kıbrıs'ta {label} etiketli yerler.",
@@ -261,14 +269,16 @@ const tr: Record<StringKey, string> = {
 	"listing.searchCount_other": "“{query}” ile eşleşen {n} yer",
 	"listing.searchDescription": "Kıbrıs'taki yerleri ada, kasabaya ya da türe göre arayın.",
 	// --- end LISTINGS ---
-	// --- HOME (home page, island map, CMS pages) -- redesign block ---
+	// --- HOME (home page, finder, CMS pages) -- redesign block ---
 	"home.title": "Kıbrıs, adım adım",
 	"home.intro":
 		"Adanın dört bir yanındaki tarihi yerler, oteller, restoranlar, plajlar ve gece hayatı; her biri fotoğrafı ve nasıl bulacağınızla birlikte.",
-	"home.searchLabel": "Bir yer bulun",
-	"home.searchPlaceholder": "Örn. Bellapais, kumarhane",
-	"home.searchButton": "Ara",
-	"home.mapAlt": "Rehberdeki şehirlerin işaretli olduğu Kıbrıs haritası",
+	"home.finder": "{town} için {kind} arıyorum",
+	"home.finderKind": "Yer türü",
+	"home.finderAnyKind": "her türden yer",
+	"home.finderAnyTown": "Tüm Kıbrıs",
+	"home.finderButton": "Yerleri göster",
+	"home.townsLabel": "Ya da bir şehirden başlayın",
 	"home.browseTitle": "Türüne göre göz atın",
 	"home.browseCount_one": "{n} yer",
 	"home.browseCount_other": "{n} yer",
@@ -331,8 +341,7 @@ const tr: Record<StringKey, string> = {
 	"town.larnaca": "Larnaka",
 	"town.ayiaNapa": "Ayia Napa",
 	"town.troodos": "Trodos",
-	"town.marker_one": "{town}, {n} yer",
-	"town.marker_other": "{town}, {n} yer",
+	"town.in": "{town}",
 	"town.title": "{town} yerler",
 	"town.empty": "{town} henüz bir yer yok.",
 	"town.clear": "Tüm şehirler",

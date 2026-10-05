@@ -17,7 +17,6 @@ import {
 import { Image, PortableText } from "emdash/ui";
 import Base from "../../layouts/Base.astro";
 import AdSpace from "../AdSpace.astro";
-import IslandMap from "../IslandMap.astro";
 import KindPlaceholder from "../KindPlaceholder.astro";
 import RegionSwitch from "../RegionSwitch.astro";
 import ListingEmpty from "./ListingEmpty.astro";
@@ -25,8 +24,16 @@ import type { ResolvedEntry } from "../../utils/resolve-entry";
 import { localePath } from "../../utils/i18n";
 import { TITLE_SEPARATOR } from "../../utils/site-identity";
 import { t, tn } from "../../utils/strings";
-import { countTerms, primaryKind } from "../../utils/kind";
-import { REGION_IN, regionFromUrl, regionTermSlug, withRegion } from "../../utils/region";
+import { countTerms, kindIcon, primaryKind } from "../../utils/kind";
+import { REGION_IN, REGION_LABEL, regionFromUrl, regionTermSlug, withRegion } from "../../utils/region";
+import { TOWNS, townFromTermSlug, withTown } from "../../utils/towns";
+import {
+	KIND_ILLUSTRATION,
+	TOWN_ILLUSTRATION,
+	kindIllustrationSrc,
+	townIllustrationSrc,
+} from "../../utils/illustrations";
+import { KIND_PARAM } from "../../utils/finder";
 
 interface Props {
 	page: Extract<ResolvedEntry, { collection: "pages" }>["entry"];
@@ -59,7 +66,7 @@ const RECENT_COUNT = 6;
 // most): the newest fill "Recently added" and all of them give the kind counts.
 const region = regionFromUrl(Astro.url);
 
-const [recent, categoryTerms] = await Promise.all([
+const [recent, categoryTerms, townTerms] = await Promise.all([
 	getEmDashCollection("posts", {
 		locale,
 		orderBy: { published_at: "desc" },
@@ -68,11 +75,13 @@ const [recent, categoryTerms] = await Promise.all([
 			: { limit: RECENT_COUNT }),
 	}),
 	getTaxonomyTermsWithCacheHint("category", { locale }),
+	getTaxonomyTermsWithCacheHint("town", { locale }),
 ]);
 
 if (Astro.cache?.enabled) {
 	Astro.cache.set(recent.cacheHint);
 	Astro.cache.set(categoryTerms.cacheHint);
+	Astro.cache.set(townTerms.cacheHint);
 }
 
 // Kinds of place: every category with posts in this locale, biggest first.
@@ -89,8 +98,8 @@ const kindByPlace = await getTermsForEntries(
 	{ locale },
 );
 const regionCounts = region ? countTerms(kindByPlace) : null;
-// Within a region the map marks only the region's towns, with their counts
-// there (Nicosia has places on both sides).
+// Within a region the finder offers only the region's towns, with their
+// counts there (Nicosia has places on both sides).
 const townCounts = region
 	? countTerms(
 			await getTermsForEntries("posts", recent.entries.map((p) => p.data.id), "town", { locale }),
@@ -100,6 +109,33 @@ const kinds = [...new Map(flatten(categoryTerms.data).map((term) => [term.slug, 
 	.map((term) => (regionCounts ? { ...term, count: regionCounts.get(term.slug) ?? 0 } : term))
 	.filter((term) => (term.count ?? 0) > 0 && term.slug !== "uncategorized")
 	.sort((a, b) => (b.count ?? 0) - (a.count ?? 0) || a.label.localeCompare(b.label, locale));
+
+// Towns with places, most first: the finder's second dropdown and the town
+// links under it. Names come from the term labels; the URL uses the town key.
+const towns = townTerms.data
+	.map((term) => ({ term, town: townFromTermSlug(term.slug) }))
+	.filter((x): x is { term: TaxonomyTerm; town: (typeof TOWNS)[number] } => x.town !== undefined)
+	.map(({ term, town }) => ({
+		key: town.key,
+		name: term.label,
+		count: townCounts ? (townCounts.get(term.slug) ?? 0) : (term.count ?? 0),
+		poster: townIllustrationSrc(town.key),
+	}))
+	.filter((town) => town.count > 0)
+	.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, locale));
+
+// The poster beside the finder: the chosen town's illustration, swapped in
+// as the dropdown changes. Until one is chosen, the town with most places
+// (Kyrenia, the guide's home harbour, when no town has places yet).
+const posterTown = towns.find((town) => town.poster) ?? {
+	name: t(locale, "town.kyrenia"),
+	poster: townIllustrationSrc("kyrenia"),
+};
+const posterLabel = (name: string) => t(locale, "illustration.town", { town: name });
+
+// "I'm looking for {kind} in {town}": the sentence around the two dropdowns.
+const finderParts = t(locale, "home.finder").split(/(\{kind\}|\{town\})/).filter(Boolean);
+const anyTown = region ? t(locale, REGION_LABEL[region]) : t(locale, "home.finderAnyTown");
 
 const places = recent.entries.slice(0, RECENT_COUNT);
 // A place's kind is its first category that names a kind of place, not the
@@ -117,7 +153,7 @@ const hasLead = leadIndex >= 0;
 const orderedPlaces = hasLead
 	? [places[leadIndex], ...places.filter((_, i) => i !== leadIndex)]
 	: places;
-const searchAction = localePath(locale, "/search");
+const finderAction = localePath(locale, "/posts");
 ---
 
 <Base
@@ -135,27 +171,87 @@ const searchAction = localePath(locale, "/search");
 			<div class="hero__text">
 				<h1 id="home-title" class="hero__title">{t(locale, "home.title")}</h1>
 				<p class="hero__intro">{t(locale, "home.intro")}</p>
-				<form class="hero__search" action={searchAction} method="get" role="search">
-					<label for="home-search" class="hero__search-label">
-						{t(locale, "home.searchLabel")}
-					</label>
-					<div class="hero__search-row">
-						<input
-							id="home-search"
-							class="hero__search-input"
-							type="search"
-							name="q"
-							placeholder={t(locale, "home.searchPlaceholder")}
-							autocomplete="off"
-							enterkeyhint="search"
-						/>
-						<button type="submit" class="hero__search-button">
-							{t(locale, "home.searchButton")}
-						</button>
-					</div>
+				<form class="finder" action={finderAction} method="get">
+					<p class="finder__sentence">
+						{finderParts.map((part) =>
+							part === "{kind}" ? (
+								<span class="finder__field">
+									<label class="sr-only" for="finder-kind">{t(locale, "home.finderKind")}</label>
+									<select id="finder-kind" class="finder__select" name={KIND_PARAM}>
+										<option value="">{t(locale, "home.finderAnyKind")}</option>
+										{kinds.map((kind) => (
+											<option value={kind.slug}>{kind.label}</option>
+										))}
+									</select>
+								</span>
+							) : part === "{town}" ? (
+								<span class="finder__field">
+									<label class="sr-only" for="finder-town">{t(locale, "town.label")}</label>
+									<select
+										id="finder-town"
+										class="finder__select"
+										name="town"
+										data-finder-town
+									>
+										<option
+											value=""
+											data-poster={posterTown.poster}
+											data-poster-label={posterLabel(posterTown.name)}
+										>
+											{anyTown}
+										</option>
+										{towns.map((town) => (
+											<option
+												value={town.key}
+												data-poster={town.poster}
+												data-poster-label={posterLabel(town.name)}
+											>
+												{town.name}
+											</option>
+										))}
+									</select>
+								</span>
+							) : (
+								<span>{part}</span>
+							),
+						)}
+					</p>
+					{region && <input type="hidden" name="region" value={region} />}
+					<button type="submit" class="finder__button">{t(locale, "home.finderButton")}</button>
 				</form>
+				{towns.length > 1 && (
+					<nav class="towns" aria-labelledby="home-towns">
+						<h2 id="home-towns" class="towns__label">{t(locale, "home.townsLabel")}</h2>
+						<ul class="towns__list">
+							{towns.map((town) => (
+								<li>
+									<a href={withRegion(withTown(localePath(locale, "/posts"), town.key), region)}>
+										{town.name}
+										<span class="towns__count">{town.count}</span>
+									</a>
+								</li>
+							))}
+						</ul>
+					</nav>
+				)}
 			</div>
-			<IslandMap class="hero__map" region={region} townCounts={townCounts} />
+			{posterTown.poster && (
+				<figure class="hero__poster">
+					<img
+						src={posterTown.poster}
+						alt={posterLabel(posterTown.name)}
+						width={TOWN_ILLUSTRATION.width}
+						height={TOWN_ILLUSTRATION.height}
+						loading="eager"
+						fetchpriority="high"
+						data-illustration
+						data-finder-poster
+					/>
+					<figcaption class="hero__poster-caption" aria-hidden="true">
+						{t(locale, "illustration.caption")}
+					</figcaption>
+				</figure>
+			)}
 		</section>
 
 		<AdSpace space="top-banner" page="home" />
@@ -175,20 +271,26 @@ const searchAction = localePath(locale, "/search");
 							actions={[{ label: t(locale, "region.emptyWhole"), href: withRegion(Astro.url, null) }]}
 						/>
 					)}
-					{kinds.length > 0 && <ul class="kinds__list">
+					{kinds.length > 0 && <ul class="kinds__grid">
 						{kinds.map((kind) => (
 							<li>
 								<a
-									class="kinds__link"
+									class="kind"
 									href={withRegion(localePath(locale, `/category/${kind.slug}`), region)}
 								>
-									<span class="kinds__name">{kind.label}</span>
-									<span class="kinds__count" aria-hidden="true">
-										{kind.count}
+									<span class="kind__art">
+										<img
+											src={kindIllustrationSrc(kindIcon(kind.slug))}
+											alt=""
+											width={KIND_ILLUSTRATION.width}
+											height={KIND_ILLUSTRATION.height}
+											loading="lazy"
+											decoding="async"
+											data-illustration
+										/>
 									</span>
-									<span class="sr-only">
-										{`, ${tn(locale, "home.browseCount", kind.count ?? 0)}`}
-									</span>
+									<span class="kind__name">{kind.label}</span>
+									<span class="kind__count">{tn(locale, "home.browseCount", kind.count ?? 0)}</span>
 								</a>
 							</li>
 						))}
@@ -257,6 +359,29 @@ const searchAction = localePath(locale, "/search");
 	</div>
 </Base>
 
+<script>
+	// Swap the poster as the town dropdown changes: a short fade out, the new
+	// drawing in once it has loaded. Without JS the first poster just stays.
+	for (const select of document.querySelectorAll("[data-finder-town]")) {
+		if (!(select instanceof HTMLSelectElement)) continue;
+		const poster = select.closest(".hero")?.querySelector<HTMLImageElement>("[data-finder-poster]");
+		if (!poster) continue;
+		select.addEventListener("change", () => {
+			const option = select.selectedOptions[0];
+			const src = option?.dataset.poster;
+			if (!src || poster.getAttribute("src") === src) return;
+			const next = new Image();
+			next.src = src;
+			poster.toggleAttribute("data-swapping", true);
+			next.decode().catch(() => {}).finally(() => {
+				poster.src = src;
+				poster.alt = option.dataset.posterLabel ?? "";
+				poster.toggleAttribute("data-swapping", false);
+			});
+		});
+	}
+</script>
+
 <style>
 	.home {
 		max-width: var(--wide-width);
@@ -270,79 +395,106 @@ const searchAction = localePath(locale, "/search");
 		}
 	}
 
-	/* ---------- Hero ---------- */
+	/* ---------- Hero: the finder sentence beside a town poster ---------- */
 
 	.hero {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr);
 		gap: var(--spacing-10);
-		padding: var(--spacing-12) 0 var(--spacing-16);
+		padding: var(--spacing-10) 0 var(--spacing-12);
 	}
 
 	.hero__title {
 		font-family: var(--font-display);
 		font-weight: var(--font-weight-display);
-		font-size: clamp(var(--font-size-3xl), 1.6rem + 3.2vw, 4.25rem);
-		line-height: 1.02;
+		font-size: var(--font-size-2xl);
+		line-height: var(--leading-tight);
 		letter-spacing: var(--tracking-tight);
-		text-wrap: balance;
-		max-width: 14ch;
 	}
 
 	.hero__intro {
-		margin-top: var(--spacing-6);
-		max-width: 40ch;
-		font-size: var(--font-size-lg);
+		margin-top: var(--spacing-3);
+		max-width: 44ch;
+		font-size: var(--font-size-base);
 		line-height: var(--leading-normal);
 		color: var(--color-text-secondary);
 		text-wrap: pretty;
 	}
 
-	.hero__search {
-		margin-top: var(--spacing-10);
-		max-width: 34rem;
+	/* The sentence is the page's one large piece of type; the two dropdowns
+	 * are set in it, in the same face, marked by an English Red rule. */
+	.finder {
+		margin-top: var(--spacing-8);
 	}
 
-	.hero__search-label {
-		display: block;
-		margin-bottom: var(--spacing-2);
-		font-size: var(--font-size-sm);
-		font-weight: 600;
-		color: var(--color-text);
+	.finder__sentence {
+		font-family: var(--font-display);
+		font-weight: var(--font-weight-display);
+		font-size: clamp(1.75rem, 1.1rem + 2.7vw, 3.25rem);
+		line-height: 1.3;
+		letter-spacing: var(--tracking-tight);
+		text-wrap: balance;
 	}
 
-	.hero__search-row {
-		display: flex;
-		gap: var(--spacing-2);
+	.finder__field {
+		position: relative;
+		display: inline-block;
+		max-width: 100%;
 	}
 
-	.hero__search-input {
-		flex: 1;
-		min-width: 0;
-		height: 3.5rem;
-		padding: 0 var(--spacing-4);
+	.finder__select {
+		appearance: none;
+		/* Size to the chosen option where supported; elsewhere the widest one. */
+		field-sizing: content;
+		max-width: 100%;
+		margin: 0;
+		padding: 0 1.1em 0.04em 0;
 		font: inherit;
-		font-size: var(--font-size-base);
+		letter-spacing: inherit;
 		color: var(--color-text);
-		background: var(--color-bg);
-		border: 1px solid var(--color-text-secondary);
+		background: transparent;
+		border: 0;
+		border-bottom: 3px solid var(--color-mark);
+		border-radius: 0;
+		cursor: pointer;
+		text-overflow: ellipsis;
+	}
+
+	.finder__select:hover {
+		color: var(--color-brand);
+	}
+
+	.finder__select:focus-visible {
+		outline: 2px solid var(--color-mark);
+		outline-offset: 4px;
 		border-radius: var(--radius);
 	}
 
-	.hero__search-input::placeholder {
-		color: var(--color-muted);
+	.finder__select option {
+		font-family: var(--font-body);
+		font-size: var(--font-size-base);
+		color: var(--color-text);
+		background: var(--color-bg);
 	}
 
-	.hero__search-input:focus-visible {
-		outline: 2px solid var(--color-mark);
-		outline-offset: 2px;
-		border-color: var(--color-text);
+	/* The dropdown's chevron, drawn in the text colour. */
+	.finder__field::after {
+		content: "";
+		position: absolute;
+		right: 0.2em;
+		top: 50%;
+		width: 0.32em;
+		height: 0.32em;
+		border-right: 0.07em solid currentColor;
+		border-bottom: 0.07em solid currentColor;
+		transform: translateY(-75%) rotate(45deg);
+		pointer-events: none;
 	}
 
-	.hero__search-button {
-		flex: none;
-		height: 3.5rem;
-		padding: 0 var(--spacing-6);
+	.finder__button {
+		margin-top: var(--spacing-6);
+		height: 3.25rem;
+		padding: 0 var(--spacing-8);
 		font: inherit;
 		font-size: var(--font-size-base);
 		font-weight: 600;
@@ -356,25 +508,110 @@ const searchAction = localePath(locale, "/search");
 	}
 
 	/* Hover: the darkened Cerulian, whose white text still passes (5.4:1). */
-	.hero__search-button:hover {
+	.finder__button:hover {
 		color: var(--color-on-button-hover);
 		background: var(--color-button-hover);
 	}
 
-	.hero__search-button:focus-visible {
+	.finder__button:focus-visible {
 		outline: 2px solid var(--color-mark);
 		outline-offset: 2px;
 	}
 
-	@media (min-width: 960px) {
-		.hero {
-			grid-template-columns: minmax(0, 11fr) minmax(0, 13fr);
-			align-items: center;
-			gap: var(--spacing-8);
-			padding: var(--spacing-16) 0 var(--spacing-20);
+	/* Towns as plain links: the way in without the dropdowns. */
+	.towns {
+		margin-top: var(--spacing-8);
+	}
+
+	.towns__label {
+		font-family: var(--font-body);
+		font-size: var(--font-size-sm);
+		font-weight: 600;
+		color: var(--color-text-secondary);
+	}
+
+	.towns__list {
+		list-style: none;
+		margin: var(--spacing-2) 0 0;
+		padding: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--spacing-1) var(--spacing-5);
+	}
+
+	.towns__list a {
+		display: inline-block;
+		padding: var(--spacing-1) 0;
+		color: var(--color-brand);
+		text-decoration: underline;
+		text-decoration-thickness: 1px;
+		text-underline-offset: 0.2em;
+	}
+
+	.towns__list a:hover {
+		color: var(--color-brand-hover);
+	}
+
+	.towns__count {
+		margin-left: 0.35em;
+		font-size: var(--font-size-sm);
+		font-variant-numeric: tabular-nums;
+		color: var(--color-muted);
+	}
+
+	/* The poster: the town's travel-poster drawing, labelled as one. */
+	.hero__poster {
+		position: relative;
+		margin: 0;
+		aspect-ratio: 16 / 9;
+		overflow: hidden;
+		border-radius: var(--radius);
+		background: var(--color-sand);
+	}
+
+	.hero__poster img {
+		display: block;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		transition: opacity 180ms ease;
+	}
+
+	.hero__poster img[data-swapping] {
+		opacity: 0;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.hero__poster img {
+			transition: none;
 		}
 	}
 
+	.hero__poster-caption {
+		position: absolute;
+		right: var(--spacing-2);
+		bottom: var(--spacing-2);
+		padding: 1px 6px;
+		font-size: 9px;
+		line-height: 1.4;
+		color: var(--color-text);
+		background: var(--color-bg);
+		border-radius: 2px;
+	}
+
+	@media (min-width: 960px) {
+		.hero {
+			grid-template-columns: minmax(0, 13fr) minmax(0, 11fr);
+			align-items: center;
+			gap: var(--spacing-12);
+			padding: var(--spacing-16) 0 var(--spacing-16);
+		}
+
+		/* Taller than 16:9 beside the sentence; the drawings crop well. */
+		.hero__poster {
+			aspect-ratio: 4 / 5;
+		}
+	}
 
 	/* ---------- Sections ---------- */
 
@@ -429,61 +666,78 @@ const searchAction = localePath(locale, "/search");
 		color: var(--color-brand-hover);
 	}
 
-	/* ---------- Browse by kind: a typographic index ---------- */
+	/* ---------- Browse by kind: one drawing per kind ---------- */
 
-	.kinds__list {
+	.kinds__grid {
 		list-style: none;
-		margin: 0;
+		margin: var(--spacing-4) 0 0;
 		padding: 0;
 		display: grid;
-		grid-template-columns: minmax(0, 1fr);
-		column-gap: var(--spacing-12);
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: var(--spacing-6) var(--spacing-4);
 	}
 
-	@media (min-width: 720px) {
-		.kinds__list {
-			grid-template-columns: repeat(2, minmax(0, 1fr));
+	@media (min-width: 640px) {
+		.kinds__grid {
+			grid-template-columns: repeat(3, minmax(0, 1fr));
 		}
 	}
 
-	.kinds__list li {
-		border-bottom: 1px solid var(--color-border);
+	@media (min-width: 1000px) {
+		.kinds__grid {
+			grid-template-columns: repeat(5, minmax(0, 1fr));
+			gap: var(--spacing-8) var(--spacing-6);
+		}
 	}
 
-	.kinds__link {
+	.kind {
 		display: flex;
-		align-items: baseline;
-		justify-content: space-between;
-		gap: var(--spacing-4);
-		padding: var(--spacing-4) 0;
+		flex-direction: column;
 		color: var(--color-text);
 		text-decoration: none;
 	}
 
-	.kinds__name {
-		font-size: clamp(var(--font-size-lg), 1rem + 1vw, var(--font-size-2xl));
+	.kind__art {
+		display: block;
+		aspect-ratio: 4 / 3;
+		overflow: hidden;
+		border-radius: var(--radius);
+		background: var(--color-sand);
+	}
+
+	.kind__art img {
+		display: block;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.kind__name {
+		margin-top: var(--spacing-3);
+		font-size: var(--font-size-lg);
 		font-weight: 600;
 		line-height: var(--leading-tight);
 		letter-spacing: var(--tracking-snug);
 	}
 
-	.kinds__count {
-		font-size: var(--font-size-base);
+	.kind__count {
+		margin-top: var(--spacing-1);
+		font-size: var(--font-size-sm);
 		font-variant-numeric: tabular-nums;
 		color: var(--color-muted);
 	}
 
 	/* Hover: the name stays ink; an English Red underline marks it. */
-	.kinds__link:hover .kinds__name {
+	.kind:hover .kind__name {
 		text-decoration: underline;
 		text-decoration-color: var(--color-mark);
 		text-decoration-thickness: 2px;
 		text-underline-offset: 0.18em;
 	}
 
-	.kinds__link:focus-visible {
+	.kind:focus-visible {
 		outline: 2px solid var(--color-mark);
-		outline-offset: 2px;
+		outline-offset: 4px;
 		border-radius: var(--radius);
 	}
 
