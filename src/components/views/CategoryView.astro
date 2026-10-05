@@ -1,5 +1,5 @@
 ---
-import { getEmDashCollection, getTermsForEntries } from "emdash";
+import { getEmDashCollection, getTaxonomyTermsWithCacheHint, getTermsForEntries } from "emdash";
 import Base from "../../layouts/Base.astro";
 import PostCard from "../../components/PostCard.astro";
 import AdSpace from "../AdSpace.astro";
@@ -13,6 +13,7 @@ import { localePath } from "../../utils/i18n";
 import { t, tn } from "../../utils/strings";
 import { primaryKind } from "../../utils/kind";
 import { REGION_IN, regionFromUrl, regionTermSlug, withRegion } from "../../utils/region";
+import { townFromUrl, townLocative, townTermSlug, withTown } from "../../utils/towns";
 
 const locale = Astro.currentLocale;
 
@@ -25,16 +26,34 @@ const { term } = Astro.props;
 const region = regionFromUrl(Astro.url);
 const regionIn = region ? t(locale, REGION_IN[region]) : "";
 
+// The town (?town=<key>), from the home page finder or a town listing. As on
+// /posts, it only filters when the `town` taxonomy has the term.
+const townChoice = townFromUrl(Astro.url);
+const { data: townTerms, cacheHint: townsHint } = await getTaxonomyTermsWithCacheHint("town", {
+	locale,
+	includeCounts: false,
+});
+const townSlug = townChoice ? townTermSlug(locale, townChoice.key) : undefined;
+const townTerm = townSlug ? townTerms.find((candidate) => candidate.slug === townSlug) : undefined;
+const town = townChoice && townTerm ? { key: townChoice.key, slug: townTerm.slug, name: townTerm.label } : null;
+// "in Kyrenia" / "Girne'de": a town is narrower than a region, so it wins.
+const placeIn = town ? t(locale, "town.in", { town: townLocative(locale, town.name) }) : regionIn;
+
 const { entries: posts, cacheHint } = await getEmDashCollection("posts", {
 	locale,
-	// Taxonomy filters AND together: this category, and the region when one is chosen.
-	where: region
-		? { category: term.slug, region: regionTermSlug(locale, region) }
-		: { category: term.slug },
+	// Taxonomy filters AND together: this category, and the region and town when chosen.
+	where: {
+		category: term.slug,
+		...(region ? { region: regionTermSlug(locale, region) } : {}),
+		...(town ? { town: town.slug } : {}),
+	},
 	orderBy: { published_at: "desc" },
 });
 
-if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
+if (Astro.cache?.enabled) {
+	Astro.cache.set(cacheHint);
+	Astro.cache.set(townsHint);
+}
 
 // Places without a photo show their own kind's drawing (a bar listed under
 // Entertainment still gets the glass; a place under the town category "girne"
@@ -48,12 +67,19 @@ const noPhotoKinds = await getTermsForEntries(
 
 const crumbs = [
 	{ label: t(locale, "listing.home"), href: localePath(locale, "/") },
-	{ label: t(locale, "listing.allPlaces"), href: withRegion(localePath(locale, "/posts"), region) },
+	{
+		label: t(locale, "listing.allPlaces"),
+		href: withTown(withRegion(localePath(locale, "/posts"), region), town?.key ?? null),
+	},
 ];
 ---
 
 <Base
-	title={t(locale, "listing.categoryTitle", { label: term.label })}
+	title={
+		town
+			? t(locale, "listing.categoryTownTitle", { label: term.label, town: townLocative(locale, town.name, "of") })
+			: t(locale, "listing.categoryTitle", { label: term.label })
+	}
 	description={term.description || t(locale, "listing.categoryDescription", { label: term.label })}
 >
 	{/* ad-manager has no category page type; "tag" is the closest (a taxonomy archive). */}
@@ -64,20 +90,30 @@ const crumbs = [
 			count={
 				posts.length === 0
 					? undefined
-					: region
-						? tn(locale, "region.count", posts.length, { in: regionIn })
+					: placeIn
+						? tn(locale, "region.count", posts.length, { in: placeIn })
 						: tn(locale, "listing.place", posts.length)
 			}
 			crumbs={crumbs}
 			crumbLabel={t(locale, "listing.breadcrumb")}
 		>
+			{town && (
+				<p class="listing-town">
+					<a href={withTown(Astro.url, null)}>{t(locale, "town.clear")}</a>
+				</p>
+			)}
 			{term.description && <p class="listing-intro">{term.description}</p>}
 			<RegionSwitch class="listing-region" />
 		</ListingHeader>
 
 		{
 			posts.length === 0 ? (
-				region ? (
+				town ? (
+					<ListingEmpty
+						message={t(locale, "region.emptyCategory", { label: term.label, in: placeIn })}
+						actions={[{ label: t(locale, "town.clear"), href: withTown(Astro.url, null) }]}
+					/>
+				) : region ? (
 					<ListingEmpty
 						message={t(locale, "region.emptyCategory", { label: term.label, in: regionIn })}
 						actions={[{ label: t(locale, "region.emptyWhole"), href: withRegion(Astro.url, null) }]}
@@ -115,6 +151,14 @@ const crumbs = [
 
 	.listing :global(.listing-region) {
 		margin-top: var(--spacing-4);
+	}
+
+	.listing-town {
+		margin: var(--spacing-2) 0 0;
+	}
+
+	.listing-town a {
+		font-weight: 500;
 	}
 
 	.listing-intro {
