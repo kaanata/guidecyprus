@@ -1,0 +1,46 @@
+---
+/**
+ * Portable Text image block on the place page. A block that carries a
+ * `credit` (see src/utils/photo-credit.ts) gets the linked 9px credit in place
+ * of its caption, and the image itself is not linked (the credit is). Any
+ * other image block renders exactly as EmDash's own renderer does.
+ *
+ * The admin editor keeps only `caption` and `link` when it re-saves a block, so
+ * an upload script also writes the credit text as `caption` and the source as
+ * `link`: after an edit in the admin the photo still shows its credit, through
+ * EmDash's caption, and still links to the source.
+ */
+import { PTImage } from "emdash/ui";
+import PhotoCredit from "./PhotoCredit.astro";
+import { readCredit } from "../utils/photo-credit";
+
+interface Props {
+	node: Record<string, unknown> & { _type: "image"; _key: string; asset: { _ref: string } };
+}
+
+const { node } = Astro.props;
+const credit = readCredit(node.credit, node.creditUrl);
+// Shown through the credit line instead.
+const imageNode = credit ? { ...node, caption: undefined, link: undefined } : node;
+---
+
+{
+	credit ? (
+		<figure class="body-photo">
+			<PTImage node={imageNode as never} />
+			<PhotoCredit credit={credit} />
+		</figure>
+	) : (
+		<PTImage node={node as never} />
+	)
+}
+
+<style>
+	.body-photo {
+		margin: 2em 0;
+	}
+
+	.body-photo :global(.emdash-image) {
+		margin: 0;
+	}
+</style>

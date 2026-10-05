@@ -1,0 +1,125 @@
+---
+/**
+ * The place's own photos (the `gallery` field, used when a place has three or
+ * more). A plain grid in the body column: each photo links to the full-size
+ * image and carries its 9px credit, linked to where it came from. No script,
+ * no lightbox.
+ *
+ * Gallery photos are pictures of the place, never logos, so they are not
+ * inside [data-photo-frame] and the logo check in Base.astro skips them.
+ */
+import { Image } from "emdash/ui";
+import PhotoCredit from "./PhotoCredit.astro";
+import type { GalleryPhoto } from "../utils/photo-credit";
+import { t } from "../utils/strings";
+
+interface Props {
+	photos: GalleryPhoto[];
+	/** The place's name, for photos stored without alt text. */
+	title: string;
+}
+
+const { photos, title } = Astro.props;
+const locale = Astro.currentLocale;
+
+/** The full-size image: its own src, or the media route for a local file. */
+function fullSize(image: GalleryPhoto["image"]): string {
+	if (typeof image.src === "string" && image.src) return image.src;
+	const meta = image.meta as Record<string, unknown> | undefined;
+	const key = typeof meta?.storageKey === "string" ? meta.storageKey : image.id;
+	return `/_emdash/api/media/file/${key}`;
+}
+
+const headingId = "place-photos-title";
+---
+
+{
+	photos.length > 0 && (
+		<section class="place-gallery" aria-labelledby={headingId}>
+			<h2 class="gallery-title" id={headingId}>{t(locale, "place.photos")}</h2>
+			<ul class="gallery-grid">
+				{photos.map((photo, i) => {
+					const alt =
+						typeof photo.image.alt === "string" && photo.image.alt
+							? photo.image.alt
+							: t(locale, "place.photoAlt", { title });
+					return (
+						<li>
+							<figure class="gallery-item">
+								<a
+									class="gallery-link"
+									href={fullSize(photo.image)}
+									aria-label={`${alt}. ${t(locale, "place.photoOpen", { n: i + 1, total: photos.length })}`}
+								>
+									<Image image={photo.image as never} alt={alt} />
+								</a>
+								{photo.credit && <PhotoCredit credit={photo.credit} />}
+							</figure>
+						</li>
+					);
+				})}
+			</ul>
+		</section>
+	)
+}
+
+<style>
+	.place-gallery {
+		margin-top: var(--spacing-12);
+		padding-top: var(--spacing-8);
+		border-top: 1px solid var(--color-border);
+	}
+
+	.gallery-title {
+		font-family: var(--font-display);
+		font-weight: var(--font-weight-display);
+		font-size: var(--font-size-xl);
+		line-height: var(--leading-snug);
+		letter-spacing: 0;
+		color: var(--color-text);
+		margin: 0 0 var(--spacing-5);
+	}
+
+	/* Two across on a phone, three in the body column on wider screens. */
+	.gallery-grid {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: var(--spacing-5) var(--spacing-3);
+	}
+
+	@media (min-width: 560px) {
+		.gallery-grid {
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: var(--spacing-6) var(--spacing-4);
+		}
+	}
+
+	.gallery-item {
+		margin: 0;
+		min-width: 0;
+	}
+
+	.gallery-link {
+		display: block;
+		border-radius: var(--radius);
+		overflow: hidden;
+		background: var(--color-sand);
+	}
+
+	/* A fixed box, so the grid is even and nothing shifts as photos load. */
+	.gallery-link :global(img) {
+		display: block;
+		width: 100%;
+		height: auto;
+		aspect-ratio: 4 / 3;
+		object-fit: cover;
+	}
+
+	.gallery-link:focus-visible {
+		outline: 2px solid var(--color-mark);
+		outline-offset: 2px;
+	}
+</style>
